@@ -1,5 +1,6 @@
 import { component$, useClientEffect$, useStore, useStylesScoped$ } from '@builder.io/qwik';
-import { DocumentHead, useLocation } from '@builder.io/qwik-city';
+import type { DocumentHead} from '@builder.io/qwik-city';
+import { useLocation } from '@builder.io/qwik-city';
 import styles from './flower.css?inline';
 
 export default component$(() => {

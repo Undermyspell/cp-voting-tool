@@ -1,5 +1,5 @@
-import { useResource$, useSignal } from "@builder.io/qwik";
-import { User } from "~/models/user";
+import { useResource$ } from "@builder.io/qwik";
+import type { User } from "~/models/user";
 
 export const loadUsers = async (): Promise<User[]> => {
 	const res = await fetch("https://reqres.in/api/users?page=1");

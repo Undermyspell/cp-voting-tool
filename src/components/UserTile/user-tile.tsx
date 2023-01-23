@@ -1,5 +1,5 @@
 import { component$ } from '@builder.io/qwik';
-import { User } from '~/models/user';
+import type { User } from '~/models/user';
 
 
 export const UserTile = component$(({ id, email, first_name, last_name, avatar }: User) => {
