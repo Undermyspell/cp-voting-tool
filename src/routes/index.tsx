@@ -8,10 +8,12 @@ import styles from './index.css?inline';
 
 export default component$(() => {
   useStylesScoped$(styles)
-  const { users } = useUsers()
+
+  const { users, reload } = useUsers()
 
   return (
     <div>
+      <button onclick$={reload} type='button'>Reload</button>
       <Resource
         value={users}
         onPending={() => <div>Loading...</div>}

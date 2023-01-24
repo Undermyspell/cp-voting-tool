@@ -1,16 +1,16 @@
-import { useResource$ } from "@builder.io/qwik";
+import { useResource$, useSignal, $ } from "@builder.io/qwik";
 import type { User } from "~/models/user";
 
-export const loadUsers = async (): Promise<User[]> => {
-	const res = await fetch("https://reqres.in/api/users?page=1");
-	const { data }: { data: User[] } = await res.json();
-	return data;
-};
-
 export function useUsers() {
-	const users = useResource$<User[]>(async () => {
-		return await loadUsers();
+	const reloadTrigger = useSignal(true);
+	const reload = $(() => (reloadTrigger.value = !reloadTrigger.value));
+
+	const users = useResource$<User[]>(async ({ track }) => {
+		track(() => reloadTrigger.value);
+		const res = await fetch("https://reqres.in/api/users?page=1");
+		const { data }: { data: User[] } = await res.json();
+		return data;
 	});
 
-	return { users };
+	return { users, reload };
 }
