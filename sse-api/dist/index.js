@@ -15,6 +15,7 @@ app.get("/status", (request, response) => response.json({ clients: clients.lengt
 let clients = [];
 const facts = [];
 function eventsHandler(request, response, next) {
+    console.log("Connection opened");
     const headers = {
         "Content-Type": "text/event-stream",
         Connection: "keep-alive",

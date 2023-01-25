@@ -14,6 +14,7 @@ let clients: { id: number; response: Response }[] = []
 const facts: any[] = []
 
 function eventsHandler(request: Request, response: Response, next: NextFunction) {
+	console.log("Connection opened")
 	const headers = {
 		"Content-Type": "text/event-stream",
 		Connection: "keep-alive",
