@@ -6,6 +6,9 @@
         "suspicious": {
           "noExplicitAny": "off",
           "noAsyncPromiseExecutor": "off"
+        },
+        "security": {
+          "noDangerouslySetInnerHtml": "off"
         }
       },
       "ignore": []

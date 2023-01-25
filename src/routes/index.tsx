@@ -1,4 +1,4 @@
-import { Resource, component$, useClientEffect$, useStylesScoped$ } from '@builder.io/qwik';
+import { Resource, component$, useStylesScoped$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { Link } from '@builder.io/qwik-city';
 import { UserTile } from '~/components/UserTile/user-tile';
@@ -11,12 +11,12 @@ export default component$(() => {
 
   const { users, reload } = useUsers()
 
-  useClientEffect$(() => {
-    const eventSource = new EventSource('http://localhost:3333/events');
-    eventSource.onmessage = ({ data }) => {
-      console.log('New message', JSON.parse(data));
-    };
-  })
+  // useClientEffect$(() => {
+  //   const eventSource = new EventSource('http://localhost:3333/events');
+  //   eventSource.onmessage = ({ data }) => {
+  //     console.log('New message', JSON.parse(data));
+  //   };
+  // })
 
   return (
     <div>
@@ -30,17 +30,15 @@ export default component$(() => {
             <div class="user-grid">
               {
                 users.map(u =>
-                  <UserTile key={u.id} id={u.id} avatar={u.avatar} email={u.email} first_name={u.first_name} last_name={u.last_name} />
+                  <Link href={`/user/${u.id}`} key={u.id} class="text-green-600 visited:text-green-600">
+                    <UserTile key={u.id} id={u.id} avatar={u.avatar} email={u.email} first_name={u.first_name} last_name={u.last_name} />
+                  </Link>
                 )
               }
             </div>
           );
         }}
       />
-
-      <Link class="mindblow" href="/flower/">
-        Blow my mind 🤯
-      </Link>
     </div>
   );
 });
