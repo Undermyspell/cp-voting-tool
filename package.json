@@ -11,6 +11,7 @@
     "build.client": "vite build",
     "build.preview": "vite build --ssr src/entry.preview.tsx",
     "build.server": "vite build -c adaptors/express/vite.config.ts",
+    "serve": "node ./server/entry.express.js",
     "build.types": "tsc --incremental --noEmit",
     "deploy": "node server/entry.express",
     "dev": "vite --mode ssr",
