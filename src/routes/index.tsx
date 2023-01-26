@@ -1,4 +1,4 @@
-import { Resource, component$, useStylesScoped$ } from '@builder.io/qwik';
+import { Resource, component$, useClientEffect$, useStylesScoped$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { Link } from '@builder.io/qwik-city';
 import { UserTile } from '~/components/UserTile/user-tile';
@@ -11,12 +11,12 @@ export default component$(() => {
 
   const { users, reload } = useUsers()
 
-  // useClientEffect$(() => {
-  //   const eventSource = new EventSource('http://localhost:3333/events');
-  //   eventSource.onmessage = ({ data }) => {
-  //     console.log('New message', JSON.parse(data));
-  //   };
-  // })
+  useClientEffect$(() => {
+    const eventSource = new EventSource('http://localhost:3333/events');
+    eventSource.onmessage = ({ data }) => {
+      console.log('New message', JSON.parse(data));
+    };
+  })
 
   return (
     <div>
