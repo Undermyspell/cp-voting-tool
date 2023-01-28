@@ -3,14 +3,18 @@ package broker
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 type Broker struct {
-	Notifier       chan []byte
-	NewClients     chan chan []byte
-	ClosingClients chan chan []byte
-	Clients        map[chan []byte]bool
+	Notifier       chan string
+	NewClients     chan chan string
+	ClosingClients chan chan string
+	Clients        map[chan string]bool
 }
 
 type Message struct {
@@ -19,72 +23,77 @@ type Message struct {
 
 func New() *Broker {
 	return &Broker{
-		Notifier:       make(chan []byte, 1),
-		NewClients:     make(chan chan []byte),
-		ClosingClients: make(chan chan []byte),
-		Clients:        make(map[chan []byte]bool),
+		Notifier:       make(chan string, 1),
+		NewClients:     make(chan chan string),
+		ClosingClients: make(chan chan string),
+		Clients:        make(map[chan string]bool),
 	}
 }
 
-func (broker *Broker) Stream(w http.ResponseWriter, r *http.Request) {
-	flusher, ok := w.(http.Flusher)
+func (broker *Broker) Stream(c *gin.Context) {
+	messageChan := make(chan string)
 
-	if !ok {
-		http.Error(w, "Streaming unsupported!", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-
-	// Each connection registers its own message channel with the Broker's connections registry
-	messageChan := make(chan []byte)
-
-	// Signal the broker that we have a new connection
-	broker.NewClients <- messageChan
-
-	// Remove this client from the map of connected clients
-	// when this handler exits.
 	defer func() {
 		broker.ClosingClients <- messageChan
+		close(messageChan)
 	}()
 
-	go func() {
-		// Listen to connection close and un-register messageChan
-		<-r.Context().Done()
-		broker.ClosingClients <- messageChan
-	}()
+	broker.NewClients <- messageChan
 
-	for {
-		// Write to the ResponseWriter
-		// Server Sent Events compatible
-		fmt.Fprintf(w, "data: %s\n\n", <-messageChan)
-
-		// Flush the data immediatly instead of buffering it for later.
-		flusher.Flush()
-	}
+	c.Stream(func(w io.Writer) bool {
+		select {
+		case msg := <-messageChan:
+			c.SSEvent("question", msg)
+		case <-c.Request.Context().Done():
+			return false
+		}
+		return true
+	})
 }
 
-func (broker *Broker) BroadcastMessage(w http.ResponseWriter, r *http.Request) {
+func (broker *Broker) BroadcastMessage(c *gin.Context) {
 	var message Message
-
-	err := json.NewDecoder(r.Body).Decode(&message)
+	err := c.BindJSON(&message)
+	res, _ := json.Marshal(message)
+	fmt.Println(string(res))
 
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("cant parse request"))
+		c.JSON(http.StatusBadRequest, "cant parse request")
 		return
 	}
 
-	byteData, err := json.Marshal(message)
+	// byteData, err := json.Marshal(message)
 
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("paging struct to byte"))
-		return
+	// if err != nil {
+	// 	c.JSON(http.StatusBadRequest, "cant unmarshal json")
+	// 	return
+	// }
+
+	// fmt.Println(res2B)
+
+	broker.Notifier <- string(res)
+}
+
+func (broker *Broker) Listen() {
+	for {
+		select {
+		case s := <-broker.NewClients:
+			// A new client has joined
+			broker.Clients[s] = true
+			log.Printf("🟢 Client added. %d registered clients", len(broker.Clients))
+		case s := <-broker.ClosingClients:
+			// A client has detached
+			// remove them from our clients map
+			delete(broker.Clients, s)
+			log.Printf("🔴 Removed client. %d registered clients", len(broker.Clients))
+		case event := <-broker.Notifier:
+			// case for getting a new msg
+			// Thus send it to all clients
+			for clientMessageChan := range broker.Clients {
+				fmt.Println("send to client")
+				fmt.Println(event)
+				clientMessageChan <- event
+			}
+		}
 	}
-
-	broker.Notifier <- byteData
 }
