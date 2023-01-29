@@ -1,21 +1,18 @@
 package broker
 
 import (
-	"encoding/json"
-	"fmt"
 	"io"
 	"log"
-	"net/http"
-	"sse/internal/events"
+	"sse/internal/sse"
 
 	"github.com/gin-gonic/gin"
 )
 
 type Broker struct {
-	Notifier       chan string
-	NewClients     chan chan string
-	ClosingClients chan chan string
-	Clients        map[chan string]bool
+	Notifier       chan sse.Event
+	NewClients     chan chan sse.Event
+	ClosingClients chan chan sse.Event
+	Clients        map[chan sse.Event]bool
 }
 
 type Message struct {
@@ -24,48 +21,32 @@ type Message struct {
 
 func New() *Broker {
 	return &Broker{
-		Notifier:       make(chan string, 1),
-		NewClients:     make(chan chan string),
-		ClosingClients: make(chan chan string),
-		Clients:        make(map[chan string]bool),
+		Notifier:       make(chan sse.Event, 1),
+		NewClients:     make(chan chan sse.Event),
+		ClosingClients: make(chan chan sse.Event),
+		Clients:        make(map[chan sse.Event]bool),
 	}
 }
 
-func (broker *Broker) StreamNew(event events.Events) func(c *gin.Context) {
-	return func(c *gin.Context) {
-		messageChan := make(chan string)
+func (broker *Broker) Stream(c *gin.Context) {
+	messageChan := make(chan sse.Event)
 
-		defer func() {
-			broker.ClosingClients <- messageChan
-			close(messageChan)
-		}()
+	defer func() {
+		broker.ClosingClients <- messageChan
+		close(messageChan)
+	}()
 
-		broker.NewClients <- messageChan
+	broker.NewClients <- messageChan
 
-		c.Stream(func(w io.Writer) bool {
-			select {
-			case msg := <-messageChan:
-				c.SSEvent(string(event), msg)
-			case <-c.Request.Context().Done():
-				return false
-			}
-			return true
-		})
-	}
-}
-
-func (broker *Broker) BroadcastMessage(c *gin.Context) {
-	var message Message
-	err := c.BindJSON(&message)
-	res, _ := json.Marshal(message)
-	fmt.Println(string(res))
-
-	if err != nil {
-		c.JSON(http.StatusBadRequest, "cant parse request")
-		return
-	}
-
-	broker.Notifier <- string(res)
+	c.Stream(func(w io.Writer) bool {
+		select {
+		case event := <-messageChan:
+			c.SSEvent(string(event.EventType), event.Payload)
+		case <-c.Request.Context().Done():
+			return false
+		}
+		return true
+	})
 }
 
 func (broker *Broker) Listen() {
@@ -84,8 +65,6 @@ func (broker *Broker) Listen() {
 			// case for getting a new msg
 			// Thus send it to all clients
 			for clientMessageChan := range broker.Clients {
-				fmt.Println("send to client")
-				fmt.Println(event)
 				clientMessageChan <- event
 			}
 		}

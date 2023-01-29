@@ -14,7 +14,10 @@ export default component$(() => {
   useClientEffect$(() => {
     const eventSource = new EventSource('http://localhost:3333/events');
     eventSource.addEventListener("new_question", ({ data }) => {
-      console.log("Received Question", JSON.parse(data))
+      console.log("New Question", JSON.parse(data))
+    })
+    eventSource.addEventListener("upvote_question", ({ data }) => {
+      console.log("Upvoted Question", JSON.parse(data))
     })
     // eventSource.onmessage = ({ data }) => {
     //   console.log("Received", data)
