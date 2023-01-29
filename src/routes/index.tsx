@@ -13,7 +13,7 @@ export default component$(() => {
 
   useClientEffect$(() => {
     const eventSource = new EventSource('http://localhost:3333/events');
-    eventSource.addEventListener("question", ({ data }) => {
+    eventSource.addEventListener("new_question", ({ data }) => {
       console.log("Received Question", JSON.parse(data))
     })
     // eventSource.onmessage = ({ data }) => {

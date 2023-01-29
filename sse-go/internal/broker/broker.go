@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"sse/internal/events"
 
 	"github.com/gin-gonic/gin"
 )
@@ -30,25 +31,27 @@ func New() *Broker {
 	}
 }
 
-func (broker *Broker) Stream(c *gin.Context) {
-	messageChan := make(chan string)
+func (broker *Broker) StreamNew(event events.Events) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		messageChan := make(chan string)
 
-	defer func() {
-		broker.ClosingClients <- messageChan
-		close(messageChan)
-	}()
+		defer func() {
+			broker.ClosingClients <- messageChan
+			close(messageChan)
+		}()
 
-	broker.NewClients <- messageChan
+		broker.NewClients <- messageChan
 
-	c.Stream(func(w io.Writer) bool {
-		select {
-		case msg := <-messageChan:
-			c.SSEvent("question", msg)
-		case <-c.Request.Context().Done():
-			return false
-		}
-		return true
-	})
+		c.Stream(func(w io.Writer) bool {
+			select {
+			case msg := <-messageChan:
+				c.SSEvent(string(event), msg)
+			case <-c.Request.Context().Done():
+				return false
+			}
+			return true
+		})
+	}
 }
 
 func (broker *Broker) BroadcastMessage(c *gin.Context) {
@@ -61,15 +64,6 @@ func (broker *Broker) BroadcastMessage(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, "cant parse request")
 		return
 	}
-
-	// byteData, err := json.Marshal(message)
-
-	// if err != nil {
-	// 	c.JSON(http.StatusBadRequest, "cant unmarshal json")
-	// 	return
-	// }
-
-	// fmt.Println(res2B)
 
 	broker.Notifier <- string(res)
 }
