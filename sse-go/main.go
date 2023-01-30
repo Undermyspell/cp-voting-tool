@@ -22,7 +22,10 @@ func main() {
 	r.Use(cors.New(config))
 
 	r.GET("/events", broker.Stream)
-	r.POST("/newquestion", questionService.AddQuestion)
-	r.POST("/upvotequestion", questionService.UpvoteQuestion)
+	q := r.Group("/question")
+	q.POST("/new", questionService.AddQuestion)
+	q.PUT("/answer", questionService.Answer)
+	q.PUT("/upvote", questionService.UpvoteQuestion)
+	r.POST("/reset", questionService.Reset)
 	r.Run(":3333")
 }

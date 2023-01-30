@@ -6,6 +6,7 @@ const (
 	NEW_QUESTION    EventType = "new_question"
 	UPVOTE_QUESTION EventType = "upvote_question"
 	ANSWER_QUESTION EventType = "answer_question"
+	RESET_SESSION   EventType = "reset_session"
 )
 
 type Event struct {
@@ -17,3 +18,5 @@ type NewQuestionEvent struct {
 	Id   string
 	Text string
 }
+
+const PayloadEmpty = "{}"

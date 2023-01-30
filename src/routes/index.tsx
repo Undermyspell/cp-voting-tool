@@ -19,6 +19,12 @@ export default component$(() => {
     eventSource.addEventListener("upvote_question", ({ data }) => {
       console.log("Upvoted Question", JSON.parse(data))
     })
+    eventSource.addEventListener("answer_question", ({ data }) => {
+      console.log("Answered Question", JSON.parse(data))
+    })
+    eventSource.addEventListener("reset_session", () => {
+      console.log("Reset Session")
+    })
     // eventSource.onmessage = ({ data }) => {
     //   console.log("Received", data)
     //   // console.log('New message', JSON.parse(data));

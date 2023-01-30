@@ -15,10 +15,6 @@ type Broker struct {
 	Clients        map[chan sse.Event]bool
 }
 
-type Message struct {
-	Message *string `json:"message"`
-}
-
 func New() *Broker {
 	return &Broker{
 		Notifier:       make(chan sse.Event, 1),
