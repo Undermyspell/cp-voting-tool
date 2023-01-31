@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 	"sse/internal/broker"
+	"sse/internal/question"
 	"sse/internal/sse"
-	"sse/models/question"
 
 	"github.com/gin-gonic/gin"
 )
