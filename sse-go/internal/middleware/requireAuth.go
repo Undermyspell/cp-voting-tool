@@ -1,13 +1,13 @@
 package middleware
 
 import (
-	"log"
 	"net/http"
 	"sse/internal/jwks"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/sirupsen/logrus"
 )
 
 func RequireAuth(keyfuncProvider jwks.KeyfuncProvider) gin.HandlerFunc {
@@ -17,7 +17,7 @@ func RequireAuth(keyfuncProvider jwks.KeyfuncProvider) gin.HandlerFunc {
 		splitted := strings.Split(bearerToken, " ")
 
 		if len(splitted) != 2 && splitted[0] != "Bearer" {
-			log.Println("Not a valid bearer token")
+			logrus.Error("Not a valid bearer token")
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
@@ -26,17 +26,16 @@ func RequireAuth(keyfuncProvider jwks.KeyfuncProvider) gin.HandlerFunc {
 		token, err := jwt.Parse(jwtB64, keyfuncProvider.GetKeyFunc())
 
 		if err != nil {
-			log.Printf("Failed to parse the JWT.\nError: %s", err.Error())
+			logrus.Error("Failed to parse the JWT.\nError: %s", err.Error())
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 
 		if !token.Valid {
-			log.Printf("The token is not valid.")
+			logrus.Error("The token is not valid.")
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
-		log.Println("The token is valid.")
 
 		c.Next()
 	}

@@ -2,10 +2,10 @@ package broker
 
 import (
 	"io"
-	"log"
 	"sse/internal/sse"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 type ChannelBroker struct {
@@ -42,12 +42,12 @@ func (broker *ChannelBroker) Listen() {
 		case s := <-broker.NewClients:
 			// A new client has joined
 			broker.Clients[s] = true
-			log.Printf("🟢 Client added. %d registered clients", len(broker.Clients))
+			logrus.Info("🟢 Client added. %d registered clients", len(broker.Clients))
 		case s := <-broker.ClosingClients:
 			// A client has detached
 			// remove them from our clients map
 			delete(broker.Clients, s)
-			log.Printf("🔴 Removed client. %d registered clients", len(broker.Clients))
+			logrus.Info("🔴 Removed client. %d registered clients", len(broker.Clients))
 		case event := <-broker.Notifier:
 			// case for getting a new msg
 			// Thus send it to all clients

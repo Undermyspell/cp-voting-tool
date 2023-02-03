@@ -10,18 +10,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func addQuestionRoutes(r *gin.Engine, questionService services.QuestionService) {
-	q := r.Group("/question")
-	q.POST("/new", questionService.AddQuestion)
-	q.PUT("/answer", questionService.Answer)
-	q.PUT("/upvote", questionService.UpvoteQuestion)
-	q.POST("/reset", questionService.Reset)
-
-}
-
 var initJwks = func() jwks.KeyfuncProvider {
 	return jwks.New()
 }
+
+var initQuestionService = func(broker broker.Broker) services.QuestionService {
+	return services.NewBrokered(broker)
+}
+
 var start = func(r *gin.Engine) {
 	r.Run(":3333")
 }
@@ -32,7 +28,7 @@ func main() {
 
 	jwks := initJwks()
 	broker := broker.New()
-	questionService := services.NewBrokered(broker)
+	questionService := initQuestionService(broker)
 
 	config := cors.DefaultConfig()
 	config.AllowOrigins = []string{"*"}
@@ -41,7 +37,11 @@ func main() {
 
 	r.GET("/events", broker.Stream)
 
-	addQuestionRoutes(r, questionService)
+	q := r.Group("/question")
+	q.POST("/new", questionService.AddQuestion)
+	q.PUT("/answer", questionService.Answer)
+	q.PUT("/upvote", questionService.UpvoteQuestion)
+	q.POST("/reset", questionService.Reset)
 
 	start(r)
 }

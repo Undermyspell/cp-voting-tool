@@ -2,13 +2,14 @@ package services
 
 import (
 	"encoding/json"
-	"log"
+	"errors"
 	"net/http"
 	"sse/internal/broker"
 	"sse/internal/models"
 	"sse/internal/sse"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 type BrokeredQuestionsService struct {
@@ -23,7 +24,7 @@ func (service *BrokeredQuestionsService) AddQuestion(c *gin.Context) {
 	err := c.BindJSON(&message)
 
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err.Error())
 		c.JSON(http.StatusBadRequest, "cant parse request")
 		return
 	}
@@ -38,8 +39,6 @@ func (service *BrokeredQuestionsService) AddQuestion(c *gin.Context) {
 	}
 
 	service.Session[question.Id] = question
-
-	log.Default().Println(service.Session)
 
 	service.Broker.Notify(event)
 }
@@ -56,7 +55,15 @@ func (service *BrokeredQuestionsService) UpvoteQuestion(c *gin.Context) {
 		return
 	}
 
-	questionMessage.Votes = service.upVote(questionMessage.Id)
+	questionMessage.Votes, err = service.upVote(questionMessage.Id)
+
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
 	questionPayload, err := json.Marshal(questionMessage)
 
 	if err != nil {
@@ -83,10 +90,16 @@ func (service *BrokeredQuestionsService) Answer(c *gin.Context) {
 		return
 	}
 
-	service.answer(questionMessage.Id)
-	questionPayload, err := json.Marshal(questionMessage)
+	err = service.answer(questionMessage.Id)
 
-	log.Default().Print(service.Session)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	questionPayload, err := json.Marshal(questionMessage)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, "cant marshal question")
@@ -103,7 +116,6 @@ func (service *BrokeredQuestionsService) Answer(c *gin.Context) {
 
 func (service *BrokeredQuestionsService) Reset(c *gin.Context) {
 	service.reset()
-	log.Default().Print(service.Session)
 
 	event := sse.Event{
 		EventType: sse.ANSWER_QUESTION,
@@ -113,18 +125,29 @@ func (service *BrokeredQuestionsService) Reset(c *gin.Context) {
 	service.Broker.Notify(event)
 }
 
-func (service *BrokeredQuestionsService) upVote(id string) int {
-	question := service.Session[id]
+func (service *BrokeredQuestionsService) upVote(id string) (int, error) {
+	question, ok := service.Session[id]
+	if !ok {
+		return 0, errors.New("question not found")
+	}
+
 	question.Votes++
 	service.Session[id] = question
 
-	return question.Votes
+	return question.Votes, nil
 }
 
-func (service *BrokeredQuestionsService) answer(id string) {
-	question := service.Session[id]
+func (service *BrokeredQuestionsService) answer(id string) error {
+	question, ok := service.Session[id]
+
+	if !ok {
+		return errors.New("question not found")
+	}
+
 	question.Answered = true
 	service.Session[id] = question
+
+	return nil
 }
 
 func (service *BrokeredQuestionsService) reset() {
