@@ -10,32 +10,38 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func main() {
-	teardown := make(chan string)
-	r := gin.Default()
-	// jwks.Init(teardown)
-
-	broker := broker.New()
-	go broker.Listen()
-
-	questionService := services.NewBrokered(broker)
-
-	jwks := jwks.New()
-
-	config := cors.DefaultConfig()
-	config.AllowOrigins = []string{"*"}
-
-	r.Use(cors.New(config))
-	r.GET("/events", broker.Stream)
-	r.GET("/token", questionService.GetToken)
+func addQuestionRoutes(r *gin.Engine, questionService services.QuestionService) {
 	q := r.Group("/question")
-	q.Use(middleware.RequireAuth(jwks))
 	q.POST("/new", questionService.AddQuestion)
 	q.PUT("/answer", questionService.Answer)
 	q.PUT("/upvote", questionService.UpvoteQuestion)
+	q.POST("/reset", questionService.Reset)
 
-	// r.POST("/reset", questionService.Reset)
+}
+
+var initJwks = func() jwks.KeyfuncProvider {
+	return jwks.New()
+}
+var start = func(r *gin.Engine) {
 	r.Run(":3333")
+}
+var r *gin.Engine
 
-	teardown <- "teardown"
+func main() {
+	r = gin.Default()
+
+	jwks := initJwks()
+	broker := broker.New()
+	questionService := services.NewBrokered(broker)
+
+	config := cors.DefaultConfig()
+	config.AllowOrigins = []string{"*"}
+	r.Use(cors.New(config))
+	r.Use(middleware.RequireAuth(jwks))
+
+	r.GET("/events", broker.Stream)
+
+	addQuestionRoutes(r, questionService)
+
+	start(r)
 }

@@ -2,7 +2,6 @@ package jwks
 
 import (
 	"context"
-	"errors"
 	"log"
 	"time"
 
@@ -14,33 +13,20 @@ type KeyfuncProvider interface {
 	GetKeyFunc() func(token *jwt.Token) (interface{}, error)
 }
 
-type JwksKeyfuncProvider struct{}
+type JwksKeyfuncProvider struct {
+	jwksKeyFunc func(token *jwt.Token) (interface{}, error)
+}
 
 func (provider *JwksKeyfuncProvider) GetKeyFunc() func(token *jwt.Token) (interface{}, error) {
-	return jwksKeyFunc
+	return provider.jwksKeyFunc
 }
 
-type MockKeyfuncProvider struct{}
-
-func (provider *MockKeyfuncProvider) GetKeyFunc() func(token *jwt.Token) (interface{}, error) {
-	return mockKeyFunc
-}
-
-var jwksKeyFunc func(token *jwt.Token) (interface{}, error)
-var mockKeyFunc func(token *jwt.Token) (interface{}, error) = func(token *jwt.Token) (interface{}, error) {
-	_, ok := token.Method.(*jwt.SigningMethodHMAC)
-	if !ok {
-		return nil, errors.New("error getting keyfunc")
-	}
-	return []byte("my_test_secret"), nil
-}
-
-func Init(teardown chan string) {
-	ctx, cancel := context.WithCancel(context.Background())
+func Init() *JwksKeyfuncProvider {
+	// ctx, cancel := context.WithCancel(context.Background())
 	jwksURL := ""
 
 	options := keyfunc.Options{
-		Ctx: ctx,
+		Ctx: context.TODO(),
 		RefreshErrorHandler: func(err error) {
 			log.Printf("There was an error with the jwt.Keyfunc\nError: %s", err.Error())
 		},
@@ -55,11 +41,15 @@ func Init(teardown chan string) {
 		log.Fatalf("Failed to create JWKS from resource at the given URL.\nError: %s", err.Error())
 	}
 
-	jwksKeyFunc = jwks.Keyfunc
+	jwksProvider := &JwksKeyfuncProvider{
+		jwksKeyFunc: jwks.Keyfunc,
+	}
 
-	go func() {
-		<-teardown
-		log.Println("JWKS teardown")
-		cancel()
-	}()
+	// go func() {
+	// 	<-teardown
+	// 	log.Println("JWKS teardown")
+	// 	cancel()
+	// }()
+
+	return jwksProvider
 }

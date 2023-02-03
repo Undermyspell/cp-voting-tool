@@ -7,10 +7,8 @@ import (
 	"sse/internal/broker"
 	"sse/internal/models"
 	"sse/internal/sse"
-	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v4"
 )
 
 type BrokeredQuestionsService struct {
@@ -24,14 +22,15 @@ func (service *BrokeredQuestionsService) AddQuestion(c *gin.Context) {
 	}
 	err := c.BindJSON(&message)
 
-	question := models.New(message.Text)
-
-	newQuestion, _ := json.Marshal(question)
-
 	if err != nil {
+		log.Println(err)
 		c.JSON(http.StatusBadRequest, "cant parse request")
 		return
 	}
+
+	question := models.New(message.Text)
+
+	newQuestion, _ := json.Marshal(question)
 
 	event := sse.Event{
 		EventType: sse.NEW_QUESTION,
@@ -112,20 +111,6 @@ func (service *BrokeredQuestionsService) Reset(c *gin.Context) {
 	}
 
 	service.Broker.Notify(event)
-}
-
-func (service *BrokeredQuestionsService) GetToken(c *gin.Context) {
-	sampleSecretKey := []byte("my_test_secret")
-	token := jwt.New(jwt.SigningMethodHS256)
-	claims := token.Claims.(jwt.MapClaims)
-	claims["exp"] = time.Now().UTC().Add(time.Second * 3600).Unix()
-	claims["user"] = "Hoodini Magician"
-	tokenString, err := token.SignedString(sampleSecretKey)
-	if err != nil {
-		log.Println("Signing error")
-	}
-
-	c.JSON(http.StatusOK, gin.H{"token": tokenString})
 }
 
 func (service *BrokeredQuestionsService) upVote(id string) int {

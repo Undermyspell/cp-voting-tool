@@ -7,5 +7,4 @@ type QuestionService interface {
 	UpvoteQuestion(c *gin.Context)
 	Answer(c *gin.Context)
 	Reset(c *gin.Context)
-	GetToken(c *gin.Context)
 }
