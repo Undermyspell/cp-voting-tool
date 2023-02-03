@@ -5,31 +5,26 @@ import (
 	"log"
 	"net/http"
 	"sse/internal/broker"
-	"sse/internal/question"
+	"sse/internal/models"
 	"sse/internal/sse"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v4"
 )
 
-type QuestionsService struct {
-	Broker  *broker.Broker
-	Session map[string]question.Question
+type BrokeredQuestionsService struct {
+	Broker  broker.Broker
+	Session map[string]models.Question
 }
 
-func New(broker *broker.Broker) *QuestionsService {
-	return &QuestionsService{
-		Broker:  broker,
-		Session: make(map[string]question.Question),
-	}
-}
-
-func (service *QuestionsService) AddQuestion(c *gin.Context) {
+func (service *BrokeredQuestionsService) AddQuestion(c *gin.Context) {
 	var message struct {
 		Text string
 	}
 	err := c.BindJSON(&message)
 
-	question := question.New(message.Text)
+	question := models.New(message.Text)
 
 	newQuestion, _ := json.Marshal(question)
 
@@ -47,10 +42,10 @@ func (service *QuestionsService) AddQuestion(c *gin.Context) {
 
 	log.Default().Println(service.Session)
 
-	service.Broker.Notifier <- event
+	service.Broker.Notify(event)
 }
 
-func (service *QuestionsService) UpvoteQuestion(c *gin.Context) {
+func (service *BrokeredQuestionsService) UpvoteQuestion(c *gin.Context) {
 	var questionMessage struct {
 		Id    string
 		Votes int
@@ -75,10 +70,10 @@ func (service *QuestionsService) UpvoteQuestion(c *gin.Context) {
 		Payload:   string(questionPayload),
 	}
 
-	service.Broker.Notifier <- event
+	service.Broker.Notify(event)
 }
 
-func (service *QuestionsService) Answer(c *gin.Context) {
+func (service *BrokeredQuestionsService) Answer(c *gin.Context) {
 	var questionMessage struct {
 		Id string
 	}
@@ -104,10 +99,10 @@ func (service *QuestionsService) Answer(c *gin.Context) {
 		Payload:   string(questionPayload),
 	}
 
-	service.Broker.Notifier <- event
+	service.Broker.Notify(event)
 }
 
-func (service *QuestionsService) Reset(c *gin.Context) {
+func (service *BrokeredQuestionsService) Reset(c *gin.Context) {
 	service.reset()
 	log.Default().Print(service.Session)
 
@@ -116,10 +111,24 @@ func (service *QuestionsService) Reset(c *gin.Context) {
 		Payload:   sse.PayloadEmpty,
 	}
 
-	service.Broker.Notifier <- event
+	service.Broker.Notify(event)
 }
 
-func (service *QuestionsService) upVote(id string) int {
+func (service *BrokeredQuestionsService) GetToken(c *gin.Context) {
+	sampleSecretKey := []byte("my_test_secret")
+	token := jwt.New(jwt.SigningMethodHS256)
+	claims := token.Claims.(jwt.MapClaims)
+	claims["exp"] = time.Now().UTC().Add(time.Second * 3600).Unix()
+	claims["user"] = "Hoodini Magician"
+	tokenString, err := token.SignedString(sampleSecretKey)
+	if err != nil {
+		log.Println("Signing error")
+	}
+
+	c.JSON(http.StatusOK, gin.H{"token": tokenString})
+}
+
+func (service *BrokeredQuestionsService) upVote(id string) int {
 	question := service.Session[id]
 	question.Votes++
 	service.Session[id] = question
@@ -127,12 +136,12 @@ func (service *QuestionsService) upVote(id string) int {
 	return question.Votes
 }
 
-func (service *QuestionsService) answer(id string) {
+func (service *BrokeredQuestionsService) answer(id string) {
 	question := service.Session[id]
 	question.Answered = true
 	service.Session[id] = question
 }
 
-func (service *QuestionsService) reset() {
-	service.Session = make(map[string]question.Question)
+func (service *BrokeredQuestionsService) reset() {
+	service.Session = make(map[string]models.Question)
 }

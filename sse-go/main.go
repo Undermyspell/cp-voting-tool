@@ -4,7 +4,7 @@ import (
 	"sse/internal/broker"
 	"sse/internal/jwks"
 	"sse/internal/middleware"
-	"sse/internal/services"
+	services "sse/internal/services/question"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -13,21 +13,23 @@ import (
 func main() {
 	teardown := make(chan string)
 	r := gin.Default()
-	jwks.Init(teardown)
+	// jwks.Init(teardown)
 
 	broker := broker.New()
 	go broker.Listen()
 
-	questionService := services.New(broker)
+	questionService := services.NewBrokered(broker)
+
+	jwks := jwks.New()
 
 	config := cors.DefaultConfig()
 	config.AllowOrigins = []string{"*"}
 
 	r.Use(cors.New(config))
-	r.Use(middleware.RequireAuth())
-
 	r.GET("/events", broker.Stream)
+	r.GET("/token", questionService.GetToken)
 	q := r.Group("/question")
+	q.Use(middleware.RequireAuth(jwks))
 	q.POST("/new", questionService.AddQuestion)
 	q.PUT("/answer", questionService.Answer)
 	q.PUT("/upvote", questionService.UpvoteQuestion)

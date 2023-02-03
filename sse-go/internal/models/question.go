@@ -1,4 +1,4 @@
-package question
+package models
 
 import "sse/internal/helper"
 

@@ -10,7 +10,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-func RequireAuth() gin.HandlerFunc {
+func RequireAuth(keyfuncProvider jwks.KeyfuncProvider) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		bearerToken := c.GetHeader("Authorization")
 
@@ -23,9 +23,8 @@ func RequireAuth() gin.HandlerFunc {
 		}
 
 		jwtB64 := splitted[1]
-		jwks := jwks.Jwks
+		token, err := jwt.Parse(jwtB64, keyfuncProvider.GetKeyFunc())
 
-		token, err := jwt.Parse(jwtB64, jwks.Keyfunc)
 		if err != nil {
 			log.Printf("Failed to parse the JWT.\nError: %s", err.Error())
 			c.AbortWithStatus(http.StatusUnauthorized)

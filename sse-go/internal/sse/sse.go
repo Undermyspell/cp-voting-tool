@@ -14,9 +14,4 @@ type Event struct {
 	Payload string
 }
 
-type NewQuestionEvent struct {
-	Id   string
-	Text string
-}
-
 const PayloadEmpty = "{}"
