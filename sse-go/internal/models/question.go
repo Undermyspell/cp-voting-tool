@@ -9,7 +9,7 @@ type Question struct {
 	Answered bool
 }
 
-func New(text string) Question {
+func NewQuestion(text string) Question {
 	return Question{
 		Id:       helper.GetRandomId(),
 		Text:     text,

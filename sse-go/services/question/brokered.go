@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"sse/dtos"
 	"sse/internal/broker"
+	"sse/internal/models"
 	"sse/internal/sse"
-	"sse/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -39,7 +39,7 @@ func (service *BrokeredQuestionsService) AddQuestion(c *gin.Context) {
 		return
 	}
 
-	question := models.New(message.Text)
+	question := models.NewQuestion(message.Text)
 
 	newQuestion, _ := json.Marshal(question)
 
@@ -64,6 +64,10 @@ func (service *BrokeredQuestionsService) AddQuestion(c *gin.Context) {
 // @Failure      401
 // @Router       /question/upvote/{id} [put]
 func (service *BrokeredQuestionsService) UpvoteQuestion(c *gin.Context) {
+	user, _ := c.Get(models.User)
+	hash := user.(*models.UserContext).GetHash()
+	logrus.Printf("user hash: %s", hash)
+
 	questionId := c.Param("id")
 
 	votes, err := service.upVote(questionId)

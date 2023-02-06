@@ -1,8 +1,10 @@
 package middleware
 
 import (
+	"errors"
 	"net/http"
 	"sse/internal/jwks"
+	"sse/internal/models"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -26,7 +28,7 @@ func RequireAuth(keyfuncProvider jwks.KeyfuncProvider) gin.HandlerFunc {
 		token, err := jwt.Parse(jwtB64, keyfuncProvider.GetKeyFunc())
 
 		if err != nil {
-			logrus.Error("Failed to parse the JWT.\nError: %s", err.Error())
+			logrus.Errorf("Failed to parse the JWT.\nError: %s", err.Error())
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
@@ -37,6 +39,27 @@ func RequireAuth(keyfuncProvider jwks.KeyfuncProvider) gin.HandlerFunc {
 			return
 		}
 
+		userContext, err := getUserContext(token)
+
+		if err != nil {
+			logrus.Error("Failed to parse required claims from token")
+			c.AbortWithStatus(http.StatusUnprocessableEntity)
+			return
+		}
+
+		c.Set(models.User, userContext)
+
 		c.Next()
 	}
+}
+
+func getUserContext(token *jwt.Token) (*models.UserContext, error) {
+	name, okName := token.Claims.(jwt.MapClaims)["name"]
+	email, okEmail := token.Claims.(jwt.MapClaims)["email"]
+
+	if !okEmail || !okName {
+		return new(models.UserContext), errors.New("claims are not valid")
+	}
+
+	return &models.UserContext{Name: name.(string), Email: email.(string)}, nil
 }
