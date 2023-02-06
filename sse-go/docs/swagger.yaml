@@ -1,0 +1,102 @@
+definitions:
+  dtos.NewQuestionDto:
+    properties:
+      text:
+        type: string
+    required:
+    - text
+    type: object
+info:
+  contact: {}
+  description: A voting tool API in Go using Gin framework.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: Voting tool api
+  version: "1.0"
+paths:
+  /question/answer/{id}:
+    put:
+      description: Answers a question of the current session
+      parameters:
+      - description: Id of question to answer
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+      security:
+      - JWT: []
+      summary: Answers a question
+      tags:
+      - Question
+  /question/new:
+    post:
+      description: Adds a new question to the current session
+      parameters:
+      - description: Question JSON
+        in: body
+        name: question
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.NewQuestionDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+      security:
+      - JWT: []
+      summary: Adds a new question
+      tags:
+      - Question
+  /question/reset/:
+    post:
+      description: Resets the current question session
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+      security:
+      - JWT: []
+      summary: Resets the current session
+      tags:
+      - Question
+  /question/upvote/{id}:
+    put:
+      description: Upvotes a question of the current session
+      parameters:
+      - description: Id of question to upvote
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+      security:
+      - JWT: []
+      summary: Upvotes a question
+      tags:
+      - Question
+securityDefinitions:
+  JWT:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

@@ -12,7 +12,7 @@ export default component$(() => {
   const { users, reload } = useUsers()
 
   useClientEffect$(() => {
-    const eventSource = new EventSource('http://localhost:3333/events');
+    const eventSource = new EventSource('http://localhost:3333/api/v1/events');
     eventSource.addEventListener("new_question", ({ data }) => {
       console.log("New Question", JSON.parse(data))
     })

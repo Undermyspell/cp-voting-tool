@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"sse/dtos"
 	"sse/internal/broker"
-	"sse/internal/models"
 	"sse/internal/sse"
+	"sse/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -17,10 +18,19 @@ type BrokeredQuestionsService struct {
 	Session map[string]models.Question
 }
 
+// AddQuestion         godoc
+// @Security 	 JWT
+// @Summary      Adds a new question
+// @Description  Adds a new question to the current session
+// @Tags         Question
+// @Produce      json
+// @Param        question  body      dtos.NewQuestionDto  true  "Question JSON"
+// @Success      200
+// @Failure      401
+// @Router       /question/new [post]
 func (service *BrokeredQuestionsService) AddQuestion(c *gin.Context) {
-	var message struct {
-		Text string
-	}
+	var message dtos.NewQuestionDto
+
 	err := c.BindJSON(&message)
 
 	if err != nil {
@@ -43,19 +53,20 @@ func (service *BrokeredQuestionsService) AddQuestion(c *gin.Context) {
 	service.Broker.Notify(event)
 }
 
+// UpvoteQuestion         godoc
+// @Security 	 JWT
+// @Summary      Upvotes a question
+// @Description  Upvotes a question of the current session
+// @Tags         Question
+// @Produce      json
+// @Param        id  path  string  true  "Id of question to upvote"
+// @Success      200
+// @Failure      401
+// @Router       /question/upvote/{id} [put]
 func (service *BrokeredQuestionsService) UpvoteQuestion(c *gin.Context) {
-	var questionMessage struct {
-		Id    string
-		Votes int
-	}
-	err := c.BindJSON(&questionMessage)
+	questionId := c.Param("id")
 
-	if err != nil {
-		c.JSON(http.StatusBadRequest, "cant parse request")
-		return
-	}
-
-	questionMessage.Votes, err = service.upVote(questionMessage.Id)
+	votes, err := service.upVote(questionId)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
@@ -64,7 +75,11 @@ func (service *BrokeredQuestionsService) UpvoteQuestion(c *gin.Context) {
 		return
 	}
 
-	questionPayload, err := json.Marshal(questionMessage)
+	questionUpvoteSeeMessage := struct {
+		Id    string
+		Votes int
+	}{questionId, votes}
+	questionPayload, err := json.Marshal(questionUpvoteSeeMessage)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, "cant marshal question")
@@ -79,18 +94,20 @@ func (service *BrokeredQuestionsService) UpvoteQuestion(c *gin.Context) {
 	service.Broker.Notify(event)
 }
 
+// AnswerQuestion         godoc
+// @Security 	 JWT
+// @Summary      Answers a question
+// @Description  Answers a question of the current session
+// @Tags         Question
+// @Produce      json
+// @Param        id  path  string  true  "Id of question to answer"
+// @Success      200
+// @Failure      401
+// @Router       /question/answer/{id} [put]
 func (service *BrokeredQuestionsService) Answer(c *gin.Context) {
-	var questionMessage struct {
-		Id string
-	}
-	err := c.BindJSON(&questionMessage)
+	questionId := c.Param("id")
 
-	if err != nil {
-		c.JSON(http.StatusBadRequest, "cant parse request")
-		return
-	}
-
-	err = service.answer(questionMessage.Id)
+	err := service.answer(questionId)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
@@ -99,6 +116,9 @@ func (service *BrokeredQuestionsService) Answer(c *gin.Context) {
 		return
 	}
 
+	questionMessage := struct {
+		Id string
+	}{questionId}
 	questionPayload, err := json.Marshal(questionMessage)
 
 	if err != nil {
@@ -114,6 +134,15 @@ func (service *BrokeredQuestionsService) Answer(c *gin.Context) {
 	service.Broker.Notify(event)
 }
 
+// ResetSession         godoc
+// @Security 	 JWT
+// @Summary      Resets the current session
+// @Description  Resets the current question session
+// @Tags         Question
+// @Produce      json
+// @Success      200
+// @Failure      401
+// @Router       /question/reset/ [post]
 func (service *BrokeredQuestionsService) Reset(c *gin.Context) {
 	service.reset()
 

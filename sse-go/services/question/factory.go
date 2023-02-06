@@ -2,7 +2,7 @@ package services
 
 import (
 	"sse/internal/broker"
-	"sse/internal/models"
+	"sse/models"
 )
 
 func NewBrokered(broker broker.Broker) QuestionService {

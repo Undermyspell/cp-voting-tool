@@ -4,10 +4,14 @@ import (
 	"sse/internal/broker"
 	"sse/internal/jwks"
 	"sse/internal/middleware"
-	services "sse/internal/services/question"
+	services "sse/services/question"
+
+	_ "sse/docs"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 var initJwks = func() jwks.KeyfuncProvider {
@@ -23,9 +27,21 @@ var start = func(r *gin.Engine) {
 }
 var r *gin.Engine
 
+// @title           Voting tool api
+// @version         1.0
+// @description     A voting tool API in Go using Gin framework.
+
+// @license.name  Apache 2.0
+// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @securityDefinitions.apikey JWT
+// @in header
+// @name Authorization
+// @host      localhost:3333
+// @BasePath  /api/v1
 func main() {
 	r = gin.Default()
-
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	jwks := initJwks()
 	broker := broker.New()
 	questionService := initQuestionService(broker)
@@ -35,13 +51,15 @@ func main() {
 	r.Use(cors.New(config))
 	r.Use(middleware.RequireAuth(jwks))
 
-	r.GET("/events", broker.Stream)
-
-	q := r.Group("/question")
-	q.POST("/new", questionService.AddQuestion)
-	q.PUT("/answer", questionService.Answer)
-	q.PUT("/upvote", questionService.UpvoteQuestion)
-	q.POST("/reset", questionService.Reset)
+	v1 := r.Group("/api/v1")
+	{
+		v1.GET("/events", broker.Stream)
+		q := v1.Group("/question")
+		q.POST("/new", questionService.AddQuestion)
+		q.PUT("/answer/:id", questionService.Answer)
+		q.PUT("/upvote/:id", questionService.UpvoteQuestion)
+		q.POST("/reset", questionService.Reset)
+	}
 
 	start(r)
 }

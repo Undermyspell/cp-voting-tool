@@ -42,12 +42,12 @@ func (broker *ChannelBroker) Listen() {
 		case s := <-broker.NewClients:
 			// A new client has joined
 			broker.Clients[s] = true
-			logrus.Info("🟢 Client added. %d registered clients", len(broker.Clients))
+			logrus.Infof("🟢 Client added. %d registered clients", len(broker.Clients))
 		case s := <-broker.ClosingClients:
 			// A client has detached
 			// remove them from our clients map
 			delete(broker.Clients, s)
-			logrus.Info("🔴 Removed client. %d registered clients", len(broker.Clients))
+			logrus.Infof("🔴 Removed client. %d registered clients", len(broker.Clients))
 		case event := <-broker.Notifier:
 			// case for getting a new msg
 			// Thus send it to all clients
