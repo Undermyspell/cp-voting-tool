@@ -59,6 +59,7 @@ func main() {
 		q.PUT("/answer/:id", questionService.Answer)
 		q.PUT("/upvote/:id", questionService.UpvoteQuestion)
 		q.POST("/reset", questionService.Reset)
+		q.GET("/session", questionService.GetSession)
 	}
 
 	start(r)

@@ -6,6 +6,17 @@ definitions:
     required:
     - text
     type: object
+  dtos.QuestionDto:
+    properties:
+      answered:
+        type: boolean
+      id:
+        type: string
+      text:
+        type: string
+      votes:
+        type: integer
+    type: object
 info:
   contact: {}
   description: A voting tool API in Go using Gin framework.
@@ -31,6 +42,10 @@ paths:
           description: OK
         "401":
           description: Unauthorized
+        "404":
+          description: Not Found
+          schema:
+            type: string
       security:
       - JWT: []
       summary: Answers a question
@@ -73,6 +88,25 @@ paths:
       summary: Resets the current session
       tags:
       - Question
+  /question/session/:
+    get:
+      description: Gets the questions of the current session
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dtos.QuestionDto'
+            type: array
+        "401":
+          description: Unauthorized
+      security:
+      - JWT: []
+      summary: Gets the questions of the current session
+      tags:
+      - Question
   /question/upvote/{id}:
     put:
       description: Upvotes a question of the current session
@@ -89,6 +123,10 @@ paths:
           description: OK
         "401":
           description: Unauthorized
+        "404":
+          description: Not Found
+          schema:
+            type: string
       security:
       - JWT: []
       summary: Upvotes a question

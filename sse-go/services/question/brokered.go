@@ -14,8 +14,9 @@ import (
 )
 
 type BrokeredQuestionsService struct {
-	Broker  broker.Broker
-	Session map[string]models.Question
+	Broker    broker.Broker
+	Session   map[string]models.Question
+	UserVotes map[string]map[string]bool
 }
 
 // AddQuestion         godoc
@@ -62,15 +63,13 @@ func (service *BrokeredQuestionsService) AddQuestion(c *gin.Context) {
 // @Param        id  path  string  true  "Id of question to upvote"
 // @Success      200
 // @Failure      401
+// @Failure      404 {string} error
 // @Router       /question/upvote/{id} [put]
 func (service *BrokeredQuestionsService) UpvoteQuestion(c *gin.Context) {
 	user, _ := c.Get(models.User)
-	hash := user.(*models.UserContext).GetHash()
-	logrus.Printf("user hash: %s", hash)
-
 	questionId := c.Param("id")
 
-	votes, err := service.upVote(questionId)
+	votes, err := service.upVote(user.(*models.UserContext), questionId)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
@@ -79,11 +78,12 @@ func (service *BrokeredQuestionsService) UpvoteQuestion(c *gin.Context) {
 		return
 	}
 
-	questionUpvoteSeeMessage := struct {
+	questionUpvoteSseMessage := struct {
 		Id    string
 		Votes int
 	}{questionId, votes}
-	questionPayload, err := json.Marshal(questionUpvoteSeeMessage)
+
+	questionPayload, err := json.Marshal(questionUpvoteSseMessage)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, "cant marshal question")
@@ -107,6 +107,7 @@ func (service *BrokeredQuestionsService) UpvoteQuestion(c *gin.Context) {
 // @Param        id  path  string  true  "Id of question to answer"
 // @Success      200
 // @Failure      401
+// @Failure      404 {string} error
 // @Router       /question/answer/{id} [put]
 func (service *BrokeredQuestionsService) Answer(c *gin.Context) {
 	questionId := c.Param("id")
@@ -158,11 +159,50 @@ func (service *BrokeredQuestionsService) Reset(c *gin.Context) {
 	service.Broker.Notify(event)
 }
 
-func (service *BrokeredQuestionsService) upVote(id string) (int, error) {
+// GetSession         godoc
+// @Security 	 JWT
+// @Summary      Gets the questions of the current session
+// @Description  Gets the questions of the current session
+// @Tags         Question
+// @Produce      json
+// @Success      200 {array} dtos.QuestionDto
+// @Failure      401
+// @Router       /question/session/ [get]
+func (service *BrokeredQuestionsService) GetSession(c *gin.Context) {
+	questions := []dtos.QuestionDto{}
+
+	for _, v := range service.Session {
+		questions = append(questions, dtos.QuestionDto{
+			Id:       v.Id,
+			Text:     v.Text,
+			Votes:    v.Votes,
+			Answered: v.Answered,
+		})
+	}
+
+	c.JSON(http.StatusOK, questions)
+}
+
+func (service *BrokeredQuestionsService) upVote(user *models.UserContext, id string) (int, error) {
 	question, ok := service.Session[id]
 	if !ok {
 		return 0, errors.New("question not found")
 	}
+
+	hash := user.GetHash()
+	_, ok = service.UserVotes[hash][id]
+
+	if ok {
+		return 0, errors.New("user already voted")
+	}
+
+	_, ok = service.UserVotes[hash]
+
+	if !ok {
+		service.UserVotes[hash] = make(map[string]bool)
+	}
+
+	service.UserVotes[hash][id] = true
 
 	question.Votes++
 	service.Session[id] = question
@@ -184,5 +224,6 @@ func (service *BrokeredQuestionsService) answer(id string) error {
 }
 
 func (service *BrokeredQuestionsService) reset() {
+	service.UserVotes = make(map[string]map[string]bool)
 	service.Session = make(map[string]models.Question)
 }

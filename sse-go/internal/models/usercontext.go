@@ -2,8 +2,8 @@ package models
 
 import (
 	"encoding/json"
-
-	"golang.org/x/crypto/bcrypt"
+	"fmt"
+	"hash/fnv"
 )
 
 type UserContext struct {
@@ -13,8 +13,11 @@ type UserContext struct {
 
 func (userContext *UserContext) GetHash() string {
 	marshalled, _ := json.Marshal(userContext)
-	bytes, _ := bcrypt.GenerateFromPassword(marshalled, 10)
-	return string(bytes)
+
+	algorithm := fnv.New32a()
+	algorithm.Write(marshalled)
+	hash := algorithm.Sum32()
+	return fmt.Sprint(hash)
 }
 
 const User string = "user"
