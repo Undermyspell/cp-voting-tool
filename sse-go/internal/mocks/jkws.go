@@ -35,7 +35,8 @@ func GetToken() string {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["exp"] = time.Now().UTC().Add(time.Second * 3600).Unix()
-	claims["user"] = "Hoodini Magician"
+	claims["name"] = "Test Tester"
+	claims["email"] = "testuser@test.com"
 	tokenString, err := token.SignedString(sampleSecretKey)
 	if err != nil {
 		logrus.Fatal("Signing error")

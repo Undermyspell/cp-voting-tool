@@ -2,12 +2,12 @@ package services
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 	"sse/dtos"
 	"sse/internal/broker"
 	"sse/internal/models"
 	"sse/internal/sse"
+	"sse/internal/validation"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -72,7 +72,7 @@ func (service *BrokeredQuestionsService) UpvoteQuestion(c *gin.Context) {
 	votes, err := service.upVote(user.(*models.UserContext), questionId)
 
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
+		c.JSON(int(err.HttpStatus), gin.H{
 			"error": err.Error(),
 		})
 		return
@@ -83,9 +83,9 @@ func (service *BrokeredQuestionsService) UpvoteQuestion(c *gin.Context) {
 		Votes int
 	}{questionId, votes}
 
-	questionPayload, err := json.Marshal(questionUpvoteSseMessage)
+	questionPayload, errj := json.Marshal(questionUpvoteSseMessage)
 
-	if err != nil {
+	if errj != nil {
 		c.JSON(http.StatusBadRequest, "cant marshal question")
 		return
 	}
@@ -115,7 +115,7 @@ func (service *BrokeredQuestionsService) Answer(c *gin.Context) {
 	err := service.answer(questionId)
 
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
+		c.JSON(int(err.HttpStatus), gin.H{
 			"error": err.Error(),
 		})
 		return
@@ -124,9 +124,9 @@ func (service *BrokeredQuestionsService) Answer(c *gin.Context) {
 	questionMessage := struct {
 		Id string
 	}{questionId}
-	questionPayload, err := json.Marshal(questionMessage)
+	questionPayload, errj := json.Marshal(questionMessage)
 
-	if err != nil {
+	if errj != nil {
 		c.JSON(http.StatusBadRequest, "cant marshal question")
 		return
 	}
@@ -183,17 +183,23 @@ func (service *BrokeredQuestionsService) GetSession(c *gin.Context) {
 	c.JSON(http.StatusOK, questions)
 }
 
-func (service *BrokeredQuestionsService) upVote(user *models.UserContext, id string) (int, error) {
+func (service *BrokeredQuestionsService) upVote(user *models.UserContext, id string) (int, *validation.ValidationError) {
 	question, ok := service.Session[id]
 	if !ok {
-		return 0, errors.New("question not found")
+		return 0, &validation.ValidationError{
+			ValidationError: "question not found",
+			HttpStatus:      http.StatusNotFound,
+		}
 	}
 
 	hash := user.GetHash()
 	_, ok = service.UserVotes[hash][id]
 
 	if ok {
-		return 0, errors.New("user already voted")
+		return 0, &validation.ValidationError{
+			ValidationError: "user already voted",
+			HttpStatus:      http.StatusNotAcceptable,
+		}
 	}
 
 	_, ok = service.UserVotes[hash]
@@ -210,11 +216,14 @@ func (service *BrokeredQuestionsService) upVote(user *models.UserContext, id str
 	return question.Votes, nil
 }
 
-func (service *BrokeredQuestionsService) answer(id string) error {
+func (service *BrokeredQuestionsService) answer(id string) *validation.ValidationError {
 	question, ok := service.Session[id]
 
 	if !ok {
-		return errors.New("question not found")
+		return &validation.ValidationError{
+			ValidationError: "question not found",
+			HttpStatus:      http.StatusNotFound,
+		}
 	}
 
 	question.Answered = true
