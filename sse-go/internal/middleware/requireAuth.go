@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"sse/internal/jwks"
 	"sse/internal/models"
+	"sse/internal/models/roles"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -61,5 +62,11 @@ func getUserContext(token *jwt.Token) (*models.UserContext, error) {
 		return new(models.UserContext), errors.New("claims are not valid")
 	}
 
-	return &models.UserContext{Name: name.(string), Email: email.(string)}, nil
+	role, okRole := token.Claims.(jwt.MapClaims)["role"]
+
+	if !okRole {
+		role = roles.Contributor
+	}
+
+	return &models.UserContext{Name: name.(string), Email: email.(string), Role: role.(roles.Role)}, nil
 }

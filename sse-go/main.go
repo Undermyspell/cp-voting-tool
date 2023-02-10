@@ -4,6 +4,7 @@ import (
 	"sse/internal/broker"
 	"sse/internal/jwks"
 	"sse/internal/middleware"
+	"sse/internal/models/roles"
 	services "sse/services/question"
 
 	_ "sse/docs"
@@ -55,8 +56,8 @@ func main() {
 	{
 		v1.GET("/events", broker.Stream)
 		q := v1.Group("/question")
+		q.PUT("/answer/:id", middleware.RequireRole(roles.SessionAdmin), questionService.Answer)
 		q.POST("/new", questionService.AddQuestion)
-		q.PUT("/answer/:id", questionService.Answer)
 		q.PUT("/upvote/:id", questionService.UpvoteQuestion)
 		q.POST("/reset", questionService.Reset)
 		q.GET("/session", questionService.GetSession)
