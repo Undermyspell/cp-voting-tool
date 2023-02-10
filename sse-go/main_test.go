@@ -2,9 +2,12 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"sse/dtos"
 	"sse/internal/jwks"
 	"sse/internal/mocks"
 	"testing"
@@ -107,6 +110,42 @@ func (suite *QuestionApiTestSuite) TestAnswerQuestion_NOTFOUND_404() {
 	suite.router.ServeHTTP(w, req)
 
 	assert.Equal(suite.T(), http.StatusNotFound, w.Code)
+}
+
+func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTACCEPTABLE_406() {
+	w := httptest.NewRecorder()
+
+	token := mocks.GetToken()
+
+	jsonData := dtos.NewQuestionDto{Text: "new question"}
+	newQuestion, _ := json.Marshal(jsonData)
+
+	req, _ := http.NewRequest("POST", fmt.Sprintf("%s/question/new", suite.apiPrefix), bytes.NewBuffer(newQuestion))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	suite.router.ServeHTTP(w, req)
+
+	reql, _ := http.NewRequest("GET", fmt.Sprintf("%s/question/session", suite.apiPrefix), nil)
+	reql.Header.Set("Content-Type", "application/json")
+	reql.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	suite.router.ServeHTTP(w, reql)
+
+	var questionList []dtos.QuestionDto
+	body, _ := io.ReadAll(w.Body)
+	json.Unmarshal(body, &questionList)
+
+	reqv, _ := http.NewRequest("PUT", fmt.Sprintf("%s/question/upvote/%s", suite.apiPrefix, questionList[0].Id), nil)
+	reqv.Header.Set("Content-Type", "application/json")
+	reqv.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	suite.router.ServeHTTP(w, reqv)
+
+	w2 := httptest.NewRecorder()
+	reqv2, _ := http.NewRequest("PUT", fmt.Sprintf("%s/question/upvote/%s", suite.apiPrefix, questionList[0].Id), nil)
+	reqv2.Header.Set("Content-Type", "application/json")
+	reqv2.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	suite.router.ServeHTTP(w2, reqv2)
+
+	assert.Equal(suite.T(), http.StatusNotAcceptable, w2.Code)
 }
 
 func TestQuestionApiSuite(t *testing.T) {
