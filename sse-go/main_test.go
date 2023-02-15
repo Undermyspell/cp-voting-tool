@@ -7,8 +7,8 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"sse/dtos"
-	"sse/internal/jwks"
 	"sse/internal/mocks"
 	"testing"
 
@@ -24,8 +24,7 @@ type QuestionApiTestSuite struct {
 }
 
 func (suite *QuestionApiTestSuite) SetupSuite() {
-	jwksMock := mocks.NewJwks()
-	initJwks = func() jwks.KeyfuncProvider { return jwksMock }
+	os.Setenv("USE_MOCK_JWKS", "true")
 	start = func(r *gin.Engine) {}
 
 	main()
@@ -64,7 +63,7 @@ func (suite *QuestionApiTestSuite) TestApi_UNAUTHORIZED_401() {
 func (suite *QuestionApiTestSuite) TestNewQuestion_OK_200() {
 	w := httptest.NewRecorder()
 
-	token := mocks.GetToken()
+	token := mocks.GetToken("test", "tester")
 
 	jsonData := []byte(`{
 		"text": "test question?"
@@ -81,7 +80,7 @@ func (suite *QuestionApiTestSuite) TestNewQuestion_OK_200() {
 func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTFOUND_404() {
 	w := httptest.NewRecorder()
 
-	token := mocks.GetToken()
+	token := mocks.GetToken("test", "tester")
 
 	jsonData := []byte(`{
 		"id": "invalid"
@@ -98,7 +97,7 @@ func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTFOUND_404() {
 func (suite *QuestionApiTestSuite) TestAnswerQuestion_NOTFOUND_404() {
 	w := httptest.NewRecorder()
 
-	token := mocks.GetToken()
+	token := mocks.GetToken("test", "tester")
 
 	jsonData := []byte(`{
 		"id": "invalid"
@@ -115,7 +114,7 @@ func (suite *QuestionApiTestSuite) TestAnswerQuestion_NOTFOUND_404() {
 func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTACCEPTABLE_406() {
 	w := httptest.NewRecorder()
 
-	token := mocks.GetToken()
+	token := mocks.GetToken("test", "tester")
 
 	jsonData := dtos.NewQuestionDto{Text: "new question"}
 	newQuestion, _ := json.Marshal(jsonData)
