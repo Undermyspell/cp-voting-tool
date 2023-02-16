@@ -42,8 +42,8 @@ func (suite *QuestionApiTestSuite) TestApi_UNAUTHORIZED_401() {
 
 	tests := []test{
 		{"Question_New_UNAUTHORIZED_401", http.MethodPost, "/question/new"},
-		{"Question_Upvote_UNAUTHORIZED_401", http.MethodPut, "/question/upvote"},
-		{"Question_Answer_UNAUTHORIZED_401", http.MethodPut, "/question/answer"},
+		{"Question_Upvote_UNAUTHORIZED_401", http.MethodPut, "/question/upvote/question1"},
+		{"Question_Answer_UNAUTHORIZED_401", http.MethodPut, "/question/answer/question1"},
 		{"Question_Rest_UNAUTHORIZED_401", http.MethodPost, "/question/reset"},
 		{"Events_UNAUTHORIZED_401", http.MethodGet, "/events"},
 	}
