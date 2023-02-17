@@ -112,7 +112,7 @@ func (suite *QuestionApiTestSuite) TestAnswerQuestion_NOTFOUND_404() {
 	assert.Equal(suite.T(), http.StatusNotFound, w.Code)
 }
 
-func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTACCEPTABLE_406() {
+func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTACCEPTABLE_406_WHEN_DOUBLE_VOTE_FROM_USER() {
 	w := httptest.NewRecorder()
 
 	token := mocks.GetToken("test", "tester")
@@ -148,7 +148,43 @@ func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTACCEPTABLE_406() {
 	assert.Equal(suite.T(), http.StatusNotAcceptable, w2.Code)
 }
 
-func (suite *QuestionApiTestSuite) TestGetSession_OK_200_CREATOR_SHOWN_ONLY_FOR_OWNED_AND_NO_ANONYMOUS_QUESTIONS() {
+func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTACCEPTABLE_406_WHEN_VOTING_ANSWERED_QUESTION() {
+	w := httptest.NewRecorder()
+
+	token := mocks.GetToken("test", "tester")
+
+	jsonData := dtos.NewQuestionDto{Text: "new question"}
+	newQuestion, _ := json.Marshal(jsonData)
+
+	req, _ := http.NewRequest("POST", fmt.Sprintf("%s/question/new", suite.apiPrefix), bytes.NewBuffer(newQuestion))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	suite.router.ServeHTTP(w, req)
+
+	reql, _ := http.NewRequest("GET", fmt.Sprintf("%s/question/session", suite.apiPrefix), nil)
+	reql.Header.Set("Content-Type", "application/json")
+	reql.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	suite.router.ServeHTTP(w, reql)
+
+	var questionList []dtos.QuestionDto
+	body, _ := io.ReadAll(w.Body)
+	json.Unmarshal(body, &questionList)
+
+	reqa, _ := http.NewRequest("PUT", fmt.Sprintf("%s/question/answer/%s", suite.apiPrefix, questionList[0].Id), nil)
+	reqa.Header.Set("Content-Type", "application/json")
+	reqa.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	suite.router.ServeHTTP(w, reqa)
+
+	w2 := httptest.NewRecorder()
+	reqv, _ := http.NewRequest("PUT", fmt.Sprintf("%s/question/upvote/%s", suite.apiPrefix, questionList[0].Id), nil)
+	reqv.Header.Set("Content-Type", "application/json")
+	reqv.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	suite.router.ServeHTTP(w2, reqv)
+
+	assert.Equal(suite.T(), http.StatusNotAcceptable, w2.Code)
+}
+
+func (suite *QuestionApiTestSuite) TestGetSession_OK_200_CREATOR_SHOWN_ONLY_FOR_OWNED_AND_NOT_ANONYMOUS_QUESTIONS() {
 	w := httptest.NewRecorder()
 
 	tokenUser_Foo := mocks.GetToken("Foo", "Foo_Tester")

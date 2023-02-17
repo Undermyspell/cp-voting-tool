@@ -207,6 +207,14 @@ func (service *BrokeredQuestionsService) upVote(user *models.UserContext, id str
 		}
 	}
 
+	answered := question.Answered
+	if answered {
+		return 0, &validation.ValidationError{
+			ValidationError: "question already answered",
+			HttpStatus:      http.StatusNotAcceptable,
+		}
+	}
+
 	hash := user.GetHash()
 	_, ok = service.UserVotes[hash][id]
 

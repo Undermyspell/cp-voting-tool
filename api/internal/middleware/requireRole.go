@@ -17,6 +17,7 @@ func RequireRole(role roles.Role) gin.HandlerFunc {
 		if user.Role != role {
 			logrus.Errorf("Required role: %s", role)
 			c.AbortWithStatus(http.StatusForbidden)
+			return
 		}
 
 		c.Next()
