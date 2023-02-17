@@ -1,4 +1,4 @@
-import { Resource, component$, useClientEffect$, useStylesScoped$ } from '@builder.io/qwik';
+import { Resource, component$, useBrowserVisibleTask$, useStylesScoped$ } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import { Link } from '@builder.io/qwik-city';
 import { UserTile } from '~/components/UserTile/user-tile';
@@ -11,10 +11,11 @@ export default component$(() => {
 
   const { users, reload } = useUsers()
 
-  useClientEffect$(() => {
+  useBrowserVisibleTask$(() => {
 
-    // Get Token from api on the /mockuser route for testing, api has to be startet with USE_MOCK_JWKS=true
-    const token = "-- USER TOKEN --"
+    console.log("we are at client")
+    // Get Token from api on the / mockuser route for testing, api has to be startet with USE_MOCK_JWKS = true
+    const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Ii5AbW9jay5jb20iLCJleHAiOjE2NzY2MjU2NjYsIm5hbWUiOiIgIn0.CZkUNpZllqZ0JhOj85fmdnpR86ttqovJPGBvlSjdec4"
 
     const eventSource = new EventSource('http://localhost:3333/api/v1/events', {
       headers: {
