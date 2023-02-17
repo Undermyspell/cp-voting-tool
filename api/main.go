@@ -10,6 +10,7 @@ import (
 	"sse/internal/mocks"
 	"sse/internal/models/roles"
 	services "sse/services/question"
+	"time"
 
 	_ "sse/docs"
 
@@ -58,7 +59,12 @@ func main() {
 	broker := broker.New()
 	questionService := initQuestionService(broker)
 
-	config := cors.DefaultConfig()
+	config := cors.Config{
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
+		AllowCredentials: false,
+		MaxAge:           12 * time.Hour,
+	}
 	config.AllowOrigins = []string{"*"}
 	r.Use(cors.New(config))
 	// r.Use(middleware.RequireAuth(jwksProvider))

@@ -12,7 +12,16 @@ export default component$(() => {
   const { users, reload } = useUsers()
 
   useClientEffect$(() => {
-    const eventSource = new EventSource('http://localhost:3333/api/v1/events');
+
+    // Get Token from api on the /mockuser route for testing, api has to be startet with USE_MOCK_JWKS=true
+    const token = "-- USER TOKEN --"
+
+    const eventSource = new EventSource('http://localhost:3333/api/v1/events', {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    } as any);
+
     eventSource.addEventListener("new_question", ({ data }) => {
       console.log("New Question", JSON.parse(data))
     })
@@ -25,10 +34,10 @@ export default component$(() => {
     eventSource.addEventListener("reset_session", () => {
       console.log("Reset Session")
     })
-    // eventSource.onmessage = ({ data }) => {
-    //   console.log("Received", data)
-    //   // console.log('New message', JSON.parse(data));
-    // };
+
+    return () => {
+      eventSource.close()
+    }
   })
 
   return (
