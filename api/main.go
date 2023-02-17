@@ -2,7 +2,6 @@ package main
 
 import (
 	"net/http"
-	"os"
 	"sse/internal/broker"
 	"sse/internal/env"
 	"sse/internal/jwks"
@@ -43,7 +42,6 @@ var r *gin.Engine
 // @host      localhost:3333
 // @BasePath  /api/v1
 func main() {
-	logrus.Printf("env %s", os.Getenv("APP_ENV"))
 	env.Init()
 
 	r = gin.Default()
@@ -79,10 +77,10 @@ func main() {
 		q.POST("/reset", questionService.Reset)
 		q.GET("/session", questionService.GetSession)
 	}
-	r.GET("mockuser", func(c *gin.Context) {
+	r.POST("mockuser", func(c *gin.Context) {
 		usr := struct {
-			firstName string
-			lastName  string
+			FirstName string
+			LastName  string
 		}{}
 
 		err := c.BindJSON(&usr)
@@ -93,7 +91,7 @@ func main() {
 			return
 		}
 
-		token := mocks.GetToken(usr.firstName, usr.lastName)
+		token := mocks.GetToken(usr.FirstName, usr.LastName)
 
 		c.JSON(http.StatusOK, struct{ Token string }{Token: token})
 	})

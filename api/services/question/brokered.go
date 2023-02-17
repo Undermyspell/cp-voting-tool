@@ -30,9 +30,12 @@ type BrokeredQuestionsService struct {
 // @Failure      401
 // @Router       /question/new [post]
 func (service *BrokeredQuestionsService) AddQuestion(c *gin.Context) {
-	var message dtos.NewQuestionDto
+	var newQuestion dtos.NewQuestionDto
+	user, _ := c.Get(models.User)
 
-	err := c.BindJSON(&message)
+	userContext := user.(*models.UserContext)
+
+	err := c.BindJSON(&newQuestion)
 
 	if err != nil {
 		logrus.Error(err.Error())
@@ -40,13 +43,13 @@ func (service *BrokeredQuestionsService) AddQuestion(c *gin.Context) {
 		return
 	}
 
-	question := models.NewQuestion(message.Text)
+	question := models.NewQuestion(newQuestion.Text, newQuestion.Anonymous, *userContext)
 
-	newQuestion, _ := json.Marshal(question)
+	newQuestionByteString, _ := json.Marshal(question)
 
 	event := sse.Event{
 		EventType: sse.NEW_QUESTION,
-		Payload:   string(newQuestion),
+		Payload:   string(newQuestionByteString),
 	}
 
 	service.Session[question.Id] = question
@@ -169,14 +172,26 @@ func (service *BrokeredQuestionsService) Reset(c *gin.Context) {
 // @Failure      401
 // @Router       /question/session/ [get]
 func (service *BrokeredQuestionsService) GetSession(c *gin.Context) {
+	user, _ := c.Get(models.User)
+	userContext := user.(*models.UserContext)
+
 	questions := []dtos.QuestionDto{}
 
 	for _, v := range service.Session {
+		creator := v.Creator.Name
+		owned := v.Creator.Email == userContext.Email
+		if v.Anonymous && !owned {
+			creator = ""
+		}
+
 		questions = append(questions, dtos.QuestionDto{
-			Id:       v.Id,
-			Text:     v.Text,
-			Votes:    v.Votes,
-			Answered: v.Answered,
+			Id:        v.Id,
+			Text:      v.Text,
+			Votes:     v.Votes,
+			Answered:  v.Answered,
+			Anonymous: v.Anonymous,
+			Creator:   creator,
+			Owned:     owned,
 		})
 	}
 
