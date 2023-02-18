@@ -29,7 +29,7 @@ type BrokeredQuestionsService struct {
 // @Success      200
 // @Failure      401
 // @Router       /question/new [post]
-func (service *BrokeredQuestionsService) AddQuestion(c *gin.Context) {
+func (service *BrokeredQuestionsService) Add(c *gin.Context) {
 	var newQuestion dtos.NewQuestionDto
 	user, _ := c.Get(models.User)
 
@@ -43,16 +43,21 @@ func (service *BrokeredQuestionsService) AddQuestion(c *gin.Context) {
 		return
 	}
 
-	question := models.NewQuestion(newQuestion.Text, newQuestion.Anonymous, *userContext)
+	question, errValidation := service.newQuestion(newQuestion.Text, newQuestion.Anonymous, *userContext)
 
-	newQuestionByteString, _ := json.Marshal(question)
+	if errValidation != nil {
+		c.JSON(int(errValidation.HttpStatus), gin.H{
+			"error": errValidation.Error(),
+		})
+		return
+	}
+
+	newQuestionByteString, _ := json.Marshal(*question)
 
 	event := sse.Event{
 		EventType: sse.NEW_QUESTION,
 		Payload:   string(newQuestionByteString),
 	}
-
-	service.Session[question.Id] = question
 
 	service.Broker.Notify(event)
 }
@@ -68,7 +73,7 @@ func (service *BrokeredQuestionsService) AddQuestion(c *gin.Context) {
 // @Failure      401
 // @Failure      404 {string} error
 // @Router       /question/upvote/{id} [put]
-func (service *BrokeredQuestionsService) UpvoteQuestion(c *gin.Context) {
+func (service *BrokeredQuestionsService) Upvote(c *gin.Context) {
 	user, _ := c.Get(models.User)
 	questionId := c.Param("id")
 
@@ -142,20 +147,40 @@ func (service *BrokeredQuestionsService) Answer(c *gin.Context) {
 	service.Broker.Notify(event)
 }
 
-// ResetSession         godoc
+// StopSession         godoc
 // @Security 	 JWT
-// @Summary      Resets the current session
-// @Description  Resets the current question session
+// @Summary      Stops the current questions session
+// @Description  Stops the current questions session
 // @Tags         Question
 // @Produce      json
 // @Success      200
 // @Failure      401
-// @Router       /question/reset/ [post]
-func (service *BrokeredQuestionsService) Reset(c *gin.Context) {
-	service.reset()
+// @Router       /question/session/stop [post]
+func (service *BrokeredQuestionsService) Stop(c *gin.Context) {
+	service.stop()
 
 	event := sse.Event{
-		EventType: sse.ANSWER_QUESTION,
+		EventType: sse.STOP_SESSION,
+		Payload:   sse.PayloadEmpty,
+	}
+
+	service.Broker.Notify(event)
+}
+
+// StartSession         godoc
+// @Security 	 JWT
+// @Summary      Starts a new questions session
+// @Description  Starts a new questions session
+// @Tags         Question
+// @Produce      json
+// @Success      200
+// @Failure      401
+// @Router       /question/session/start [post]
+func (service *BrokeredQuestionsService) Start(c *gin.Context) {
+	service.start()
+
+	event := sse.Event{
+		EventType: sse.START_SESSION,
 		Payload:   sse.PayloadEmpty,
 	}
 
@@ -170,8 +195,15 @@ func (service *BrokeredQuestionsService) Reset(c *gin.Context) {
 // @Produce      json
 // @Success      200 {array} dtos.QuestionDto
 // @Failure      401
-// @Router       /question/session/ [get]
+// @Router       /question/session [get]
 func (service *BrokeredQuestionsService) GetSession(c *gin.Context) {
+	if service.Session == nil {
+		c.JSON(http.StatusNotAcceptable, gin.H{
+			"error": "no questions session currently running",
+		})
+		return
+	}
+
 	user, _ := c.Get(models.User)
 	userContext := user.(*models.UserContext)
 
@@ -198,7 +230,27 @@ func (service *BrokeredQuestionsService) GetSession(c *gin.Context) {
 	c.JSON(http.StatusOK, questions)
 }
 
+func (service *BrokeredQuestionsService) newQuestion(text string, anonymous bool, creator models.UserContext) (*models.Question, *validation.ValidationError) {
+	if service.Session == nil {
+		return nil, &validation.ValidationError{
+			ValidationError: "no questions session currently running",
+			HttpStatus:      http.StatusNotAcceptable,
+		}
+	}
+
+	question := models.NewQuestion(text, anonymous, creator)
+	service.Session[question.Id] = question
+	return &question, nil
+}
+
 func (service *BrokeredQuestionsService) upVote(user *models.UserContext, id string) (int, *validation.ValidationError) {
+	if service.Session == nil {
+		return 0, &validation.ValidationError{
+			ValidationError: "no questions session currently running",
+			HttpStatus:      http.StatusNotAcceptable,
+		}
+	}
+
 	question, ok := service.Session[id]
 	if !ok {
 		return 0, &validation.ValidationError{
@@ -240,6 +292,13 @@ func (service *BrokeredQuestionsService) upVote(user *models.UserContext, id str
 }
 
 func (service *BrokeredQuestionsService) answer(id string) *validation.ValidationError {
+	if service.Session == nil {
+		return &validation.ValidationError{
+			ValidationError: "no questions session currently running",
+			HttpStatus:      http.StatusNotAcceptable,
+		}
+	}
+
 	question, ok := service.Session[id]
 
 	if !ok {
@@ -255,7 +314,12 @@ func (service *BrokeredQuestionsService) answer(id string) *validation.Validatio
 	return nil
 }
 
-func (service *BrokeredQuestionsService) reset() {
+func (service *BrokeredQuestionsService) stop() {
+	service.UserVotes = nil
+	service.Session = nil
+}
+
+func (service *BrokeredQuestionsService) start() {
 	service.UserVotes = make(map[string]map[string]bool)
 	service.Session = make(map[string]models.Question)
 }

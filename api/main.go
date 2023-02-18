@@ -71,10 +71,13 @@ func main() {
 		v1.GET("/events", broker.Stream)
 		q := v1.Group("/question")
 		q.PUT("/answer/:id", questionService.Answer)
-		q.POST("/new", questionService.AddQuestion)
-		q.PUT("/upvote/:id", questionService.UpvoteQuestion)
-		q.POST("/reset", questionService.Reset)
-		q.GET("/session", questionService.GetSession)
+		q.POST("/new", questionService.Add)
+		q.PUT("/upvote/:id", questionService.Upvote)
+
+		s := q.Group("/session")
+		s.POST("/start", questionService.Start)
+		s.POST("/stop", questionService.Stop)
+		s.GET("", questionService.GetSession)
 	}
 	r.POST("mockuser", func(c *gin.Context) {
 		usr := struct {

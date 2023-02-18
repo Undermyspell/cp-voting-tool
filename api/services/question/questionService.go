@@ -5,9 +5,10 @@ import (
 )
 
 type QuestionService interface {
-	AddQuestion(c *gin.Context)
-	UpvoteQuestion(c *gin.Context)
+	Add(c *gin.Context)
+	Upvote(c *gin.Context)
 	Answer(c *gin.Context)
-	Reset(c *gin.Context)
+	Stop(c *gin.Context)
+	Start(c *gin.Context)
 	GetSession(c *gin.Context)
 }
