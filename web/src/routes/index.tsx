@@ -15,7 +15,7 @@ export default component$(() => {
 
     console.log("we are at client")
     // Get Token from api on the / mockuser route for testing, api has to be startet with USE_MOCK_JWKS = true
-    const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Ii5AbW9jay5jb20iLCJleHAiOjE2NzY2MjU2NjYsIm5hbWUiOiIgIn0.CZkUNpZllqZ0JhOj85fmdnpR86ttqovJPGBvlSjdec4"
+    const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6IkhhbnMuTWVpZXJAbW9jay5jb20iLCJleHAiOjE2NzY4NDEyOTMsIm5hbWUiOiJIYW5zIE1laWVyIn0.XKgx4E7h27Y96qVIrpcKuMFslaphD_6DqnPBN96KXsQ"
 
     const eventSource = new EventSource('http://localhost:3333/api/v1/events', {
       headers: {
@@ -26,14 +26,23 @@ export default component$(() => {
     eventSource.addEventListener("new_question", ({ data }) => {
       console.log("New Question", JSON.parse(data))
     })
+    eventSource.addEventListener("update_question", ({ data }) => {
+      console.log("Updated Question", JSON.parse(data))
+    })
+    eventSource.addEventListener("delete_question", ({ data }) => {
+      console.log("Deleted Question", JSON.parse(data))
+    })
     eventSource.addEventListener("upvote_question", ({ data }) => {
       console.log("Upvoted Question", JSON.parse(data))
     })
     eventSource.addEventListener("answer_question", ({ data }) => {
       console.log("Answered Question", JSON.parse(data))
     })
-    eventSource.addEventListener("reset_session", () => {
-      console.log("Reset Session")
+    eventSource.addEventListener("start_session", () => {
+      console.log("Started Session")
+    })
+    eventSource.addEventListener("stop_session", () => {
+      console.log("Stopped Session")
     })
 
     return () => {

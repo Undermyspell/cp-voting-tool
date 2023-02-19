@@ -74,6 +74,7 @@ func main() {
 		q.POST("/new", questionService.Add)
 		q.PUT("/upvote/:id", questionService.Upvote)
 		q.PUT("/update", questionService.Update)
+		q.DELETE("/delete/:id", questionService.Delete)
 
 		s := q.Group("/session")
 		s.POST("/start", questionService.Start)

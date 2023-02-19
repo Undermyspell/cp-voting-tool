@@ -59,6 +59,46 @@ const docTemplate = `{
                 }
             }
         },
+        "/question/delete/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Deletes an existing question of the current session, only owned questions can be updated",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Question"
+                ],
+                "summary": "Deletes an existing question of the current session",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Id of question to delete",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/question/new": {
             "post": {
                 "security": [
@@ -176,6 +216,45 @@ const docTemplate = `{
                 }
             }
         },
+        "/question/update": {
+            "put": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Updates an existing question of the current session, only owned questions can be updated",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Question"
+                ],
+                "summary": "Updates an existing question of the current session",
+                "parameters": [
+                    {
+                        "description": "Question JSON",
+                        "name": "question",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dtos.UpdateQuestionDto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                }
+            }
+        },
         "/question/upvote/{id}": {
             "put": {
                 "security": [
@@ -257,6 +336,24 @@ const docTemplate = `{
                     "type": "integer"
                 }
             }
+        },
+        "dtos.UpdateQuestionDto": {
+            "type": "object",
+            "required": [
+                "id",
+                "text"
+            ],
+            "properties": {
+                "anonymous": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "text": {
+                    "type": "string"
+                }
+            }
         }
     },
     "securityDefinitions": {
@@ -274,8 +371,8 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "",
 	BasePath:         "",
 	Schemes:          []string{},
-	Title:            "Voting tool api",
-	Description:      "A voting tool API in Go using Gin framework.",
+	Title:            "CP Voting tool api",
+	Description:      "THE CP voting tool API in Go using Gin framework.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 }

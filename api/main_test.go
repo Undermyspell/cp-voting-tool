@@ -164,14 +164,8 @@ func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTACCEPTABLE_406_WHEN_DOU
 	w := httptest.NewRecorder()
 
 	token := suite.tokenUser_Foo
-
-	jsonData := dtos.NewQuestionDto{Text: "new question"}
-	newQuestion, _ := json.Marshal(jsonData)
-
-	req, _ := http.NewRequest("POST", fmt.Sprintf("%s/question/new", suite.apiPrefix), bytes.NewBuffer(newQuestion))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
-	suite.router.ServeHTTP(w, req)
+	newQuestion := dtos.NewQuestionDto{Text: "new question"}
+	postNewQuestion(suite, w, newQuestion, token)
 
 	questionList := getSession(suite, w, token)
 
@@ -280,7 +274,7 @@ func (suite *QuestionApiTestSuite) TestUpdateQuestion_OK_200_WHEN_QUESTION_IS_OW
 	assert.Equal(suite.T(), http.StatusOK, w.Code)
 }
 
-func (suite *QuestionApiTestSuite) TestUpdateQuestion_OK_403_WHEN_QUESTION_IS_NOT_OWNED() {
+func (suite *QuestionApiTestSuite) TestUpdateQuestion_FORBIDDEN_403_WHEN_QUESTION_IS_NOT_OWNED() {
 	w := httptest.NewRecorder()
 
 	tokenUser_Foo := suite.tokenUser_Foo
@@ -302,6 +296,47 @@ func (suite *QuestionApiTestSuite) TestUpdateQuestion_OK_403_WHEN_QUESTION_IS_NO
 	assert.Equal(suite.T(), http.StatusForbidden, w2.Code)
 }
 
+func (suite *QuestionApiTestSuite) TestDeleteQuestion_OK_200_WHEN_QUESTION_IS_OWNED() {
+	w := httptest.NewRecorder()
+
+	tokenUser_Foo := suite.tokenUser_Foo
+	newQuestion := dtos.NewQuestionDto{Text: "Foo Question", Anonymous: false}
+	postNewQuestion(suite, w, newQuestion, tokenUser_Foo)
+	questionList := getSession(suite, w, tokenUser_Foo)
+	question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Foo Question" })]
+
+	assert.Equal(suite.T(), "Foo Question", question_FOO_Q.Text)
+	assert.Equal(suite.T(), false, question_FOO_Q.Anonymous)
+
+	deleteQuestion(suite, w, question_FOO_Q.Id, tokenUser_Foo)
+
+	updatedQuestionList := getSession(suite, w, tokenUser_Foo)
+	idx := slices.IndexFunc(updatedQuestionList, func(c dtos.QuestionDto) bool { return c.Id == question_FOO_Q.Id })
+
+	assert.Equal(suite.T(), -1, idx)
+	assert.Equal(suite.T(), http.StatusOK, w.Code)
+}
+
+func (suite *QuestionApiTestSuite) TestDeleteQuestion_FORBIDDEN_403_WHEN_QUESTION_IS_NOT_OWNED() {
+	w := httptest.NewRecorder()
+
+	tokenUser_Foo := suite.tokenUser_Foo
+	tokenUser_Bar := suite.tokenUser_Bar
+
+	newQuestion := dtos.NewQuestionDto{Text: "Foo Question", Anonymous: false}
+	postNewQuestion(suite, w, newQuestion, tokenUser_Foo)
+	questionList := getSession(suite, w, tokenUser_Foo)
+	question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Foo Question" })]
+
+	assert.Equal(suite.T(), "Foo Question", question_FOO_Q.Text)
+	assert.Equal(suite.T(), false, question_FOO_Q.Anonymous)
+
+	w2 := httptest.NewRecorder()
+	deleteQuestion(suite, w2, question_FOO_Q.Id, tokenUser_Bar)
+
+	assert.Equal(suite.T(), http.StatusForbidden, w2.Code)
+}
+
 func TestQuestionApiSuite(t *testing.T) {
 	suite.Run(t, new(QuestionApiTestSuite))
 }
@@ -317,6 +352,13 @@ func postNewQuestion(suite *QuestionApiTestSuite, w *httptest.ResponseRecorder, 
 func putUpdateQuestion(suite *QuestionApiTestSuite, w *httptest.ResponseRecorder, question dtos.UpdateQuestionDto, token string) {
 	updateQuestion, _ := json.Marshal(question)
 	req, _ := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/question/update", suite.apiPrefix), bytes.NewBuffer(updateQuestion))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	suite.router.ServeHTTP(w, req)
+}
+
+func deleteQuestion(suite *QuestionApiTestSuite, w *httptest.ResponseRecorder, id string, token string) {
+	req, _ := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/question/delete/%s", suite.apiPrefix, id), nil)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 	suite.router.ServeHTTP(w, req)

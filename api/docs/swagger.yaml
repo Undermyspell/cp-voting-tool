@@ -25,13 +25,25 @@ definitions:
       votes:
         type: integer
     type: object
+  dtos.UpdateQuestionDto:
+    properties:
+      anonymous:
+        type: boolean
+      id:
+        type: string
+      text:
+        type: string
+    required:
+    - id
+    - text
+    type: object
 info:
   contact: {}
-  description: A voting tool API in Go using Gin framework.
+  description: THE CP voting tool API in Go using Gin framework.
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
-  title: Voting tool api
+  title: CP Voting tool api
   version: "1.0"
 paths:
   /question/answer/{id}:
@@ -57,6 +69,32 @@ paths:
       security:
       - JWT: []
       summary: Answers a question
+      tags:
+      - Question
+  /question/delete/{id}:
+    delete:
+      description: Deletes an existing question of the current session, only owned
+        questions can be updated
+      parameters:
+      - description: Id of question to delete
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+          schema:
+            type: string
+      security:
+      - JWT: []
+      summary: Deletes an existing question of the current session
       tags:
       - Question
   /question/new:
@@ -128,6 +166,31 @@ paths:
       security:
       - JWT: []
       summary: Stops the current questions session
+      tags:
+      - Question
+  /question/update:
+    put:
+      description: Updates an existing question of the current session, only owned
+        questions can be updated
+      parameters:
+      - description: Question JSON
+        in: body
+        name: question
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.UpdateQuestionDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+      security:
+      - JWT: []
+      summary: Updates an existing question of the current session
       tags:
       - Question
   /question/upvote/{id}:

@@ -52,7 +52,14 @@ func (service *BrokeredQuestionsService) Add(c *gin.Context) {
 		return
 	}
 
-	newQuestionByteString, _ := json.Marshal(*question)
+	newQuestionSseMessage := struct {
+		Id        string
+		Text      string
+		Creator   string
+		Anonymous bool
+	}{question.Id, question.Text, question.Creator.Name, question.Anonymous}
+
+	newQuestionByteString, _ := json.Marshal(newQuestionSseMessage)
 
 	event := sse.Event{
 		EventType: sse.NEW_QUESTION,
@@ -95,11 +102,56 @@ func (service *BrokeredQuestionsService) Update(c *gin.Context) {
 		return
 	}
 
-	newQuestionByteString, _ := json.Marshal(*questionToUpdate)
+	questionToUpdateSseMessage := struct {
+		Id        string
+		Text      string
+		Creator   string
+		Anonymous bool
+	}{questionToUpdate.Id, questionToUpdate.Text, questionToUpdate.Creator.Name, questionToUpdate.Anonymous}
+
+	newQuestionByteString, _ := json.Marshal(questionToUpdateSseMessage)
 
 	event := sse.Event{
 		EventType: sse.UPDATE_QUESTION,
 		Payload:   string(newQuestionByteString),
+	}
+
+	service.Broker.Notify(event)
+}
+
+// AddQuestion         godoc
+// @Security 	 JWT
+// @Summary      Deletes an existing question of the current session
+// @Description  Deletes an existing question of the current session, only owned questions can be updated
+// @Tags         Question
+// @Produce      json
+// @Param        id  path  string  true  "Id of question to delete"
+// @Success      200
+// @Failure      401
+// @Failure      403 {string} error
+// @Router       /question/delete/{id} [delete]
+func (service *BrokeredQuestionsService) Delete(c *gin.Context) {
+	user, _ := c.Get(models.User)
+	userContext := user.(*models.UserContext)
+	questionId := c.Param("id")
+
+	err := service.deleteQuestion(questionId, *userContext)
+
+	if err != nil {
+		c.JSON(int(err.HttpStatus), gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	questionDeletedSseMessage := struct {
+		Id string
+	}{questionId}
+	questionDeletedByteString, _ := json.Marshal(questionDeletedSseMessage)
+
+	event := sse.Event{
+		EventType: sse.DELETE_QUESTION,
+		Payload:   string(questionDeletedByteString),
 	}
 
 	service.Broker.Notify(event)
@@ -119,8 +171,9 @@ func (service *BrokeredQuestionsService) Update(c *gin.Context) {
 func (service *BrokeredQuestionsService) Upvote(c *gin.Context) {
 	user, _ := c.Get(models.User)
 	questionId := c.Param("id")
+	userContext := user.(*models.UserContext)
 
-	votes, err := service.upVote(user.(*models.UserContext), questionId)
+	votes, err := service.upVote(questionId, *userContext)
 
 	if err != nil {
 		c.JSON(int(err.HttpStatus), gin.H{
@@ -316,7 +369,35 @@ func (service *BrokeredQuestionsService) updateQuestion(question dtos.UpdateQues
 	return &questionToUpdate, nil
 }
 
-func (service *BrokeredQuestionsService) upVote(user *models.UserContext, id string) (int, *validation.ValidationError) {
+func (service *BrokeredQuestionsService) deleteQuestion(id string, creator models.UserContext) *validation.ValidationError {
+	if service.Session == nil {
+		return &validation.ValidationError{
+			ValidationError: "no questions session currently running",
+			HttpStatus:      http.StatusNotAcceptable,
+		}
+	}
+
+	questionToDelete, ok := service.Session[id]
+	if !ok {
+		return &validation.ValidationError{
+			ValidationError: "question not found",
+			HttpStatus:      http.StatusNotFound,
+		}
+	}
+
+	if questionToDelete.Creator.Email != creator.Email {
+		return &validation.ValidationError{
+			ValidationError: "you do not own this question",
+			HttpStatus:      http.StatusForbidden,
+		}
+	}
+
+	delete(service.Session, questionToDelete.Id)
+
+	return nil
+}
+
+func (service *BrokeredQuestionsService) upVote(id string, user models.UserContext) (int, *validation.ValidationError) {
 	if service.Session == nil {
 		return 0, &validation.ValidationError{
 			ValidationError: "no questions session currently running",
