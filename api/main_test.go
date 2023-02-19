@@ -20,8 +20,10 @@ import (
 
 type QuestionApiTestSuite struct {
 	suite.Suite
-	router    *gin.Engine
-	apiPrefix string
+	router        *gin.Engine
+	apiPrefix     string
+	tokenUser_Foo string
+	tokenUser_Bar string
 }
 
 func (suite *QuestionApiTestSuite) SetupSuite() {
@@ -32,6 +34,8 @@ func (suite *QuestionApiTestSuite) SetupSuite() {
 
 	suite.router = r
 	suite.apiPrefix = "/api/v1"
+	suite.tokenUser_Foo = mocks.GetToken("Foo", "Foo_Tester")
+	suite.tokenUser_Bar = mocks.GetToken("Bar", "Bar_Tester")
 }
 
 func (suite *QuestionApiTestSuite) SetupTest() {
@@ -77,7 +81,7 @@ func (suite *QuestionApiTestSuite) TestApi_NOTACCEPTABLE_406_WHEN_NO_SESSION_RUN
 
 	stopSession(suite)
 
-	token := mocks.GetToken("test", "tester")
+	token := suite.tokenUser_Foo
 
 	tests := []test{
 		{"Question_New_NOTACCEPTABLE_406", http.MethodPost, "/question/new", bytes.NewBuffer([]byte(`{"text": "test question?" }`))},
@@ -108,7 +112,7 @@ func (suite *QuestionApiTestSuite) TestApi_NOTACCEPTABLE_406_WHEN_NO_SESSION_RUN
 func (suite *QuestionApiTestSuite) TestNewQuestion_OK_200() {
 	w := httptest.NewRecorder()
 
-	token := mocks.GetToken("test", "tester")
+	token := suite.tokenUser_Foo
 
 	jsonData := []byte(`{
 		"text": "test question?"
@@ -125,7 +129,7 @@ func (suite *QuestionApiTestSuite) TestNewQuestion_OK_200() {
 func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTFOUND_404() {
 	w := httptest.NewRecorder()
 
-	token := mocks.GetToken("test", "tester")
+	token := suite.tokenUser_Foo
 
 	jsonData := []byte(`{
 		"id": "invalid"
@@ -142,7 +146,7 @@ func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTFOUND_404() {
 func (suite *QuestionApiTestSuite) TestAnswerQuestion_NOTFOUND_404() {
 	w := httptest.NewRecorder()
 
-	token := mocks.GetToken("test", "tester")
+	token := suite.tokenUser_Foo
 
 	jsonData := []byte(`{
 		"id": "invalid"
@@ -159,7 +163,7 @@ func (suite *QuestionApiTestSuite) TestAnswerQuestion_NOTFOUND_404() {
 func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTACCEPTABLE_406_WHEN_DOUBLE_VOTE_FROM_USER() {
 	w := httptest.NewRecorder()
 
-	token := mocks.GetToken("test", "tester")
+	token := suite.tokenUser_Foo
 
 	jsonData := dtos.NewQuestionDto{Text: "new question"}
 	newQuestion, _ := json.Marshal(jsonData)
@@ -188,7 +192,7 @@ func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTACCEPTABLE_406_WHEN_DOU
 func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTACCEPTABLE_406_WHEN_VOTING_ANSWERED_QUESTION() {
 	w := httptest.NewRecorder()
 
-	token := mocks.GetToken("test", "tester")
+	token := suite.tokenUser_Foo
 
 	jsonData := dtos.NewQuestionDto{Text: "new question"}
 
@@ -213,8 +217,8 @@ func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTACCEPTABLE_406_WHEN_VOT
 func (suite *QuestionApiTestSuite) TestGetSession_OK_200_CREATOR_SHOWN_ONLY_FOR_OWNED_AND_NOT_ANONYMOUS_QUESTIONS() {
 	w := httptest.NewRecorder()
 
-	tokenUser_Foo := mocks.GetToken("Foo", "Foo_Tester")
-	tokenUser_Bar := mocks.GetToken("Bar", "Bar_Tester")
+	tokenUser_Foo := suite.tokenUser_Foo
+	tokenUser_Bar := suite.tokenUser_Bar
 
 	newQuestion_FOO_Q1 := dtos.NewQuestionDto{Text: "Foo Question1", Anonymous: false}
 	newQuestion_FOO_Q2 := dtos.NewQuestionDto{Text: "Foo Question2 anonynmous", Anonymous: true}
@@ -252,13 +256,67 @@ func (suite *QuestionApiTestSuite) TestGetSession_OK_200_CREATOR_SHOWN_ONLY_FOR_
 	assert.Equal(suite.T(), http.StatusOK, w.Code)
 }
 
+func (suite *QuestionApiTestSuite) TestUpdateQuestion_OK_200_WHEN_QUESTION_IS_OWNED() {
+	w := httptest.NewRecorder()
+
+	tokenUser_Foo := suite.tokenUser_Foo
+	newQuestion := dtos.NewQuestionDto{Text: "Foo Question", Anonymous: false}
+	postNewQuestion(suite, w, newQuestion, tokenUser_Foo)
+	questionList := getSession(suite, w, tokenUser_Foo)
+	question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Foo Question" })]
+
+	updateQuestionDto := dtos.UpdateQuestionDto{Id: question_FOO_Q.Id, Text: "Updated Foo Question", Anonymous: true}
+
+	assert.Equal(suite.T(), "Foo Question", question_FOO_Q.Text)
+	assert.Equal(suite.T(), false, question_FOO_Q.Anonymous)
+
+	putUpdateQuestion(suite, w, updateQuestionDto, tokenUser_Foo)
+
+	updatedQuestionList := getSession(suite, w, tokenUser_Foo)
+	updated_question_FOO_Q := updatedQuestionList[slices.IndexFunc(updatedQuestionList, func(c dtos.QuestionDto) bool { return c.Id == question_FOO_Q.Id })]
+
+	assert.Equal(suite.T(), "Updated Foo Question", updated_question_FOO_Q.Text)
+	assert.Equal(suite.T(), true, updated_question_FOO_Q.Anonymous)
+	assert.Equal(suite.T(), http.StatusOK, w.Code)
+}
+
+func (suite *QuestionApiTestSuite) TestUpdateQuestion_OK_403_WHEN_QUESTION_IS_NOT_OWNED() {
+	w := httptest.NewRecorder()
+
+	tokenUser_Foo := suite.tokenUser_Foo
+	tokenUser_Bar := suite.tokenUser_Bar
+
+	newQuestion := dtos.NewQuestionDto{Text: "Foo Question", Anonymous: false}
+	postNewQuestion(suite, w, newQuestion, tokenUser_Foo)
+	questionList := getSession(suite, w, tokenUser_Foo)
+	question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Foo Question" })]
+
+	updateQuestionDto := dtos.UpdateQuestionDto{Id: question_FOO_Q.Id, Text: "Updated Foo Question", Anonymous: true}
+
+	assert.Equal(suite.T(), "Foo Question", question_FOO_Q.Text)
+	assert.Equal(suite.T(), false, question_FOO_Q.Anonymous)
+
+	w2 := httptest.NewRecorder()
+	putUpdateQuestion(suite, w2, updateQuestionDto, tokenUser_Bar)
+
+	assert.Equal(suite.T(), http.StatusForbidden, w2.Code)
+}
+
 func TestQuestionApiSuite(t *testing.T) {
 	suite.Run(t, new(QuestionApiTestSuite))
 }
 
 func postNewQuestion(suite *QuestionApiTestSuite, w *httptest.ResponseRecorder, question dtos.NewQuestionDto, token string) {
 	newQuestion, _ := json.Marshal(question)
-	req, _ := http.NewRequest("POST", fmt.Sprintf("%s/question/new", suite.apiPrefix), bytes.NewBuffer(newQuestion))
+	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/question/new", suite.apiPrefix), bytes.NewBuffer(newQuestion))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	suite.router.ServeHTTP(w, req)
+}
+
+func putUpdateQuestion(suite *QuestionApiTestSuite, w *httptest.ResponseRecorder, question dtos.UpdateQuestionDto, token string) {
+	updateQuestion, _ := json.Marshal(question)
+	req, _ := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/question/update", suite.apiPrefix), bytes.NewBuffer(updateQuestion))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 	suite.router.ServeHTTP(w, req)
@@ -267,7 +325,7 @@ func postNewQuestion(suite *QuestionApiTestSuite, w *httptest.ResponseRecorder, 
 func startSession(suite *QuestionApiTestSuite) {
 	w := httptest.NewRecorder()
 
-	tokenUser_Foo := mocks.GetToken("Foo", "Foo_Tester")
+	tokenUser_Foo := suite.tokenUser_Foo
 
 	req, _ := http.NewRequest("POST", fmt.Sprintf("%s/question/session/start", suite.apiPrefix), nil)
 	req.Header.Set("Content-Type", "application/json")
@@ -278,7 +336,7 @@ func startSession(suite *QuestionApiTestSuite) {
 func stopSession(suite *QuestionApiTestSuite) {
 	w := httptest.NewRecorder()
 
-	tokenUser_Foo := mocks.GetToken("Foo", "Foo_Tester")
+	tokenUser_Foo := suite.tokenUser_Foo
 
 	req, _ := http.NewRequest("POST", fmt.Sprintf("%s/question/session/stop", suite.apiPrefix), nil)
 	req.Header.Set("Content-Type", "application/json")

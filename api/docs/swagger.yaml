@@ -1,6 +1,8 @@
 definitions:
   dtos.NewQuestionDto:
     properties:
+      anonymous:
+        type: boolean
       text:
         type: string
     required:
@@ -8,10 +10,16 @@ definitions:
     type: object
   dtos.QuestionDto:
     properties:
+      anonymous:
+        type: boolean
       answered:
         type: boolean
+      creator:
+        type: string
       id:
         type: string
+      owned:
+        type: boolean
       text:
         type: string
       votes:
@@ -73,22 +81,7 @@ paths:
       summary: Adds a new question
       tags:
       - Question
-  /question/reset/:
-    post:
-      description: Resets the current question session
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-        "401":
-          description: Unauthorized
-      security:
-      - JWT: []
-      summary: Resets the current session
-      tags:
-      - Question
-  /question/session/:
+  /question/session:
     get:
       description: Gets the questions of the current session
       produces:
@@ -105,6 +98,36 @@ paths:
       security:
       - JWT: []
       summary: Gets the questions of the current session
+      tags:
+      - Question
+  /question/session/start:
+    post:
+      description: Starts a new questions session
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+      security:
+      - JWT: []
+      summary: Starts a new questions session
+      tags:
+      - Question
+  /question/session/stop:
+    post:
+      description: Stops the current questions session
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+      security:
+      - JWT: []
+      summary: Stops the current questions session
       tags:
       - Question
   /question/upvote/{id}:

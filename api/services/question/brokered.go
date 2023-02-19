@@ -30,12 +30,12 @@ type BrokeredQuestionsService struct {
 // @Failure      401
 // @Router       /question/new [post]
 func (service *BrokeredQuestionsService) Add(c *gin.Context) {
-	var newQuestion dtos.NewQuestionDto
+	var newQuestionDto dtos.NewQuestionDto
 	user, _ := c.Get(models.User)
 
 	userContext := user.(*models.UserContext)
 
-	err := c.BindJSON(&newQuestion)
+	err := c.BindJSON(&newQuestionDto)
 
 	if err != nil {
 		logrus.Error(err.Error())
@@ -43,7 +43,7 @@ func (service *BrokeredQuestionsService) Add(c *gin.Context) {
 		return
 	}
 
-	question, errValidation := service.newQuestion(newQuestion.Text, newQuestion.Anonymous, *userContext)
+	question, errValidation := service.newQuestion(newQuestionDto.Text, newQuestionDto.Anonymous, *userContext)
 
 	if errValidation != nil {
 		c.JSON(int(errValidation.HttpStatus), gin.H{
@@ -56,6 +56,49 @@ func (service *BrokeredQuestionsService) Add(c *gin.Context) {
 
 	event := sse.Event{
 		EventType: sse.NEW_QUESTION,
+		Payload:   string(newQuestionByteString),
+	}
+
+	service.Broker.Notify(event)
+}
+
+// AddQuestion         godoc
+// @Security 	 JWT
+// @Summary      Updates an existing question of the current session
+// @Description  Updates an existing question of the current session, only owned questions can be updated
+// @Tags         Question
+// @Produce      json
+// @Param        question  body      dtos.UpdateQuestionDto  true  "Question JSON"
+// @Success      200
+// @Failure      401
+// @Failure      403
+// @Router       /question/update [put]
+func (service *BrokeredQuestionsService) Update(c *gin.Context) {
+	var updateQuestionDto dtos.UpdateQuestionDto
+	user, _ := c.Get(models.User)
+	userContext := user.(*models.UserContext)
+
+	err := c.BindJSON(&updateQuestionDto)
+
+	if err != nil {
+		logrus.Error(err.Error())
+		c.JSON(http.StatusBadRequest, "cant parse request")
+		return
+	}
+
+	questionToUpdate, errValidation := service.updateQuestion(updateQuestionDto, *userContext)
+
+	if errValidation != nil {
+		c.JSON(int(errValidation.HttpStatus), gin.H{
+			"error": errValidation.Error(),
+		})
+		return
+	}
+
+	newQuestionByteString, _ := json.Marshal(*questionToUpdate)
+
+	event := sse.Event{
+		EventType: sse.UPDATE_QUESTION,
 		Payload:   string(newQuestionByteString),
 	}
 
@@ -241,6 +284,36 @@ func (service *BrokeredQuestionsService) newQuestion(text string, anonymous bool
 	question := models.NewQuestion(text, anonymous, creator)
 	service.Session[question.Id] = question
 	return &question, nil
+}
+
+func (service *BrokeredQuestionsService) updateQuestion(question dtos.UpdateQuestionDto, creator models.UserContext) (*models.Question, *validation.ValidationError) {
+	if service.Session == nil {
+		return nil, &validation.ValidationError{
+			ValidationError: "no questions session currently running",
+			HttpStatus:      http.StatusNotAcceptable,
+		}
+	}
+
+	questionToUpdate, ok := service.Session[question.Id]
+	if !ok {
+		return nil, &validation.ValidationError{
+			ValidationError: "question not found",
+			HttpStatus:      http.StatusNotFound,
+		}
+	}
+
+	if questionToUpdate.Creator.Email != creator.Email {
+		return nil, &validation.ValidationError{
+			ValidationError: "you do not own this question",
+			HttpStatus:      http.StatusForbidden,
+		}
+	}
+
+	questionToUpdate.Text = question.Text
+	questionToUpdate.Anonymous = question.Anonymous
+
+	service.Session[questionToUpdate.Id] = questionToUpdate
+	return &questionToUpdate, nil
 }
 
 func (service *BrokeredQuestionsService) upVote(user *models.UserContext, id string) (int, *validation.ValidationError) {

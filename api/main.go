@@ -28,9 +28,9 @@ var start = func(r *gin.Engine) {
 }
 var r *gin.Engine
 
-// @title           Voting tool api
+// @title           CP Voting tool api
 // @version         1.0
-// @description     A voting tool API in Go using Gin framework.
+// @description     THE CP voting tool API in Go using Gin framework.
 
 // @license.name  Apache 2.0
 // @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
@@ -73,6 +73,7 @@ func main() {
 		q.PUT("/answer/:id", questionService.Answer)
 		q.POST("/new", questionService.Add)
 		q.PUT("/upvote/:id", questionService.Upvote)
+		q.PUT("/update", questionService.Update)
 
 		s := q.Group("/session")
 		s.POST("/start", questionService.Start)

@@ -95,32 +95,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/question/reset/": {
-            "post": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "Resets the current question session",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Question"
-                ],
-                "summary": "Resets the current session",
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "401": {
-                        "description": "Unauthorized"
-                    }
-                }
-            }
-        },
-        "/question/session/": {
+        "/question/session": {
             "get": {
                 "security": [
                     {
@@ -144,6 +119,56 @@ const docTemplate = `{
                                 "$ref": "#/definitions/dtos.QuestionDto"
                             }
                         }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/question/session/start": {
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Starts a new questions session",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Question"
+                ],
+                "summary": "Starts a new questions session",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/question/session/stop": {
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Stops the current questions session",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Question"
+                ],
+                "summary": "Stops the current questions session",
+                "responses": {
+                    "200": {
+                        "description": "OK"
                     },
                     "401": {
                         "description": "Unauthorized"
@@ -199,6 +224,9 @@ const docTemplate = `{
                 "text"
             ],
             "properties": {
+                "anonymous": {
+                    "type": "boolean"
+                },
                 "text": {
                     "type": "string"
                 }
@@ -207,11 +235,20 @@ const docTemplate = `{
         "dtos.QuestionDto": {
             "type": "object",
             "properties": {
+                "anonymous": {
+                    "type": "boolean"
+                },
                 "answered": {
                     "type": "boolean"
                 },
+                "creator": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "string"
+                },
+                "owned": {
+                    "type": "boolean"
                 },
                 "text": {
                     "type": "string"
