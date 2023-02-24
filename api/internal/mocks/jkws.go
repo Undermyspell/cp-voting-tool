@@ -2,12 +2,9 @@ package mocks
 
 import (
 	"errors"
-	"fmt"
 	"sse/internal/jwks"
-	"time"
 
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -30,19 +27,4 @@ func NewJwks() jwks.KeyfuncProvider {
 func (m *JwksMock) GetKeyFunc() func(token *jwt.Token) (interface{}, error) {
 	args := m.Called()
 	return args.Get(0).(func(token *jwt.Token) (interface{}, error))
-}
-
-func GetToken(firstName, lastName string) string {
-	sampleSecretKey := []byte("my_test_secret")
-	token := jwt.New(jwt.SigningMethodHS256)
-	claims := token.Claims.(jwt.MapClaims)
-	claims["exp"] = time.Now().UTC().Add(time.Second * 3600).Unix()
-	claims["name"] = fmt.Sprintf("%s %s", firstName, lastName)
-	claims["email"] = fmt.Sprintf("%s.%s@mock.com", firstName, lastName)
-	tokenString, err := token.SignedString(sampleSecretKey)
-	if err != nil {
-		logrus.Fatal("Signing error")
-	}
-
-	return tokenString
 }

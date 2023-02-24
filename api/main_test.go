@@ -20,10 +20,12 @@ import (
 
 type QuestionApiTestSuite struct {
 	suite.Suite
-	router        *gin.Engine
-	apiPrefix     string
-	tokenUser_Foo string
-	tokenUser_Bar string
+	router                 *gin.Engine
+	apiPrefix              string
+	tokenUser_Foo          string
+	tokenUser_Bar          string
+	tokenUser_Admin        string
+	tokenUser_SessionAdmin string
 }
 
 func (suite *QuestionApiTestSuite) SetupSuite() {
@@ -34,8 +36,10 @@ func (suite *QuestionApiTestSuite) SetupSuite() {
 
 	suite.router = r
 	suite.apiPrefix = "/api/v1"
-	suite.tokenUser_Foo = mocks.GetToken("Foo", "Foo_Tester")
-	suite.tokenUser_Bar = mocks.GetToken("Bar", "Bar_Tester")
+	suite.tokenUser_Foo = mocks.GetUserToken("Foo", "Foo_Tester")
+	suite.tokenUser_Bar = mocks.GetUserToken("Bar", "Bar_Tester")
+	suite.tokenUser_Admin = mocks.GetAdminUserToken("Admin", "Admin_Tester")
+	suite.tokenUser_SessionAdmin = mocks.GetSessionAdminUserToken("SessionAdmin", "Session_Admin_Tester")
 }
 
 func (suite *QuestionApiTestSuite) SetupTest() {
@@ -81,7 +85,7 @@ func (suite *QuestionApiTestSuite) TestApi_NOTACCEPTABLE_406_WHEN_NO_SESSION_RUN
 
 	stopSession(suite)
 
-	token := suite.tokenUser_Foo
+	token := suite.tokenUser_Admin
 
 	tests := []test{
 		{"Question_New_NOTACCEPTABLE_406", http.MethodPost, "/question/new", bytes.NewBuffer([]byte(`{"text": "test question?" }`))},
@@ -146,18 +150,55 @@ func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTFOUND_404() {
 func (suite *QuestionApiTestSuite) TestAnswerQuestion_NOTFOUND_404() {
 	w := httptest.NewRecorder()
 
-	token := suite.tokenUser_Foo
+	token := suite.tokenUser_SessionAdmin
 
-	jsonData := []byte(`{
-		"id": "invalid"
-	}`)
-
-	req, _ := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/question/answer", suite.apiPrefix), bytes.NewBuffer(jsonData))
+	req, _ := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/question/answer/%s", suite.apiPrefix, "invalid"), nil)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 	suite.router.ServeHTTP(w, req)
 
 	assert.Equal(suite.T(), http.StatusNotFound, w.Code)
+}
+
+func (suite *QuestionApiTestSuite) TestAnswerQuestion_OK_200() {
+	type test struct {
+		name  string
+		token string
+	}
+
+	tests := []test{
+		{"SESSION_ADMIN_200", suite.tokenUser_SessionAdmin},
+		{"ADMIN_200", suite.tokenUser_Admin},
+	}
+
+	for _, test := range tests {
+		suite.T().Run(test.name, func(t *testing.T) {
+			w := httptest.NewRecorder()
+
+			newQuestion := dtos.NewQuestionDto{Text: "Foo Question", Anonymous: false}
+			postNewQuestion(suite, w, newQuestion, suite.tokenUser_Bar)
+			questionList := getSession(suite, w, suite.tokenUser_Bar)
+			question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Foo Question" })]
+
+			assert.Equal(suite.T(), "Foo Question", question_FOO_Q.Text)
+			assert.Equal(suite.T(), false, question_FOO_Q.Anonymous)
+
+			w2 := httptest.NewRecorder()
+			answerQuestion(suite, w2, question_FOO_Q.Id, test.token)
+
+			assert.Equal(suite.T(), http.StatusOK, w.Code)
+		})
+	}
+}
+
+func (suite *QuestionApiTestSuite) TestAnswerQuestion_FORBIDDEN_403_WHEN_NO_SESSION_ADMIN_OR_ADMIN() {
+	tokenUser_Foo := suite.tokenUser_Foo
+
+	w := httptest.NewRecorder()
+
+	answerQuestion(suite, w, "id_123", tokenUser_Foo)
+
+	assert.Equal(suite.T(), http.StatusForbidden, w.Code)
 }
 
 func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTACCEPTABLE_406_WHEN_DOUBLE_VOTE_FROM_USER() {
@@ -169,16 +210,10 @@ func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTACCEPTABLE_406_WHEN_DOU
 
 	questionList := getSession(suite, w, token)
 
-	reqv, _ := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/question/upvote/%s", suite.apiPrefix, questionList[0].Id), nil)
-	reqv.Header.Set("Content-Type", "application/json")
-	reqv.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
-	suite.router.ServeHTTP(w, reqv)
+	upvoteQuestion(suite, w, questionList[0].Id, token)
 
 	w2 := httptest.NewRecorder()
-	reqv2, _ := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/question/upvote/%s", suite.apiPrefix, questionList[0].Id), nil)
-	reqv2.Header.Set("Content-Type", "application/json")
-	reqv2.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
-	suite.router.ServeHTTP(w2, reqv2)
+	upvoteQuestion(suite, w2, questionList[0].Id, token)
 
 	assert.Equal(suite.T(), http.StatusNotAcceptable, w2.Code)
 }
@@ -186,7 +221,7 @@ func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTACCEPTABLE_406_WHEN_DOU
 func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTACCEPTABLE_406_WHEN_VOTING_ANSWERED_QUESTION() {
 	w := httptest.NewRecorder()
 
-	token := suite.tokenUser_Foo
+	token := suite.tokenUser_SessionAdmin
 
 	jsonData := dtos.NewQuestionDto{Text: "new question"}
 
@@ -194,16 +229,10 @@ func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTACCEPTABLE_406_WHEN_VOT
 
 	questionList := getSession(suite, w, token)
 
-	reqa, _ := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/question/answer/%s", suite.apiPrefix, questionList[0].Id), nil)
-	reqa.Header.Set("Content-Type", "application/json")
-	reqa.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
-	suite.router.ServeHTTP(w, reqa)
+	answerQuestion(suite, w, questionList[0].Id, token)
 
 	w2 := httptest.NewRecorder()
-	reqv, _ := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/question/upvote/%s", suite.apiPrefix, questionList[0].Id), nil)
-	reqv.Header.Set("Content-Type", "application/json")
-	reqv.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
-	suite.router.ServeHTTP(w2, reqv)
+	upvoteQuestion(suite, w2, questionList[0].Id, token)
 
 	assert.Equal(suite.T(), http.StatusNotAcceptable, w2.Code)
 }
@@ -337,8 +366,90 @@ func (suite *QuestionApiTestSuite) TestDeleteQuestion_FORBIDDEN_403_WHEN_QUESTIO
 	assert.Equal(suite.T(), http.StatusForbidden, w2.Code)
 }
 
+func (suite *QuestionApiTestSuite) TestAnswerQuestion_FORBIDDEN_403_WHEN_USER_NOT_SESSION_ADMIN_OR_ADMIN() {
+	w := httptest.NewRecorder()
+
+	tokenUser_Foo := suite.tokenUser_Foo
+	tokenUser_Bar := suite.tokenUser_Bar
+
+	newQuestion := dtos.NewQuestionDto{Text: "Foo Question", Anonymous: false}
+	postNewQuestion(suite, w, newQuestion, tokenUser_Foo)
+	questionList := getSession(suite, w, tokenUser_Foo)
+	question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Foo Question" })]
+
+	assert.Equal(suite.T(), "Foo Question", question_FOO_Q.Text)
+	assert.Equal(suite.T(), false, question_FOO_Q.Anonymous)
+
+	w2 := httptest.NewRecorder()
+	answerQuestion(suite, w2, question_FOO_Q.Id, tokenUser_Bar)
+
+	assert.Equal(suite.T(), http.StatusForbidden, w2.Code)
+}
+
+func (suite *QuestionApiTestSuite) TestStartSession_FORBIDDEN_403_WHEN_USER_NOT_ADMIN() {
+	type test struct {
+		name  string
+		token string
+	}
+
+	tests := []test{
+		{"SESSION_ADMIN_403", suite.tokenUser_SessionAdmin},
+		{"CONTRIBUTOR_403", suite.tokenUser_Bar},
+	}
+
+	for _, test := range tests {
+		suite.T().Run(test.name, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("%s%s", suite.apiPrefix, "/question/session/start"), nil)
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", test.token))
+			suite.router.ServeHTTP(w, req)
+
+			assert.Equal(suite.T(), http.StatusForbidden, w.Code)
+		})
+	}
+}
+
+func (suite *QuestionApiTestSuite) TestStopSession_FORBIDDEN_403_WHEN_USER_NOT_ADMIN() {
+	type test struct {
+		name  string
+		token string
+	}
+
+	tests := []test{
+		{"SESSION_ADMIN_403", suite.tokenUser_SessionAdmin},
+		{"CONTRIBUTOR_403", suite.tokenUser_Bar},
+	}
+
+	for _, test := range tests {
+		suite.T().Run(test.name, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("%s%s", suite.apiPrefix, "/question/session/stop"), nil)
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", test.token))
+			suite.router.ServeHTTP(w, req)
+
+			assert.Equal(suite.T(), http.StatusForbidden, w.Code)
+		})
+	}
+}
+
 func TestQuestionApiSuite(t *testing.T) {
 	suite.Run(t, new(QuestionApiTestSuite))
+}
+
+func upvoteQuestion(suite *QuestionApiTestSuite, w *httptest.ResponseRecorder, questionId, token string) {
+	reqv, _ := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/question/upvote/%s", suite.apiPrefix, questionId), nil)
+	reqv.Header.Set("Content-Type", "application/json")
+	reqv.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	suite.router.ServeHTTP(w, reqv)
+}
+
+func answerQuestion(suite *QuestionApiTestSuite, w *httptest.ResponseRecorder, questionId, token string) {
+	req, _ := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/question/answer/%s", suite.apiPrefix, questionId), nil)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	suite.router.ServeHTTP(w, req)
 }
 
 func postNewQuestion(suite *QuestionApiTestSuite, w *httptest.ResponseRecorder, question dtos.NewQuestionDto, token string) {
@@ -367,22 +478,22 @@ func deleteQuestion(suite *QuestionApiTestSuite, w *httptest.ResponseRecorder, i
 func startSession(suite *QuestionApiTestSuite) {
 	w := httptest.NewRecorder()
 
-	tokenUser_Foo := suite.tokenUser_Foo
+	tokenUser_Admin := suite.tokenUser_Admin
 
 	req, _ := http.NewRequest("POST", fmt.Sprintf("%s/question/session/start", suite.apiPrefix), nil)
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tokenUser_Foo))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tokenUser_Admin))
 	suite.router.ServeHTTP(w, req)
 }
 
 func stopSession(suite *QuestionApiTestSuite) {
 	w := httptest.NewRecorder()
 
-	tokenUser_Foo := suite.tokenUser_Foo
+	tokenUser_Admin := suite.tokenUser_Admin
 
 	req, _ := http.NewRequest("POST", fmt.Sprintf("%s/question/session/stop", suite.apiPrefix), nil)
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tokenUser_Foo))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tokenUser_Admin))
 	suite.router.ServeHTTP(w, req)
 }
 

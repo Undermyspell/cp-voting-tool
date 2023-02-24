@@ -35,7 +35,7 @@ func RequireAuth(keyfuncProvider jwks.KeyfuncProvider) gin.HandlerFunc {
 		}
 
 		if !token.Valid {
-			logrus.Error("The token is not valid.")
+			logrus.Error("The token signature could not be verified.")
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
@@ -56,17 +56,19 @@ func RequireAuth(keyfuncProvider jwks.KeyfuncProvider) gin.HandlerFunc {
 
 func getUserContext(token *jwt.Token) (*models.UserContext, error) {
 	name, okName := token.Claims.(jwt.MapClaims)["name"]
-	email, okEmail := token.Claims.(jwt.MapClaims)["email"]
+	email, okEmail := token.Claims.(jwt.MapClaims)["preferred_username"]
 
 	if !okEmail || !okName {
 		return new(models.UserContext), errors.New("claims are not valid")
 	}
 
-	role, okRole := token.Claims.(jwt.MapClaims)["role"]
+	userRoles, okRole := token.Claims.(jwt.MapClaims)["roles"]
+	role := roles.Contributor
 
-	if !okRole {
-		role = roles.Contributor
+	if okRole {
+		t := userRoles.([]interface{})
+		role = roles.Role(t[0].(string))
 	}
 
-	return &models.UserContext{Name: name.(string), Email: email.(string), Role: role.(roles.Role)}, nil
+	return &models.UserContext{Name: name.(string), Email: email.(string), Role: role}, nil
 }

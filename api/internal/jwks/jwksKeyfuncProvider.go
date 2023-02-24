@@ -18,7 +18,7 @@ func (provider *JwksKeyfuncProvider) GetKeyFunc() func(token *jwt.Token) (interf
 }
 
 func Init() *JwksKeyfuncProvider {
-	jwksURL := "https://omnect.keycloak.dm.conplement.cloud/realms/conplement-development/protocol/openid-connect/certs"
+	jwksURL := "https://login.microsoftonline.com/ff930651-2670-491e-9a70-7847e7fbf8b7/discovery/v2.0/keys"
 
 	options := keyfunc.Options{
 		Ctx: context.TODO(),

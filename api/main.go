@@ -1,26 +1,26 @@
 package main
 
 import (
-	"net/http"
 	"sse/internal/broker"
 	"sse/internal/env"
 	"sse/internal/jwks"
 	"sse/internal/middleware"
 	"sse/internal/mocks"
-	services "sse/services/question"
+	"sse/internal/models/roles"
+	questionService "sse/services/question"
+	userService "sse/services/user"
 	"time"
 
 	_ "sse/docs"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-var initQuestionService = func(broker broker.Broker) services.QuestionService {
-	return services.NewBrokered(broker)
+var initQuestionService = func(broker broker.Broker) questionService.QuestionService {
+	return questionService.NewBrokered(broker)
 }
 
 var start = func(r *gin.Engine) {
@@ -55,6 +55,7 @@ func main() {
 
 	broker := broker.New()
 	questionService := initQuestionService(broker)
+	userService := userService.NewTestUser()
 
 	config := cors.Config{
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
@@ -64,41 +65,27 @@ func main() {
 	}
 	config.AllowOrigins = []string{"*"}
 	r.Use(cors.New(config))
-	// r.Use(middleware.RequireAuth(jwksProvider))
 
-	v1 := r.Group("/api/v1", middleware.RequireAuth(jwksProvider))
+	v1 := r.Group("/api/v1")
 	{
-		v1.GET("/events", broker.Stream)
-		q := v1.Group("/question")
-		q.PUT("/answer/:id", questionService.Answer)
+		v1.GET("/events", middleware.RequireAuth(jwksProvider), broker.Stream)
+		q := v1.Group("/question", middleware.RequireAuth(jwksProvider))
+		q.PUT("/answer/:id", middleware.RequireRole(roles.SessionAdmin, roles.Admin), questionService.Answer)
 		q.POST("/new", questionService.Add)
 		q.PUT("/upvote/:id", questionService.Upvote)
 		q.PUT("/update", questionService.Update)
 		q.DELETE("/delete/:id", questionService.Delete)
 
-		s := q.Group("/session")
-		s.POST("/start", questionService.Start)
-		s.POST("/stop", questionService.Stop)
+		s := q.Group("/session", middleware.RequireAuth(jwksProvider))
+		s.POST("/start", middleware.RequireRole(roles.Admin), questionService.Start)
+		s.POST("/stop", middleware.RequireRole(roles.Admin), questionService.Stop)
 		s.GET("", questionService.GetSession)
+
+		u := q.Group("/user/test")
+		u.POST("/contributor", userService.GetContributor)
+		u.POST("/admin", userService.GetAdmin)
+		u.POST("/sessionadmin", userService.GetAdmin)
 	}
-	r.POST("mockuser", func(c *gin.Context) {
-		usr := struct {
-			FirstName string
-			LastName  string
-		}{}
-
-		err := c.BindJSON(&usr)
-
-		if err != nil {
-			logrus.Error(err.Error())
-			c.JSON(http.StatusBadRequest, "cant parse request")
-			return
-		}
-
-		token := mocks.GetToken(usr.FirstName, usr.LastName)
-
-		c.JSON(http.StatusOK, struct{ Token string }{Token: token})
-	})
 
 	start(r)
 }

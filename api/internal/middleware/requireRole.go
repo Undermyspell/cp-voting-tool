@@ -9,13 +9,21 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func RequireRole(role roles.Role) gin.HandlerFunc {
+func RequireRole(requiredRoles ...roles.Role) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		u, _ := c.Get(models.User)
 		user := u.(*models.UserContext)
 
-		if user.Role != role {
-			logrus.Errorf("Required role: %s", role)
+		hasRequiredRole := false
+		for _, r := range requiredRoles {
+			if r == user.Role {
+				hasRequiredRole = true
+				break
+			}
+		}
+
+		if !hasRequiredRole {
+			logrus.Errorf("Required role: %s", requiredRoles)
 			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
