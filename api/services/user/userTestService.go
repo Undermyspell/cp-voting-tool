@@ -20,7 +20,7 @@ type TestUserService struct{}
 // @Param        question  body dtos.NewTestUserDto  true  "User JSON"
 // @Success      200
 // @Failure      404
-// @Router       /user/test/contributor [post]
+// @Router       /api/v1/user/test/contributor [post]
 func (service *TestUserService) GetContributor(c *gin.Context) {
 	var userDto dtos.NewTestUserDto
 
@@ -46,7 +46,7 @@ func (service *TestUserService) GetContributor(c *gin.Context) {
 // @Param        question  body dtos.NewTestUserDto  true  "User JSON"
 // @Success      200
 // @Failure      404
-// @Router       /user/test/admin [post]
+// @Router       /api/v1/user/test/admin [post]
 func (service *TestUserService) GetAdmin(c *gin.Context) {
 	var userDto dtos.NewTestUserDto
 
@@ -72,7 +72,7 @@ func (service *TestUserService) GetAdmin(c *gin.Context) {
 // @Param        question  body dtos.NewTestUserDto  true  "User JSON"
 // @Success      200
 // @Failure      404
-// @Router       /user/test/admin [post]
+// @Router       /api/v1/user/test/sessionadmin [post]
 func (service *TestUserService) GetSessionAdmin(c *gin.Context) {
 	var userDto dtos.NewTestUserDto
 

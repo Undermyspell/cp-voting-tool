@@ -11,7 +11,7 @@
         "version": "1.0"
     },
     "paths": {
-        "/question/answer/{id}": {
+        "/api/v1/question/answer/{id}": {
             "put": {
                 "security": [
                     {
@@ -51,7 +51,7 @@
                 }
             }
         },
-        "/question/delete/{id}": {
+        "/api/v1/question/delete/{id}": {
             "delete": {
                 "security": [
                     {
@@ -91,7 +91,7 @@
                 }
             }
         },
-        "/question/new": {
+        "/api/v1/question/new": {
             "post": {
                 "security": [
                     {
@@ -127,7 +127,7 @@
                 }
             }
         },
-        "/question/session": {
+        "/api/v1/question/session": {
             "get": {
                 "security": [
                     {
@@ -158,7 +158,7 @@
                 }
             }
         },
-        "/question/session/start": {
+        "/api/v1/question/session/start": {
             "post": {
                 "security": [
                     {
@@ -183,7 +183,7 @@
                 }
             }
         },
-        "/question/session/stop": {
+        "/api/v1/question/session/stop": {
             "post": {
                 "security": [
                     {
@@ -208,7 +208,7 @@
                 }
             }
         },
-        "/question/update": {
+        "/api/v1/question/update": {
             "put": {
                 "security": [
                     {
@@ -247,7 +247,7 @@
                 }
             }
         },
-        "/question/upvote/{id}": {
+        "/api/v1/question/upvote/{id}": {
             "put": {
                 "security": [
                     {
@@ -286,6 +286,114 @@
                     }
                 }
             }
+        },
+        "/api/v1/user/test/admin": {
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Gets a test user with admin role",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Gets a test user with admin role",
+                "parameters": [
+                    {
+                        "description": "User JSON",
+                        "name": "question",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dtos.NewTestUserDto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                }
+            }
+        },
+        "/api/v1/user/test/contributor": {
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Gets a test user without role",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Gets a test user without role",
+                "parameters": [
+                    {
+                        "description": "User JSON",
+                        "name": "question",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dtos.NewTestUserDto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                }
+            }
+        },
+        "/api/v1/user/test/sessionadmin": {
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Gets a test user with session admin role",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Gets a test user with session admin role",
+                "parameters": [
+                    {
+                        "description": "User JSON",
+                        "name": "question",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dtos.NewTestUserDto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -299,6 +407,21 @@
                     "type": "boolean"
                 },
                 "text": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.NewTestUserDto": {
+            "type": "object",
+            "required": [
+                "firstname",
+                "lastname"
+            ],
+            "properties": {
+                "firstname": {
+                    "type": "string"
+                },
+                "lastname": {
                     "type": "string"
                 }
             }

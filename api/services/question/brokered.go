@@ -28,7 +28,7 @@ type BrokeredQuestionsService struct {
 // @Param        question  body      dtos.NewQuestionDto  true  "Question JSON"
 // @Success      200
 // @Failure      401
-// @Router       /question/new [post]
+// @Router       /api/v1/question/new [post]
 func (service *BrokeredQuestionsService) Add(c *gin.Context) {
 	var newQuestionDto dtos.NewQuestionDto
 	user, _ := c.Get(models.User)
@@ -79,7 +79,7 @@ func (service *BrokeredQuestionsService) Add(c *gin.Context) {
 // @Success      200
 // @Failure      401
 // @Failure      403
-// @Router       /question/update [put]
+// @Router       /api/v1/question/update [put]
 func (service *BrokeredQuestionsService) Update(c *gin.Context) {
 	var updateQuestionDto dtos.UpdateQuestionDto
 	user, _ := c.Get(models.User)
@@ -129,7 +129,7 @@ func (service *BrokeredQuestionsService) Update(c *gin.Context) {
 // @Success      200
 // @Failure      401
 // @Failure      403 {string} error
-// @Router       /question/delete/{id} [delete]
+// @Router       /api/v1/question/delete/{id} [delete]
 func (service *BrokeredQuestionsService) Delete(c *gin.Context) {
 	user, _ := c.Get(models.User)
 	userContext := user.(*models.UserContext)
@@ -167,7 +167,7 @@ func (service *BrokeredQuestionsService) Delete(c *gin.Context) {
 // @Success      200
 // @Failure      401
 // @Failure      404 {string} error
-// @Router       /question/upvote/{id} [put]
+// @Router       /api/v1/question/upvote/{id} [put]
 func (service *BrokeredQuestionsService) Upvote(c *gin.Context) {
 	user, _ := c.Get(models.User)
 	questionId := c.Param("id")
@@ -212,7 +212,7 @@ func (service *BrokeredQuestionsService) Upvote(c *gin.Context) {
 // @Success      200
 // @Failure      401
 // @Failure      404 {string} error
-// @Router       /question/answer/{id} [put]
+// @Router       /api/v1/question/answer/{id} [put]
 func (service *BrokeredQuestionsService) Answer(c *gin.Context) {
 	questionId := c.Param("id")
 
@@ -251,7 +251,7 @@ func (service *BrokeredQuestionsService) Answer(c *gin.Context) {
 // @Produce      json
 // @Success      200
 // @Failure      401
-// @Router       /question/session/stop [post]
+// @Router       /api/v1/question/session/stop [post]
 func (service *BrokeredQuestionsService) Stop(c *gin.Context) {
 	service.stop()
 
@@ -271,7 +271,7 @@ func (service *BrokeredQuestionsService) Stop(c *gin.Context) {
 // @Produce      json
 // @Success      200
 // @Failure      401
-// @Router       /question/session/start [post]
+// @Router       /api/v1/question/session/start [post]
 func (service *BrokeredQuestionsService) Start(c *gin.Context) {
 	service.start()
 
@@ -291,7 +291,7 @@ func (service *BrokeredQuestionsService) Start(c *gin.Context) {
 // @Produce      json
 // @Success      200 {array} dtos.QuestionDto
 // @Failure      401
-// @Router       /question/session [get]
+// @Router       /api/v1/question/session [get]
 func (service *BrokeredQuestionsService) GetSession(c *gin.Context) {
 	if service.Session == nil {
 		c.JSON(http.StatusNotAcceptable, gin.H{

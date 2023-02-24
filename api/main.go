@@ -81,7 +81,7 @@ func main() {
 		s.POST("/stop", middleware.RequireRole(roles.Admin), questionService.Stop)
 		s.GET("", questionService.GetSession)
 
-		u := q.Group("/user/test")
+		u := v1.Group("/user/test")
 		u.POST("/contributor", userService.GetContributor)
 		u.POST("/admin", userService.GetAdmin)
 		u.POST("/sessionadmin", userService.GetAdmin)

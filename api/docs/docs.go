@@ -19,7 +19,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/question/answer/{id}": {
+        "/api/v1/question/answer/{id}": {
             "put": {
                 "security": [
                     {
@@ -59,7 +59,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/question/delete/{id}": {
+        "/api/v1/question/delete/{id}": {
             "delete": {
                 "security": [
                     {
@@ -99,7 +99,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/question/new": {
+        "/api/v1/question/new": {
             "post": {
                 "security": [
                     {
@@ -135,7 +135,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/question/session": {
+        "/api/v1/question/session": {
             "get": {
                 "security": [
                     {
@@ -166,7 +166,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/question/session/start": {
+        "/api/v1/question/session/start": {
             "post": {
                 "security": [
                     {
@@ -191,7 +191,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/question/session/stop": {
+        "/api/v1/question/session/stop": {
             "post": {
                 "security": [
                     {
@@ -216,7 +216,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/question/update": {
+        "/api/v1/question/update": {
             "put": {
                 "security": [
                     {
@@ -255,7 +255,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/question/upvote/{id}": {
+        "/api/v1/question/upvote/{id}": {
             "put": {
                 "security": [
                     {
@@ -294,6 +294,114 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/api/v1/user/test/admin": {
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Gets a test user with admin role",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Gets a test user with admin role",
+                "parameters": [
+                    {
+                        "description": "User JSON",
+                        "name": "question",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dtos.NewTestUserDto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                }
+            }
+        },
+        "/api/v1/user/test/contributor": {
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Gets a test user without role",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Gets a test user without role",
+                "parameters": [
+                    {
+                        "description": "User JSON",
+                        "name": "question",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dtos.NewTestUserDto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                }
+            }
+        },
+        "/api/v1/user/test/sessionadmin": {
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Gets a test user with session admin role",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Gets a test user with session admin role",
+                "parameters": [
+                    {
+                        "description": "User JSON",
+                        "name": "question",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dtos.NewTestUserDto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -307,6 +415,21 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "text": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.NewTestUserDto": {
+            "type": "object",
+            "required": [
+                "firstname",
+                "lastname"
+            ],
+            "properties": {
+                "firstname": {
+                    "type": "string"
+                },
+                "lastname": {
                     "type": "string"
                 }
             }

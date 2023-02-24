@@ -8,6 +8,16 @@ definitions:
     required:
     - text
     type: object
+  dtos.NewTestUserDto:
+    properties:
+      firstname:
+        type: string
+      lastname:
+        type: string
+    required:
+    - firstname
+    - lastname
+    type: object
   dtos.QuestionDto:
     properties:
       anonymous:
@@ -46,7 +56,7 @@ info:
   title: CP Voting tool api
   version: "1.0"
 paths:
-  /question/answer/{id}:
+  /api/v1/question/answer/{id}:
     put:
       description: Answers a question of the current session
       parameters:
@@ -71,7 +81,7 @@ paths:
       summary: Answers a question
       tags:
       - Question
-  /question/delete/{id}:
+  /api/v1/question/delete/{id}:
     delete:
       description: Deletes an existing question of the current session, only owned
         questions can be updated
@@ -97,7 +107,7 @@ paths:
       summary: Deletes an existing question of the current session
       tags:
       - Question
-  /question/new:
+  /api/v1/question/new:
     post:
       description: Adds a new question to the current session
       parameters:
@@ -119,7 +129,7 @@ paths:
       summary: Adds a new question
       tags:
       - Question
-  /question/session:
+  /api/v1/question/session:
     get:
       description: Gets the questions of the current session
       produces:
@@ -138,7 +148,7 @@ paths:
       summary: Gets the questions of the current session
       tags:
       - Question
-  /question/session/start:
+  /api/v1/question/session/start:
     post:
       description: Starts a new questions session
       produces:
@@ -153,7 +163,7 @@ paths:
       summary: Starts a new questions session
       tags:
       - Question
-  /question/session/stop:
+  /api/v1/question/session/stop:
     post:
       description: Stops the current questions session
       produces:
@@ -168,7 +178,7 @@ paths:
       summary: Stops the current questions session
       tags:
       - Question
-  /question/update:
+  /api/v1/question/update:
     put:
       description: Updates an existing question of the current session, only owned
         questions can be updated
@@ -193,7 +203,7 @@ paths:
       summary: Updates an existing question of the current session
       tags:
       - Question
-  /question/upvote/{id}:
+  /api/v1/question/upvote/{id}:
     put:
       description: Upvotes a question of the current session
       parameters:
@@ -218,6 +228,72 @@ paths:
       summary: Upvotes a question
       tags:
       - Question
+  /api/v1/user/test/admin:
+    post:
+      description: Gets a test user with admin role
+      parameters:
+      - description: User JSON
+        in: body
+        name: question
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.NewTestUserDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not Found
+      security:
+      - JWT: []
+      summary: Gets a test user with admin role
+      tags:
+      - User
+  /api/v1/user/test/contributor:
+    post:
+      description: Gets a test user without role
+      parameters:
+      - description: User JSON
+        in: body
+        name: question
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.NewTestUserDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not Found
+      security:
+      - JWT: []
+      summary: Gets a test user without role
+      tags:
+      - User
+  /api/v1/user/test/sessionadmin:
+    post:
+      description: Gets a test user with session admin role
+      parameters:
+      - description: User JSON
+        in: body
+        name: question
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.NewTestUserDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not Found
+      security:
+      - JWT: []
+      summary: Gets a test user with session admin role
+      tags:
+      - User
 securityDefinitions:
   JWT:
     in: header
