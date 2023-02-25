@@ -1,6 +1,7 @@
 lockfileVersion: 5.4
 
 specifiers:
+  '@azure/msal-browser': ^2.33.0
   '@sveltejs/vite-plugin-svelte': ^2.0.2
   '@tsconfig/svelte': ^3.0.0
   svelte: ^3.55.1
@@ -8,6 +9,9 @@ specifiers:
   tslib: ^2.5.0
   typescript: ^4.9.3
   vite: ^4.1.0
+
+dependencies:
+  '@azure/msal-browser': 2.33.0
 
 devDependencies:
   '@sveltejs/vite-plugin-svelte': 2.0.3_svelte@3.55.1+vite@4.1.4
@@ -19,6 +23,18 @@ devDependencies:
   vite: 4.1.4
 
 packages:
+
+  /@azure/msal-browser/2.33.0:
+    resolution: {integrity: sha512-c7CVh1tfUfxiWkEIhoIb11hL4PGo4hz0M+gMy34ATagAKdLK7qyEu/5AXJWAf5lz5eE+vQhm7+LKiuETrcXXGw==}
+    engines: {node: '>=0.8.0'}
+    dependencies:
+      '@azure/msal-common': 10.0.0
+    dev: false
+
+  /@azure/msal-common/10.0.0:
+    resolution: {integrity: sha512-/LghpT93jsZLy55QzTsRZWMx6R1Mjc1Aktwps8sKSGE3WbrGwbSsh2uhDlpl6FMcKChYjJ0ochThWwwOodrQNg==}
+    engines: {node: '>=0.8.0'}
+    dev: false
 
   /@esbuild/android-arm/0.16.17:
     resolution: {integrity: sha512-N9x1CMXVhtWEAMS7pNNONyA14f71VPQN9Cnavj1XQh6T7bskqiLLrSca4O0Vr8Wdcga943eThxnVp3JLnBMYtw==}
