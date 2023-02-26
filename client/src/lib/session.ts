@@ -1,4 +1,5 @@
-import { writable } from "svelte/store"
+import { get, writable } from "svelte/store"
+import { idToken } from "./auth/auth"
 
 const apiBaseUrl = "http://localhost:3333"
 

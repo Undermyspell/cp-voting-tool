@@ -1,6 +1,7 @@
 import { get, writable, type Writable } from "svelte/store"
 import type { Question } from "../models/question"
 import { idToken } from "./auth/auth"
+import { activeSessison } from "./session"
 
 export const questions: Writable<Question[]> = writable([])
 export const sessionActive = writable(false)
@@ -12,13 +13,20 @@ export const getQuestions = async (eventSource: EventSource) => {
 		const data = JSON.parse(event.data)
 		questionAdded(data)
 	})
-	const repsonse = await fetch("http://localhost:3333/api/v1/question/session", {
-		headers: {
-			Authorization: `Bearer ${get(idToken)}`
+	try {
+		const repsonse = await fetch("http://localhost:3333/api/v1/question/session", {
+			headers: {
+				Authorization: `Bearer ${get(idToken)}`
+			}
+		})
+		if (repsonse.ok) {
+			activeSessison.set(true)
+			const data = await repsonse.json()
+			questions.set(data)
 		}
-	})
-	const data = await repsonse.json()
-	questions.set(data as Question[])
+	} catch (error) {
+		console.log(error)
+	}
 }
 
 const questionAdded = (question: Question) => {
