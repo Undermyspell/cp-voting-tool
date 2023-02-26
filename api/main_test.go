@@ -10,6 +10,7 @@ import (
 	"os"
 	"sse/dtos"
 	"sse/internal/mocks"
+	"sync"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -235,6 +236,36 @@ func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTACCEPTABLE_406_WHEN_VOT
 	upvoteQuestion(suite, w2, questionList[0].Id, token)
 
 	assert.Equal(suite.T(), http.StatusNotAcceptable, w2.Code)
+}
+
+func (suite *QuestionApiTestSuite) TestUpvoteQuestion_SAME_QUESTION_PARALLEL_100_SHOULD_RETURN_100() {
+	w := httptest.NewRecorder()
+	jsonData := dtos.NewQuestionDto{Text: "new question"}
+	postNewQuestion(suite, w, jsonData, suite.tokenUser_Bar)
+	questionList := getSession(suite, w, suite.tokenUser_Bar)
+	questionId := questionList[0].Id
+
+	suite.T().Run("Parallel_Question_Upvote", func(t *testing.T) {
+		var wg sync.WaitGroup
+		for i := 1; i <= 100; i++ {
+			wg.Add(1)
+			tokenUser := mocks.GetUserToken(fmt.Sprintf("User_%d", i), fmt.Sprintf("User_%d", i))
+			go func(tokenUser string, w *httptest.ResponseRecorder, questionId string) {
+				defer wg.Done()
+				req, _ := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/question/upvote/%s", suite.apiPrefix, questionId), nil)
+				req.Header.Set("Content-Type", "application/json")
+				req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tokenUser))
+				suite.router.ServeHTTP(w, req)
+			}(tokenUser, w, questionId)
+		}
+		wg.Wait()
+
+		w1 := httptest.NewRecorder()
+		questionList := getSession(suite, w1, suite.tokenUser_Bar)
+		question := questionList[0]
+
+		assert.Equal(suite.T(), 100, question.Votes)
+	})
 }
 
 func (suite *QuestionApiTestSuite) TestGetSession_OK_200_CREATOR_SHOWN_ONLY_FOR_OWNED_AND_NOT_ANONYMOUS_QUESTIONS() {
