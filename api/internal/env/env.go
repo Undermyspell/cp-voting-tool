@@ -20,5 +20,5 @@ func Init() {
 		UseMockJwks: viper.GetBool("USE_MOCK_JWKS"),
 	}
 
-	logrus.Infof("Found env var: %s", Env)
+	logrus.Infof("Found env var: %+v", Env)
 }

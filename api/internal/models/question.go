@@ -1,6 +1,8 @@
 package models
 
-import "sse/internal/helper"
+import (
+	"github.com/oklog/ulid/v2"
+)
 
 type Question struct {
 	Id        string `json:"id"`
@@ -13,7 +15,7 @@ type Question struct {
 
 func NewQuestion(text string, anonymous bool, creator UserContext) Question {
 	return Question{
-		Id:        helper.GetRandomId(),
+		Id:        ulid.Make().String(),
 		Text:      text,
 		Votes:     0,
 		Answered:  false,
