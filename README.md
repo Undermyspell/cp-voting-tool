@@ -1,9 +1,9 @@
 # Conplement Voting Tool
 This is the repository of the conplement voting tool used in employee meetings
 
-## Web Frontend (built with qwik) ⚡️
+## Web Frontend (built with svelte) ⚡️
 
-- [Qwik](https://qwik.builder.io/)
+- [Svelte](https://svelte.dev/)
 - [Vite](https://vitejs.dev/)
 
 ## Api Backend (built with go) ⚡️
