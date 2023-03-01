@@ -15,8 +15,8 @@ import (
 
 type BrokeredQuestionsService struct {
 	Broker    broker.Broker
-	Session   map[string]models.Question
-	UserVotes map[string]map[string]bool
+	Session   map[string]*models.Question
+	UserVotes *models.SafeUserVotes
 }
 
 // AddQuestion         godoc
@@ -315,7 +315,7 @@ func (service *BrokeredQuestionsService) GetSession(c *gin.Context) {
 		questions = append(questions, dtos.QuestionDto{
 			Id:        v.Id,
 			Text:      v.Text,
-			Votes:     v.Votes,
+			Votes:     v.Votes.Value(),
 			Answered:  v.Answered,
 			Anonymous: v.Anonymous,
 			Creator:   creator,
@@ -336,7 +336,7 @@ func (service *BrokeredQuestionsService) newQuestion(text string, anonymous bool
 
 	question := models.NewQuestion(text, anonymous, creator)
 	service.Session[question.Id] = question
-	return &question, nil
+	return question, nil
 }
 
 func (service *BrokeredQuestionsService) updateQuestion(question dtos.UpdateQuestionDto, creator models.UserContext) (*models.Question, *validation.ValidationError) {
@@ -365,8 +365,7 @@ func (service *BrokeredQuestionsService) updateQuestion(question dtos.UpdateQues
 	questionToUpdate.Text = question.Text
 	questionToUpdate.Anonymous = question.Anonymous
 
-	service.Session[questionToUpdate.Id] = questionToUpdate
-	return &questionToUpdate, nil
+	return questionToUpdate, nil
 }
 
 func (service *BrokeredQuestionsService) deleteQuestion(id string, creator models.UserContext) *validation.ValidationError {
@@ -406,6 +405,7 @@ func (service *BrokeredQuestionsService) upVote(id string, user models.UserConte
 	}
 
 	question, ok := service.Session[id]
+
 	if !ok {
 		return 0, &validation.ValidationError{
 			ValidationError: "question not found",
@@ -422,7 +422,7 @@ func (service *BrokeredQuestionsService) upVote(id string, user models.UserConte
 	}
 
 	hash := user.GetHash()
-	_, ok = service.UserVotes[hash][id]
+	_, ok = service.UserVotes.Value()[hash][id]
 
 	if ok {
 		return 0, &validation.ValidationError{
@@ -431,18 +431,10 @@ func (service *BrokeredQuestionsService) upVote(id string, user models.UserConte
 		}
 	}
 
-	_, ok = service.UserVotes[hash]
+	service.UserVotes.SetUserVote(hash, id)
+	question.Votes.Increment()
 
-	if !ok {
-		service.UserVotes[hash] = make(map[string]bool)
-	}
-
-	service.UserVotes[hash][id] = true
-
-	question.Votes++
-	service.Session[id] = question
-
-	return question.Votes, nil
+	return question.Votes.Value(), nil
 }
 
 func (service *BrokeredQuestionsService) answer(id string) *validation.ValidationError {
@@ -463,7 +455,6 @@ func (service *BrokeredQuestionsService) answer(id string) *validation.Validatio
 	}
 
 	question.Answered = true
-	service.Session[id] = question
 
 	return nil
 }
@@ -474,6 +465,6 @@ func (service *BrokeredQuestionsService) stop() {
 }
 
 func (service *BrokeredQuestionsService) start() {
-	service.UserVotes = make(map[string]map[string]bool)
-	service.Session = make(map[string]models.Question)
+	service.UserVotes = models.NewSafeUserVotes()
+	service.Session = make(map[string]*models.Question)
 }
