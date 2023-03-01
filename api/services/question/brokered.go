@@ -56,8 +56,10 @@ func (service *BrokeredQuestionsService) Add(c *gin.Context) {
 		Id        string
 		Text      string
 		Creator   string
+		Answered  bool
+		Votes     int
 		Anonymous bool
-	}{question.Id, question.Text, question.Creator.Name, question.Anonymous}
+	}{question.Id, question.Text, question.Creator.Name, question.Answered, question.Votes.Value(), question.Anonymous}
 
 	newQuestionByteString, _ := json.Marshal(newQuestionSseMessage)
 
