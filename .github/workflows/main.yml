@@ -3,14 +3,41 @@ on:
   push:
     branches:
       - main
-jobs:
-  docker:
+  workflow_dispatch:
+  
+jobs:   
+  test:
+    name: Test Go Api
+    runs-on: ubuntu-latest
+    container: 
+      image: golang:1.20-alpine
+      options: --user root
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        working-directory: api
+        run: go get .
+      - name: Test
+        working-directory: api
+        run: go test -v ./...
+    # steps:
+        # - uses: actions/checkout@v3
+        # - name: Set up Go
+        #   uses: actions/setup-go@v3
+        #   with:
+        #     go-version: 1.20
+        # - name: Install dependencies
+        #   working-directory: api
+        #   run: go get .
+        # - name: Test
+        #   working-directory: api
+        #   run: go test -v ./...
+  build:
     name: Build Go Api
     runs-on: ubuntu-latest
+    needs: ['test']
     steps:
-        -
-          name: Checkout
-          uses: actions/checkout@v3
+        - uses: actions/checkout@v3
         -
           name: Set up QEMU
           uses: docker/setup-qemu-action@v2
