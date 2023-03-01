@@ -1,14 +1,28 @@
 import { get, writable } from "svelte/store"
+import { postRequest } from "./api"
 import { idToken } from "./auth/auth"
-
-const apiBaseUrl = "http://localhost:3333"
 
 export const activeSessison = writable(false)
 
-export const startSession = () => {
-	activeSessison.set(true)
+export const startSession = async () => {
+	try {
+		const repsonse = await postRequest({path: "/question/session/start"})
+
+		if (repsonse.ok) {
+			activeSessison.set(true)
+		}
+	} catch (error) {
+		console.log(error)
+	}
 }
 
-export const stopSession = () => {
-	activeSessison.set(false)
+export const stopSession = async () => {
+	try {
+		const repsonse = await postRequest({path: "/question/session/stop"})
+		if (repsonse.ok) {
+			activeSessison.set(false)
+		}
+	} catch (error) {
+		console.log(error)
+	}
 }

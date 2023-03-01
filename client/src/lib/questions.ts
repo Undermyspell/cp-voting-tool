@@ -1,5 +1,6 @@
 import { get, writable, type Writable } from "svelte/store"
 import type { Question } from "../models/question"
+import { getRequest, postRequest } from "./api"
 import { idToken } from "./auth/auth"
 import { activeSessison } from "./session"
 
@@ -26,33 +27,35 @@ export const getQuestions = async () => {
 		})
 	}
 	try {
-		const repsonse = await fetch("http://localhost:3333/api/v1/question/session", {
-			headers: {
-				Authorization: `Bearer ${get(idToken)}`
-			}
-		})
+		const repsonse = await getRequest({path: "/question/session"})
 		if (repsonse.ok) {
 			activeSessison.set(true)
 			const data = await repsonse.json()
 			data.forEach((question) => {
 				questionMap.set(question.Id, question)
 			})
-			questions.set([...questionMap.values()].sort((a, b) => b.Votes - a.Votes))
+			sortAndUpdateQuestions()
 		}
 	} catch (error) {
 		console.log(error)
 	}
 }
 
+export const postQuestion = async (questionText) => {
+	await postRequest({path: "/question/new", body: JSON.stringify({anonymous: true, text: questionText})})
+}
+
 const questionAdded = (question: Question) => {
-	questions.update((questions) => {
-		questionMap.set(question.Id, question)
-		return [...questionMap.values()].sort((a, b) => a.Votes - b.Votes)
-	})
+	questionMap.set(question.Id, question)
+	sortAndUpdateQuestions()
 }
 
 const questionVoted = (payload: { Id: string; Votes: number }) => {
 	const votedQuestion = questionMap.get(payload.Id)
 	questionMap.set(payload.Id, Object.assign({}, votedQuestion, { Votes: payload.Votes }))
-	questions.set([...questionMap.values()].sort((a, b) => a.Votes - b.Votes))
+	sortAndUpdateQuestions()
+}
+
+const sortAndUpdateQuestions = () => {
+	questions.set([...questionMap.values()].sort((a, b) => b.Votes - a.Votes))
 }

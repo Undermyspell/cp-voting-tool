@@ -1,31 +1,23 @@
 <script lang="ts">
   import svelteLogo from "./assets/svelte.svg";
   import { authenticate } from "./lib/auth/auth";
-  import Questions from "./Questions.svelte";
+  import Questions from "./components/Questions.svelte";
+  import Session from "./components/Session.svelte";
 </script>
 
 {#await authenticate()}
   <div>logging in</div>
 {:then _}
   <main>
-    <Questions />
+    <Session />
+    <div class="questions">
+      <Questions />
+    </div>
   </main>
 {/await}
 
 <style>
-  .logo {
-    height: 6em;
-    padding: 1.5em;
-    will-change: filter;
-    transition: filter 300ms;
-  }
-  .logo:hover {
-    filter: drop-shadow(0 0 2em #646cffaa);
-  }
-  .logo.svelte:hover {
-    filter: drop-shadow(0 0 2em #ff3e00aa);
-  }
-  .read-the-docs {
-    color: #888;
+  .questions {
+    margin-top: 4rem;
   }
 </style>
