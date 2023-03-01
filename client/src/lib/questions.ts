@@ -1,6 +1,6 @@
 import { get, writable, type Writable } from "svelte/store"
 import type { Question } from "../models/question"
-import { getRequest, postRequest } from "./api"
+import { getRequest, postRequest, putRequest } from "./api"
 import { idToken } from "./auth/auth"
 import { activeSessison } from "./session"
 
@@ -43,6 +43,10 @@ export const getQuestions = async () => {
 
 export const postQuestion = async (questionText) => {
 	await postRequest({path: "/question/new", body: JSON.stringify({anonymous: true, text: questionText})})
+}
+
+export const voteQuestion = async (questionId) => {
+	await putRequest({path: `/question/upvote/${questionId}`})
 }
 
 const questionAdded = (question: Question) => {

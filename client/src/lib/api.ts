@@ -34,3 +34,17 @@ export const postRequest = async ({path, body}: RequestData) => {
 		console.log(error)
 	}
 }
+
+
+export const putRequest = async ({path}: RequestData) => {
+    try {
+		return await fetch(`${baseUrl}${path}`, {
+			method: 'PUT',
+			headers: {
+                Authorization: `Bearer ${get(idToken)}`
+            },
+		})
+	} catch (error) {
+		console.log(error)
+	}
+}
