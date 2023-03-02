@@ -47,4 +47,4 @@ jobs:
             context: ./api
             push: true
             platforms: linux/amd64
-            tags: hoodini/cpvotingtool:${{ env.TODAY }}.${{ github.run_number }}
+            tags: hoodini/cpvotingtool:${{ env.TODAY }}.${{ github.run_number }}, hoodini/cpvotingtool:latest
