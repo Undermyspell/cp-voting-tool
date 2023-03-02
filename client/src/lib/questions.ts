@@ -25,9 +25,21 @@ export const getQuestions = async () => {
 			const data = JSON.parse(event.data)
 			questionVoted(data)
 		})
+		eventSource.addEventListener("update_question", (event) => {
+			const data = JSON.parse(event.data)
+			questionEdited(data)
+		})
+		eventSource.addEventListener("delete_question", (event) => {
+			const data = JSON.parse(event.data)
+			questionDeleted(data)
+		})
+		eventSource.addEventListener("answer_question", (event) => {
+			const data = JSON.parse(event.data)
+			questionAnswered(data)
+		})
 	}
 	try {
-		const repsonse = await getRequest({path: "/question/session"})
+		const repsonse = await getRequest({ path: "/question/session" })
 		if (repsonse.ok) {
 			activeSessison.set(true)
 			const data = await repsonse.json()
@@ -42,11 +54,11 @@ export const getQuestions = async () => {
 }
 
 export const postQuestion = async (questionText) => {
-	await postRequest({path: "/question/new", body: JSON.stringify({anonymous: true, text: questionText})})
+	await postRequest({ path: "/question/new", body: JSON.stringify({ anonymous: true, text: questionText }) })
 }
 
 export const voteQuestion = async (questionId) => {
-	await putRequest({path: `/question/upvote/${questionId}`})
+	await putRequest({ path: `/question/upvote/${questionId}` })
 }
 
 const questionAdded = (question: Question) => {
@@ -54,9 +66,26 @@ const questionAdded = (question: Question) => {
 	sortAndUpdateQuestions()
 }
 
+const questionDeleted = (payload: { Id: string }) => {
+	questionMap.delete(payload.Id)
+	sortAndUpdateQuestions()
+}
+
 const questionVoted = (payload: { Id: string; Votes: number }) => {
 	const votedQuestion = questionMap.get(payload.Id)
 	questionMap.set(payload.Id, Object.assign({}, votedQuestion, { Votes: payload.Votes }))
+	sortAndUpdateQuestions()
+}
+
+const questionEdited = (payload: { Id: string; Text: string; Creator: string; Anonymous: boolean }) => {
+	const editedQuestion = questionMap.get(payload.Id)
+	questionMap.set(payload.Id, Object.assign({}, editedQuestion, { ...payload }))
+	sortAndUpdateQuestions()
+}
+
+const questionAnswered = (payload: { Id: string }) => {
+	const editedQuestion = questionMap.get(payload.Id)
+	questionMap.set(payload.Id, Object.assign({}, editedQuestion, { Answered: true }))
 	sortAndUpdateQuestions()
 }
 

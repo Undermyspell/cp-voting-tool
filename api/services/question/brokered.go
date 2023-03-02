@@ -71,7 +71,7 @@ func (service *BrokeredQuestionsService) Add(c *gin.Context) {
 	service.Broker.Notify(event)
 }
 
-// AddQuestion         godoc
+// UpdateQuestion         godoc
 // @Security 	 JWT
 // @Summary      Updates an existing question of the current session
 // @Description  Updates an existing question of the current session, only owned questions can be updated
