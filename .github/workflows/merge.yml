@@ -1,0 +1,21 @@
+name: PR Merge
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, reopened] 
+jobs:   
+  test:
+    name: Test Go Api
+    runs-on: ubuntu-latest
+    container: 
+      image: golang:1.20-alpine
+      options: --user root
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        working-directory: api
+        run: go get .
+      - name: Test
+        working-directory: api
+        run: go test -v ./...
