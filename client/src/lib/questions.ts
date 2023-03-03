@@ -1,22 +1,14 @@
 import { get, writable, type Writable } from "svelte/store"
 import type { Question } from "../models/question"
-import { getRequest, postRequest, putRequest } from "./api"
-import { idToken } from "./auth/auth"
+import { deleteRequest, getRequest, postRequest, putRequest } from "./api"
+import { eventSource } from "./eventsource"
 import { activeSessison } from "./session"
 
 export const questions: Writable<Question[]> = writable([])
 export const sessionActive = writable(false)
-let eventSource: EventSource | null = null
-const questionMap = new Map<string, Question>()
 
-export const getQuestions = async () => {
-	if (eventSource === null) {
-		eventSource = new EventSource("http://localhost:3333/api/v1/events", {
-			headers: {
-				Authorization: `Bearer ${get(idToken)}`
-			}
-		} as any)
-
+const unsub = eventSource.subscribe((eventSource) => {
+	if (eventSource) {
 		eventSource.addEventListener("new_question", (event) => {
 			const data = JSON.parse(event.data)
 			questionAdded(data)
@@ -38,6 +30,11 @@ export const getQuestions = async () => {
 			questionAnswered(data)
 		})
 	}
+})
+
+const questionMap = new Map<string, Question>()
+
+export const getQuestions = async () => {
 	try {
 		const repsonse = await getRequest({ path: "/question/session" })
 		if (repsonse.ok) {
@@ -57,8 +54,20 @@ export const postQuestion = async (questionText) => {
 	await postRequest({ path: "/question/new", body: JSON.stringify({ anonymous: true, text: questionText }) })
 }
 
+export const updateQuestion = async (payload: { Id: string; Anonymous: boolean; Text: string }) => {
+	await postRequest({ path: "/question/update", body: JSON.stringify(payload) })
+}
+
 export const voteQuestion = async (questionId) => {
 	await putRequest({ path: `/question/upvote/${questionId}` })
+}
+
+export const answerQuestion = async (questionId) => {
+	await putRequest({ path: `/question/answer/${questionId}` })
+}
+
+export const deleteQuestion = async (questionId) => {
+	await deleteRequest({ path: `/question/delete/${questionId}` })
 }
 
 const questionAdded = (question: Question) => {

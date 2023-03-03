@@ -1,9 +1,10 @@
 import { writable } from "svelte/store"
 import { loginRequest, msalConfig } from "./auth.config"
 import { PublicClientApplication, InteractionRequiredAuthError, type AuthenticationResult } from "@azure/msal-browser"
+import { initEventSource } from "../eventsource"
 
 const msalInstance = new PublicClientApplication(msalConfig)
-const refreshInterval = 60 * 1000 * 50
+const refreshInterval = 60 * 1000 * 15
 
 export const idToken = writable(null)
 export const user = writable(null)
@@ -11,6 +12,7 @@ export const user = writable(null)
 const refreshToken = async () => {
 	const refreshResult: AuthenticationResult = await msalInstance.acquireTokenSilent({ scopes: ["User.Read"] })
 	idToken.set(refreshResult.idToken)
+	initEventSource()
 }
 
 export const authenticate = async () => {
@@ -25,6 +27,7 @@ export const authenticate = async () => {
 			})
 			idToken.set(response.idToken)
 			user.set(response.account)
+			initEventSource()
 			setInterval(refreshToken, refreshInterval)
 		}
 	} catch (error) {
