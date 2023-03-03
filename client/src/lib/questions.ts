@@ -1,22 +1,14 @@
 import { get, writable, type Writable } from "svelte/store"
 import type { Question } from "../models/question"
-import { getRequest, postRequest, putRequest } from "./api"
-import { idToken } from "./auth/auth"
+import { deleteRequest, getRequest, postRequest, putRequest } from "./api"
+import { eventSource } from "./eventsource"
 import { activeSessison } from "./session"
 
 export const questions: Writable<Question[]> = writable([])
 export const sessionActive = writable(false)
-let eventSource: EventSource | null = null
-const questionMap = new Map<string, Question>()
 
-export const getQuestions = async () => {
-	if (eventSource === null) {
-		eventSource = new EventSource("http://localhost:3333/api/v1/events", {
-			headers: {
-				Authorization: `Bearer ${get(idToken)}`
-			}
-		} as any)
-
+const unsub = eventSource.subscribe((eventSource) => {
+	if (eventSource) {
 		eventSource.addEventListener("new_question", (event) => {
 			const data = JSON.parse(event.data)
 			questionAdded(data)
@@ -25,9 +17,26 @@ export const getQuestions = async () => {
 			const data = JSON.parse(event.data)
 			questionVoted(data)
 		})
+		eventSource.addEventListener("update_question", (event) => {
+			const data = JSON.parse(event.data)
+			questionEdited(data)
+		})
+		eventSource.addEventListener("delete_question", (event) => {
+			const data = JSON.parse(event.data)
+			questionDeleted(data)
+		})
+		eventSource.addEventListener("answer_question", (event) => {
+			const data = JSON.parse(event.data)
+			questionAnswered(data)
+		})
 	}
+})
+
+const questionMap = new Map<string, Question>()
+
+export const getQuestions = async () => {
 	try {
-		const repsonse = await getRequest({path: "/question/session"})
+		const repsonse = await getRequest({ path: "/question/session" })
 		if (repsonse.ok) {
 			activeSessison.set(true)
 			const data = await repsonse.json()
@@ -42,11 +51,23 @@ export const getQuestions = async () => {
 }
 
 export const postQuestion = async (questionText) => {
-	await postRequest({path: "/question/new", body: JSON.stringify({anonymous: true, text: questionText})})
+	await postRequest({ path: "/question/new", body: JSON.stringify({ anonymous: true, text: questionText }) })
+}
+
+export const updateQuestion = async (payload: { Id: string; Anonymous: boolean; Text: string }) => {
+	await postRequest({ path: "/question/update", body: JSON.stringify(payload) })
 }
 
 export const voteQuestion = async (questionId) => {
-	await putRequest({path: `/question/upvote/${questionId}`})
+	await putRequest({ path: `/question/upvote/${questionId}` })
+}
+
+export const answerQuestion = async (questionId) => {
+	await putRequest({ path: `/question/answer/${questionId}` })
+}
+
+export const deleteQuestion = async (questionId) => {
+	await deleteRequest({ path: `/question/delete/${questionId}` })
 }
 
 const questionAdded = (question: Question) => {
@@ -54,9 +75,26 @@ const questionAdded = (question: Question) => {
 	sortAndUpdateQuestions()
 }
 
+const questionDeleted = (payload: { Id: string }) => {
+	questionMap.delete(payload.Id)
+	sortAndUpdateQuestions()
+}
+
 const questionVoted = (payload: { Id: string; Votes: number }) => {
 	const votedQuestion = questionMap.get(payload.Id)
 	questionMap.set(payload.Id, Object.assign({}, votedQuestion, { Votes: payload.Votes }))
+	sortAndUpdateQuestions()
+}
+
+const questionEdited = (payload: { Id: string; Text: string; Creator: string; Anonymous: boolean }) => {
+	const editedQuestion = questionMap.get(payload.Id)
+	questionMap.set(payload.Id, Object.assign({}, editedQuestion, { ...payload }))
+	sortAndUpdateQuestions()
+}
+
+const questionAnswered = (payload: { Id: string }) => {
+	const editedQuestion = questionMap.get(payload.Id)
+	questionMap.set(payload.Id, Object.assign({}, editedQuestion, { Answered: true }))
 	sortAndUpdateQuestions()
 }
 
