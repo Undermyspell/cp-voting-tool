@@ -1,6 +1,8 @@
 package models
 
 import (
+	"crypto/hmac"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"hash/fnv"
@@ -13,12 +15,11 @@ type UserContext struct {
 	Role  roles.Role
 }
 
-func (userContext *UserContext) GetHash() string {
+func (userContext *UserContext) GetHash(secret string) string {
+	h := hmac.New(fnv.New128a, []byte(secret))
 	marshalled, _ := json.Marshal(userContext)
-
-	algorithm := fnv.New32a()
-	algorithm.Write(marshalled)
-	hash := algorithm.Sum32()
+	h.Write(marshalled)
+	hash := hex.EncodeToString(h.Sum(nil))
 	return fmt.Sprint(hash)
 }
 
