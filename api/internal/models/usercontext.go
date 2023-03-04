@@ -5,8 +5,9 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"hash/fnv"
 	"sse/internal/models/roles"
+
+	"golang.org/x/crypto/sha3"
 )
 
 type UserContext struct {
@@ -16,7 +17,7 @@ type UserContext struct {
 }
 
 func (userContext *UserContext) GetHash(secret string) string {
-	h := hmac.New(fnv.New128a, []byte(secret))
+	h := hmac.New(sha3.New256, []byte(secret))
 	marshalled, _ := json.Marshal(userContext)
 	h.Write(marshalled)
 	hash := hex.EncodeToString(h.Sum(nil))
