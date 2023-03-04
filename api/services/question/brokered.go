@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"sse/dtos"
 	"sse/internal/broker"
+	"sse/internal/helper"
 	"sse/internal/models"
 	"sse/internal/sse"
 	"sse/internal/validation"
@@ -14,9 +15,10 @@ import (
 )
 
 type BrokeredQuestionsService struct {
-	Broker    broker.Broker
-	Session   map[string]*models.Question
-	UserVotes *models.SafeUserVotes
+	Broker        broker.Broker
+	Session       map[string]*models.Question
+	UserVotes     *models.SafeUserVotes
+	SessionSecret string
 }
 
 // AddQuestion         godoc
@@ -423,7 +425,7 @@ func (service *BrokeredQuestionsService) upVote(id string, user models.UserConte
 		}
 	}
 
-	hash := user.GetHash()
+	hash := user.GetHash(service.SessionSecret)
 	_, ok = service.UserVotes.Value()[hash][id]
 
 	if ok {
@@ -464,9 +466,11 @@ func (service *BrokeredQuestionsService) answer(id string) *validation.Validatio
 func (service *BrokeredQuestionsService) stop() {
 	service.UserVotes = nil
 	service.Session = nil
+	service.SessionSecret = ""
 }
 
 func (service *BrokeredQuestionsService) start() {
 	service.UserVotes = models.NewSafeUserVotes()
 	service.Session = make(map[string]*models.Question)
+	service.SessionSecret = helper.GetRandomId()
 }
