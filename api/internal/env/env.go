@@ -1,12 +1,17 @@
 package env
 
 import (
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+)
+
+const (
+	USE_MOCK_JWKS string = "USE_MOCK_JWKS"
+	JWKS_URL      string = "JWKS_URL"
 )
 
 type EnvConfig struct {
 	UseMockJwks bool
+	JwksUrl     string
 }
 
 var Env EnvConfig
@@ -17,8 +22,7 @@ func Init() {
 	viper.ReadInConfig()
 
 	Env = EnvConfig{
-		UseMockJwks: viper.GetBool("USE_MOCK_JWKS"),
+		UseMockJwks: viper.GetBool(USE_MOCK_JWKS),
+		JwksUrl:     viper.GetString(JWKS_URL),
 	}
-
-	logrus.Infof("Found env var: %+v", Env)
 }

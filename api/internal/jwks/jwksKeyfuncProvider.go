@@ -2,6 +2,8 @@ package jwks
 
 import (
 	"context"
+	"fmt"
+	"sse/internal/env"
 	"time"
 
 	"github.com/MicahParks/keyfunc"
@@ -18,7 +20,8 @@ func (provider *JwksKeyfuncProvider) GetKeyFunc() func(token *jwt.Token) (interf
 }
 
 func Init() *JwksKeyfuncProvider {
-	jwksURL := "https://login.microsoftonline.com/ff930651-2670-491e-9a70-7847e7fbf8b7/discovery/v2.0/keys"
+	jwksURL := env.Env.JwksUrl
+	fmt.Print(jwksURL)
 
 	options := keyfunc.Options{
 		Ctx: context.TODO(),
