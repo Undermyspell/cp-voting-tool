@@ -1,0 +1,14 @@
+name: CD Deploy
+on:
+  workflow_dispatch:
+  
+jobs:   
+  build:
+    name: Deploy Go Api
+    runs-on: ubuntu-latest
+    steps:
+        - uses: azure/webapps-deploy@v2
+          with:
+            app-name: 'cp-voting-tool-api'
+            publish-profile: ${{ secrets.AZURE_WEB_APP_API_PUBLISH_PROFILE }}
+            images: 'hoodini/cpvotingtool:latest'
