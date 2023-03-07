@@ -7,17 +7,21 @@ jobs:
     name: Deploy Go Api
     runs-on: ubuntu-latest
     steps:
+        - name: Set short commit as buildtag env variable
+          run: echo "BUILDTAG=${GITHUB_SHA::7}" >> $GITHUB_ENV
         - uses: azure/webapps-deploy@v2
           with:
             app-name: 'cp-voting-tool-api'
             publish-profile: ${{ secrets.AZURE_WEB_APP_API_PUBLISH_PROFILE }}
-            images: '${{ secrets.ACR_SERVER }}/cpvt-api:latest'
+            images: '${{ secrets.ACR_SERVER }}/cpvt-api:${{ env.BUILDTAG}}'
   deploy_web:
     name: Deploy Svelte Web app
     runs-on: ubuntu-latest
     steps:
+        - name: Set short commit as buildtag env variable
+          run: echo "BUILDTAG=${GITHUB_SHA::7}" >> $GITHUB_ENV
         - uses: azure/webapps-deploy@v2
           with:
             app-name: 'cp-voting-tool-web'
             publish-profile: ${{ secrets.AZURE_WEB_APP_WEB_PUBLISH_PROFILE }}
-            images: '${{ secrets.ACR_SERVER }}/cpvt-web:latest'
+            images: '${{ secrets.ACR_SERVER }}/cpvt-web:${{ env.BUILDTAG}}'
