@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   
 jobs:   
-  build:
+  deploy_api:
     name: Deploy Go Api
     runs-on: ubuntu-latest
     steps:
@@ -11,4 +11,13 @@ jobs:
           with:
             app-name: 'cp-voting-tool-api'
             publish-profile: ${{ secrets.AZURE_WEB_APP_API_PUBLISH_PROFILE }}
-            images: 'hoodini/cpvotingtool:latest'
+            images: 'hoodini/cpvt-api:latest'
+  deploy_web:
+    name: Deploy Svelte Web app
+    runs-on: ubuntu-latest
+    steps:
+        - uses: azure/webapps-deploy@v2
+          with:
+            app-name: 'cp-voting-tool-web'
+            publish-profile: ${{ secrets.AZURE_WEB_APP_WEB_PUBLISH_PROFILE }}
+            images: 'hoodini/cpvt-web:latest'
