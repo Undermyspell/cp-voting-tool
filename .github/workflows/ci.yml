@@ -61,4 +61,4 @@ jobs:
             context: ./client
             push: true
             platforms: linux/amd64
-            tags: ${{ secrets.ACR_SERVER }}/cpvt-web:${{ env.TODAY }}.${{ github.run_number }}, ${{ secrets.ACR_SERVER }}/cpvt-api:latest
+            tags: ${{ secrets.ACR_SERVER }}/cpvt-web:${{ env.TODAY }}.${{ github.run_number }}, ${{ secrets.ACR_SERVER }}/cpvt-web:latest
