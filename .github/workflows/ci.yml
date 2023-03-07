@@ -10,6 +10,8 @@ jobs:
     name: Build Go Api
     runs-on: ubuntu-latest
     steps:
+        - name: Set short commit as buildtag env variable
+          run: echo "BUILDTAG=${GITHUB_SHA::7}" >> $GITHUB_ENV
         - uses: actions/checkout@v3
         -
           name: Set up QEMU
@@ -31,11 +33,13 @@ jobs:
             context: ./api
             push: true
             platforms: linux/amd64
-            tags: ${{ secrets.ACR_SERVER }}/cpvt-api:$GITHUB_SHA, ${{ secrets.ACR_SERVER }}/cpvt-api:latest
+            tags: ${{ secrets.ACR_SERVER }}/cpvt-api:${{ env.BUILDTAG }}, ${{ secrets.ACR_SERVER }}/cpvt-api:latest
   build_web:
     name: Build Svelte Web App
     runs-on: ubuntu-latest
     steps:
+        - name: Set short commit as buildtag env variable
+          run: echo "BUILDTAG=${GITHUB_SHA::7}" >> $GITHUB_ENV
         - uses: actions/checkout@v3
         -
           name: Set up QEMU
@@ -57,4 +61,4 @@ jobs:
             context: ./client
             push: true
             platforms: linux/amd64
-            tags: ${{ secrets.ACR_SERVER }}/cpvt-web:$GITHUB_SHA, ${{ secrets.ACR_SERVER }}/cpvt-web:latest
+            tags: ${{ secrets.ACR_SERVER }}/cpvt-web:${{ env.BUILDTAG }}, ${{ secrets.ACR_SERVER }}/cpvt-web:latest
