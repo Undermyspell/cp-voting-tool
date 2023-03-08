@@ -50,12 +50,16 @@ export const getQuestions = async () => {
 	}
 }
 
+export function getQuestion(id: string) {
+	return questionMap.get(id)
+}
+
 export const postQuestion = async (questionText) => {
 	await postRequest({ path: "/question/new", body: JSON.stringify({ anonymous: true, text: questionText }) })
 }
 
 export const updateQuestion = async (payload: { Id: string; Anonymous: boolean; Text: string }) => {
-	await postRequest({ path: "/question/update", body: JSON.stringify(payload) })
+	await putRequest({ path: "/question/update", body: JSON.stringify({ id: payload.Id, text: payload.Text, anonymous: payload.Anonymous }) })
 }
 
 export const voteQuestion = async (questionId) => {
