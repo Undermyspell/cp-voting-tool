@@ -6,7 +6,7 @@ export interface RequestData {
 	body?: any
 }
 
-const baseUrl = "http://localhost:3333/api/v1"
+const baseUrl = `${import.meta.env.VITE_API_BASE_URL}/api/v1`
 
 export const getRequest = async ({ path }: RequestData) => {
 	try {

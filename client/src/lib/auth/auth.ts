@@ -9,7 +9,7 @@ const refreshInterval = 60 * 1000 * 15
 export const idToken = writable(null)
 export const user = writable(null)
 
-const refreshToken = async () => {
+export const refreshToken = async () => {
 	const refreshResult: AuthenticationResult = await msalInstance.acquireTokenSilent({ scopes: ["User.Read"] })
 	idToken.set(refreshResult.idToken)
 	initEventSource()
