@@ -21,32 +21,83 @@
 </script>
 
 <div class="container" class:complete={question.Answered}>
-    <div>{question.Text}</div>
-    <div>{question.Id}</div>
-    <div>Votes: {question.Votes}</div>
-    <div>{question.Owned}</div>
-    <button on:click={() => voteQuestion(question.Id)}>Voten</button>
-    <button on:click={() => edit()}> Bearbeiten </button>
-    {#if isAdmin || isSessionAdmin}
-        <button on:click={() => answerQuestion(question.Id)}>Beantwortet</button
-        >
-    {/if}
-    {#if isAdmin || isSessionAdmin || question.Owned}
-        <button on:click={() => deleteQuestion(question.Id)}>Löschen</button>
-    {/if}
+    <button on:click={() => voteQuestion(question.Id)} class="votingbubble">
+        <div class="arrow-up" />
+        <div class="votes">{question.Votes}</div>
+    </button>
+    <div class="content">
+        <div class="questiontext">{question.Text}</div>
+        <div class="action-panel">
+            <button on:click={() => edit()}> Bearbeiten </button>
+            {#if isAdmin || isSessionAdmin}
+                <button on:click={() => answerQuestion(question.Id)}
+                    >Beantwortet</button
+                >
+            {/if}
+            {#if isAdmin || isSessionAdmin || question.Owned}
+                <button on:click={() => deleteQuestion(question.Id)}
+                    >Löschen</button
+                >
+            {/if}
+        </div>
+    </div>
 </div>
 
 <style>
     .container {
         display: flex;
         gap: 16px;
-        padding: 16px;
+        padding: 8px;
         background-color: #343434;
         color: #fcfcfc;
         box-shadow: var(--shadow-medium);
         border-radius: 0.5rem;
-        justify-content: flex-end;
         place-items: center;
+    }
+
+    .content {
+        width: 100%;
+    }
+
+    .arrow-up {
+        width: 0;
+        height: 0;
+        border-left: 8px solid transparent;
+        border-right: 8px solid transparent;
+
+        border-bottom: 8px solid white;
+    }
+
+    .votingbubble {
+        display: flex;
+        cursor: pointer;
+        border-radius: 4px;
+        width: 2.5rem;
+        align-items: center;
+        border: 1px solid gray;
+        flex-direction: column;
+        padding: 8px;
+    }
+
+    .action-panel {
+        display: flex;
+        justify-content: end;
+        gap: 8px;
+    }
+
+    .votingbubble:hover {
+        background-color: #444;
+    }
+
+    .questiontext {
+        display: block;
+        text-align: left;
+        width: 100%;
+        margin-bottom: 8px;
+    }
+
+    .votes {
+        font-size: 1.5rem;
     }
 
     .complete {
