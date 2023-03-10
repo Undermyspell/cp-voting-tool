@@ -1,11 +1,11 @@
 import { writable } from "svelte/store"
 import { postRequest } from "./api"
 import { eventSource } from "./eventsource"
+import { clearQuestions } from "./questions"
 
 export const activeSessison = writable(false)
 
 const unsub = eventSource.subscribe((eventSource) => {
-	console.log(eventSource)
 	if (eventSource) {
 		eventSource.addEventListener("start_session", (event) => {
 			activeSessison.set(true)
@@ -27,6 +27,7 @@ export const startSession = async () => {
 export const stopSession = async () => {
 	try {
 		const repsonse = await postRequest({ path: "/question/session/stop" })
+		clearQuestions()
 	} catch (error) {
 		console.log(error)
 	}

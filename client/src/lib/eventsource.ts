@@ -10,10 +10,7 @@ export const initEventSource = () => {
 		}
 	} as any)
 	source.addEventListener("error", (event: any) => {
-		console.log(event)
 		if (event.status === 401) {
-			console.log("refresh eventsource")
-
 			refreshToken()
 		}
 	})

@@ -1,6 +1,6 @@
 <script lang="ts">
   import svelteLogo from "./assets/svelte.svg";
-  import { authenticate } from "./lib/auth/auth";
+  import { authenticate, isAdmin } from "./lib/auth/auth";
   import Questions from "./components/Questions.svelte";
   import Session from "./components/Session.svelte";
 </script>
@@ -9,7 +9,9 @@
   <div>logging in</div>
 {:then _}
   <main>
-    <Session />
+    {#if isAdmin}
+      <Session />
+    {/if}
     <div class="questions">
       <Questions />
     </div>

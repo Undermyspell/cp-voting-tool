@@ -40,6 +40,7 @@ export const getQuestions = async () => {
 		if (repsonse.ok) {
 			activeSessison.set(true)
 			const data = await repsonse.json()
+			console.log(data)
 			data.forEach((question) => {
 				questionMap.set(question.Id, question)
 			})
@@ -52,6 +53,11 @@ export const getQuestions = async () => {
 
 export function getQuestion(id: string) {
 	return questionMap.get(id)
+}
+
+export function clearQuestions() {
+	questionMap.clear()
+	sortAndUpdateQuestions()
 }
 
 export const postQuestion = async (questionText) => {

@@ -1,5 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
+    import { isAdmin, isSessionAdmin } from "../lib/auth/auth";
     import {
         answerQuestion,
         deleteQuestion,
@@ -23,10 +24,16 @@
     <div>{question.Text}</div>
     <div>{question.Id}</div>
     <div>Votes: {question.Votes}</div>
-    <button on:click={() => voteQuestion(question.Id)}>UpVote</button>
-    <button on:click={() => edit()}> bearbeiten </button>
-    <button on:click={() => answerQuestion(question.Id)}>Answered</button>
-    <button on:click={() => deleteQuestion(question.Id)}>Delete</button>
+    <div>{question.Owned}</div>
+    <button on:click={() => voteQuestion(question.Id)}>Voten</button>
+    <button on:click={() => edit()}> Bearbeiten </button>
+    {#if isAdmin || isSessionAdmin}
+        <button on:click={() => answerQuestion(question.Id)}>Beantwortet</button
+        >
+    {/if}
+    {#if isAdmin || isSessionAdmin || question.Owned}
+        <button on:click={() => deleteQuestion(question.Id)}>Löschen</button>
+    {/if}
 </div>
 
 <style>
@@ -34,7 +41,7 @@
         display: flex;
         gap: 16px;
         padding: 16px;
-        background-color: #242424;
+        background-color: #343434;
         color: #fcfcfc;
         box-shadow: var(--shadow-medium);
         border-radius: 0.5rem;

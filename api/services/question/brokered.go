@@ -54,14 +54,17 @@ func (service *BrokeredQuestionsService) Add(c *gin.Context) {
 		return
 	}
 
+	owned := question.Creator.Email == userContext.Email
+
 	newQuestionSseMessage := struct {
 		Id        string
 		Text      string
 		Creator   string
 		Answered  bool
+		Owned     bool
 		Votes     int
 		Anonymous bool
-	}{question.Id, question.Text, question.Creator.Name, question.Answered, question.Votes.Value(), question.Anonymous}
+	}{question.Id, question.Text, question.Creator.Name, question.Answered, owned, question.Votes.Value(), question.Anonymous}
 
 	newQuestionByteString, _ := json.Marshal(newQuestionSseMessage)
 
