@@ -28,7 +28,9 @@
     <div class="content">
         <div class="questiontext">{question.Text}</div>
         <div class="action-panel">
-            <button on:click={() => edit()}> Bearbeiten </button>
+            {#if isAdmin || isSessionAdmin || question.Owned}
+                <button on:click={() => edit()}> Bearbeiten </button>
+            {/if}
             {#if isAdmin || isSessionAdmin}
                 <button on:click={() => answerQuestion(question.Id)}
                     >Beantwortet</button

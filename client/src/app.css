@@ -108,7 +108,7 @@ button:focus-visible {
     14.9px 21.5px 29.4px -2.1px hsl(var(--shadow-color) / 0.34),
     22px 31.7px 43.4px -2.5px hsl(var(--shadow-color) / 0.34);
     color: #213547;
-    background-color: #fcfcfc;
+    background-color: #f3f4f6;
   }
   a:hover {
     color: #747bff;
