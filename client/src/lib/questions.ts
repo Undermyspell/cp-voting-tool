@@ -10,6 +10,7 @@ export const sessionActive = writable(false)
 const unsub = eventSource.subscribe((eventSource) => {
 	if (eventSource) {
 		eventSource.addEventListener("new_question", (event) => {
+			console.log(event)
 			const data = JSON.parse(event.data)
 			questionAdded(data)
 		})
