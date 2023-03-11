@@ -72,7 +72,7 @@
         display: flex;
         cursor: pointer;
         border-radius: 4px;
-        width: 2.5rem;
+        width: 3.5rem;
         align-items: center;
         border: 1px solid gray;
         flex-direction: column;

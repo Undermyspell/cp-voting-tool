@@ -13,7 +13,7 @@
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
 
-    --shadow-color: 0deg 0% 62%;
+    --shadow-color: 0deg 0% 10%;
     --shadow-low:
       0.2px 0.3px 0.4px hsl(var(--shadow-color) / 0.34),
       0.4px 0.5px 0.7px -1.2px hsl(var(--shadow-color) / 0.34),
@@ -86,26 +86,27 @@ button:focus-visible {
 }
 
 @media (prefers-color-scheme: light) {
-  --shadow-color: 0deg 0% 10%;
-  --shadow-low:
-  0.2px 0.3px 0.4px hsl(var(--shadow-color) / 0.34),
-  0.4px 0.5px 0.7px -1.2px hsl(var(--shadow-color) / 0.34),
-  0.9px 1.3px 1.8px -2.5px hsl(var(--shadow-color) / 0.34);
---shadow-medium:
-  0.2px 0.3px 0.4px hsl(var(--shadow-color) / 0.36),
-  0.7px 1px 1.4px -0.8px hsl(var(--shadow-color) / 0.36),
-  1.8px 2.6px 3.6px -1.7px hsl(var(--shadow-color) / 0.36),
-  4.4px 6.3px 8.6px -2.5px hsl(var(--shadow-color) / 0.36);
---shadow-high:
-  0.2px 0.3px 0.4px hsl(var(--shadow-color) / 0.34),
-  1.3px 1.8px 2.5px -0.4px hsl(var(--shadow-color) / 0.34),
-  2.4px 3.4px 4.7px -0.7px hsl(var(--shadow-color) / 0.34),
-  3.9px 5.7px 7.8px -1.1px hsl(var(--shadow-color) / 0.34),
-  6.3px 9.1px 12.5px -1.4px hsl(var(--shadow-color) / 0.34),
-  9.8px 14.2px 19.4px -1.8px hsl(var(--shadow-color) / 0.34),
-  14.9px 21.5px 29.4px -2.1px hsl(var(--shadow-color) / 0.34),
-  22px 31.7px 43.4px -2.5px hsl(var(--shadow-color) / 0.34);
+
   :root {
+    --shadow-color: 0deg 0% 62%;
+    --shadow-low:
+    0.2px 0.3px 0.4px hsl(var(--shadow-color) / 0.34),
+    0.4px 0.5px 0.7px -1.2px hsl(var(--shadow-color) / 0.34),
+    0.9px 1.3px 1.8px -2.5px hsl(var(--shadow-color) / 0.34);
+  --shadow-medium:
+    0.2px 0.3px 0.4px hsl(var(--shadow-color) / 0.36),
+    0.7px 1px 1.4px -0.8px hsl(var(--shadow-color) / 0.36),
+    1.8px 2.6px 3.6px -1.7px hsl(var(--shadow-color) / 0.36),
+    4.4px 6.3px 8.6px -2.5px hsl(var(--shadow-color) / 0.36);
+  --shadow-high:
+    0.2px 0.3px 0.4px hsl(var(--shadow-color) / 0.34),
+    1.3px 1.8px 2.5px -0.4px hsl(var(--shadow-color) / 0.34),
+    2.4px 3.4px 4.7px -0.7px hsl(var(--shadow-color) / 0.34),
+    3.9px 5.7px 7.8px -1.1px hsl(var(--shadow-color) / 0.34),
+    6.3px 9.1px 12.5px -1.4px hsl(var(--shadow-color) / 0.34),
+    9.8px 14.2px 19.4px -1.8px hsl(var(--shadow-color) / 0.34),
+    14.9px 21.5px 29.4px -2.1px hsl(var(--shadow-color) / 0.34),
+    22px 31.7px 43.4px -2.5px hsl(var(--shadow-color) / 0.34);
     color: #213547;
     background-color: #fcfcfc;
   }
