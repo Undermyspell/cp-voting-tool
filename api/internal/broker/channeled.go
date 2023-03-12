@@ -2,32 +2,45 @@ package broker
 
 import (
 	"io"
+	"sse/internal/models"
 	"sse/internal/sse"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
 
+type UserBoundSseChannel struct {
+	Channel chan sse.Event
+	User    models.UserContext
+}
+
 type ChannelBroker struct {
-	Notifier       chan sse.Event
-	NewClients     chan chan sse.Event
-	ClosingClients chan chan sse.Event
-	Clients        map[chan sse.Event]bool
+	NotifierAll        chan sse.Event
+	NotifierUser       chan sse.UserBoundSseEvent
+	NotifierAllButUser chan sse.UserBoundSseEvent
+	NewClients         chan UserBoundSseChannel
+	ClosingClients     chan UserBoundSseChannel
+	Clients            map[UserBoundSseChannel]bool
 }
 
 func (broker *ChannelBroker) Stream(c *gin.Context) {
-	messageChan := make(chan sse.Event)
+	user, _ := c.Get(models.User)
+	userContext := user.(*models.UserContext)
+	userBoundSseChannel := UserBoundSseChannel{
+		Channel: make(chan sse.Event),
+		User:    *userContext,
+	}
 
 	defer func() {
-		broker.ClosingClients <- messageChan
-		close(messageChan)
+		broker.ClosingClients <- userBoundSseChannel
+		close(userBoundSseChannel.Channel)
 	}()
 
-	broker.NewClients <- messageChan
+	broker.NewClients <- userBoundSseChannel
 
 	c.Stream(func(w io.Writer) bool {
 		select {
-		case event := <-messageChan:
+		case event := <-userBoundSseChannel.Channel:
 			c.SSEvent(string(event.EventType), event.Payload)
 		case <-c.Request.Context().Done():
 			return false
@@ -40,24 +53,45 @@ func (broker *ChannelBroker) Listen() {
 	for {
 		select {
 		case s := <-broker.NewClients:
-			// A new client has joined
 			broker.Clients[s] = true
 			logrus.Infof("🟢 Client added. %d registered clients", len(broker.Clients))
 		case s := <-broker.ClosingClients:
-			// A client has detached
-			// remove them from our clients map
 			delete(broker.Clients, s)
 			logrus.Infof("🔴 Removed client. %d registered clients", len(broker.Clients))
-		case event := <-broker.Notifier:
-			// case for getting a new msg
-			// Thus send it to all clients
+		case event := <-broker.NotifierAll:
 			for clientMessageChan := range broker.Clients {
-				clientMessageChan <- event
+				clientMessageChan.Channel <- event
+			}
+		case event := <-broker.NotifierUser:
+			for clientMessageChan := range broker.Clients {
+				if clientMessageChan.User.Email == event.User.Email {
+					clientMessageChan.Channel <- event.Event
+				}
+			}
+		case event := <-broker.NotifierAllButUser:
+			for clientMessageChan := range broker.Clients {
+				if clientMessageChan.User.Email != event.User.Email {
+					clientMessageChan.Channel <- event.Event
+				}
 			}
 		}
 	}
 }
 
-func (broker *ChannelBroker) Notify(event sse.Event) {
-	broker.Notifier <- event
+func (broker *ChannelBroker) NotifyAll(event sse.Event) {
+	broker.NotifierAll <- event
+}
+
+func (broker *ChannelBroker) NotifyUser(event sse.Event, user models.UserContext) {
+	broker.NotifierUser <- sse.UserBoundSseEvent{
+		Event: event,
+		User:  user,
+	}
+}
+
+func (broker *ChannelBroker) NotifyAllButUser(event sse.Event, user models.UserContext) {
+	broker.NotifierAllButUser <- sse.UserBoundSseEvent{
+		Event: event,
+		User:  user,
+	}
 }
