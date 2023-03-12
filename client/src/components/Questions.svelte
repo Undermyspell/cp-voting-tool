@@ -40,19 +40,25 @@
                 {/each}
             </div>
             <Modal bind:showModal>
-                <h2 slot="header">Frage bearbeiten</h2>
-                <button slot="action" on:click={() => saveEdit()}
-                    >Speichern</button
+                <button
+                    type="button"
+                    class="btn btn-sm variant-filled-success"
+                    slot="action"
+                    on:click={() => saveEdit()}>Speichern</button
                 >
-                <div class="container">
+                <h3 slot="header" class="pb-4 text-token">Frage bearbeiten</h3>
+
+                <div class="space-y-4 pb-4">
                     <textarea
-                        bind:value={activeQuestion.Text}
+                        class="textarea text-token resize-none"
+                        rows="4"
                         cols="80"
-                        rows="5"
+                        bind:value={activeQuestion.Text}
                     />
-                    <label>
+                    <label class="text-token">
                         <input
                             type="checkbox"
+                            class="checkbox"
                             bind:checked={activeQuestion.Anonymous}
                         />
                         Frage anonym stellen
