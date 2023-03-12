@@ -1,5 +1,7 @@
 package sse
 
+import "sse/internal/models"
+
 type EventType string
 
 const (
@@ -15,6 +17,11 @@ const (
 type Event struct {
 	EventType
 	Payload string
+}
+
+type UserBoundSseEvent struct {
+	Event Event
+	User  models.UserContext
 }
 
 const PayloadEmpty = "{}"

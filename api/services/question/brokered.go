@@ -54,23 +54,46 @@ func (service *BrokeredQuestionsService) Add(c *gin.Context) {
 		return
 	}
 
-	newQuestionSseMessage := struct {
-		Id        string
-		Text      string
-		Creator   string
-		Answered  bool
-		Votes     int
-		Anonymous bool
-	}{question.Id, question.Text, question.Creator.Name, question.Answered, question.Votes.Value(), question.Anonymous}
-
-	newQuestionByteString, _ := json.Marshal(newQuestionSseMessage)
-
-	event := sse.Event{
-		EventType: sse.NEW_QUESTION,
-		Payload:   string(newQuestionByteString),
+	newQuestionForUserSseMessage := dtos.QuestionDto{
+		Id:        question.Id,
+		Text:      question.Text,
+		Creator:   question.Creator.Name,
+		Answered:  question.Answered,
+		Votes:     question.Votes.Value(),
+		Anonymous: question.Anonymous,
+		Owned:     true,
 	}
 
-	service.Broker.Notify(event)
+	creatorForAllButUser := ""
+
+	if !question.Anonymous {
+		creatorForAllButUser = question.Creator.Name
+	}
+
+	newQuestionForAllButUserSseMessage := dtos.QuestionDto{
+		Id:        question.Id,
+		Text:      question.Text,
+		Creator:   creatorForAllButUser,
+		Answered:  question.Answered,
+		Votes:     question.Votes.Value(),
+		Anonymous: question.Anonymous,
+		Owned:     false,
+	}
+
+	newQuestionForUserByteString, _ := json.Marshal(newQuestionForUserSseMessage)
+	newQuestionForAllButUserByteString, _ := json.Marshal(newQuestionForAllButUserSseMessage)
+
+	eventForUser := sse.Event{
+		EventType: sse.NEW_QUESTION,
+		Payload:   string(newQuestionForUserByteString),
+	}
+	eventForAllButUser := sse.Event{
+		EventType: sse.NEW_QUESTION,
+		Payload:   string(newQuestionForAllButUserByteString),
+	}
+
+	service.Broker.NotifyUser(eventForUser, *userContext)
+	service.Broker.NotifyAllButUser(eventForAllButUser, *userContext)
 }
 
 // UpdateQuestion         godoc
@@ -120,7 +143,7 @@ func (service *BrokeredQuestionsService) Update(c *gin.Context) {
 		Payload:   string(newQuestionByteString),
 	}
 
-	service.Broker.Notify(event)
+	service.Broker.NotifyAll(event)
 }
 
 // AddQuestion         godoc
@@ -158,7 +181,7 @@ func (service *BrokeredQuestionsService) Delete(c *gin.Context) {
 		Payload:   string(questionDeletedByteString),
 	}
 
-	service.Broker.Notify(event)
+	service.Broker.NotifyAll(event)
 }
 
 // UpvoteQuestion         godoc
@@ -203,7 +226,7 @@ func (service *BrokeredQuestionsService) Upvote(c *gin.Context) {
 		Payload:   string(questionPayload),
 	}
 
-	service.Broker.Notify(event)
+	service.Broker.NotifyAll(event)
 }
 
 // AnswerQuestion         godoc
@@ -244,7 +267,7 @@ func (service *BrokeredQuestionsService) Answer(c *gin.Context) {
 		Payload:   string(questionPayload),
 	}
 
-	service.Broker.Notify(event)
+	service.Broker.NotifyAll(event)
 }
 
 // StopSession         godoc
@@ -264,7 +287,7 @@ func (service *BrokeredQuestionsService) Stop(c *gin.Context) {
 		Payload:   sse.PayloadEmpty,
 	}
 
-	service.Broker.Notify(event)
+	service.Broker.NotifyAll(event)
 }
 
 // StartSession         godoc
@@ -284,7 +307,7 @@ func (service *BrokeredQuestionsService) Start(c *gin.Context) {
 		Payload:   sse.PayloadEmpty,
 	}
 
-	service.Broker.Notify(event)
+	service.Broker.NotifyAll(event)
 }
 
 // GetSession         godoc

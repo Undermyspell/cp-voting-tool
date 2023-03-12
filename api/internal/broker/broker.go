@@ -1,6 +1,7 @@
 package broker
 
 import (
+	"sse/internal/models"
 	"sse/internal/sse"
 
 	"github.com/gin-gonic/gin"
@@ -9,5 +10,7 @@ import (
 type Broker interface {
 	Stream(c *gin.Context)
 	Listen()
-	Notify(sse.Event)
+	NotifyAll(sse.Event)
+	NotifyUser(event sse.Event, user models.UserContext)
+	NotifyAllButUser(event sse.Event, user models.UserContext)
 }

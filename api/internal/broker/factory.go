@@ -5,10 +5,12 @@ import "sse/internal/sse"
 func New() Broker {
 
 	broker := &ChannelBroker{
-		Notifier:       make(chan sse.Event, 1),
-		NewClients:     make(chan chan sse.Event),
-		ClosingClients: make(chan chan sse.Event),
-		Clients:        make(map[chan sse.Event]bool),
+		NotifierAll:        make(chan sse.Event, 1),
+		NotifierUser:       make(chan sse.UserBoundSseEvent, 1),
+		NotifierAllButUser: make(chan sse.UserBoundSseEvent, 1),
+		NewClients:         make(chan UserBoundSseChannel),
+		ClosingClients:     make(chan UserBoundSseChannel),
+		Clients:            make(map[UserBoundSseChannel]bool),
 	}
 
 	go broker.Listen()
