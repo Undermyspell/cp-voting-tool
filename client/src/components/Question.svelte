@@ -38,7 +38,7 @@
     </section>
     <hr class="opacity-50" />
     <footer class="card-footer flex justify-end gap-4 p-2">
-        {#if isAdmin || isSessionAdmin || question.Owned}
+        {#if question.Owned}
             <button
                 type="button"
                 class="btn btn-sm variant-filled"
