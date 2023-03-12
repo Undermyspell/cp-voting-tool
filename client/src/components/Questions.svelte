@@ -34,9 +34,11 @@
         {#if $questions.length === 0}
             <div>keine Fragen vorhanden</div>
         {:else}
-            {#each $questions as question}
-                <Question on:edit={editMessage} {question} />
-            {/each}
+            <div class="flex flex-col gap-4">
+                {#each $questions as question}
+                    <Question on:edit={editMessage} {question} />
+                {/each}
+            </div>
             <Modal bind:showModal>
                 <h2 slot="header">Frage bearbeiten</h2>
                 <button slot="action" on:click={() => saveEdit()}
@@ -60,13 +62,3 @@
         {/if}
     </div>
 {/if}
-
-<style>
-    .container {
-        margin-top: 32px;
-        margin-bottom: 32px;
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-    }
-</style>
