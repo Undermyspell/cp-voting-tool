@@ -10,7 +10,6 @@ export const sessionActive = writable(false)
 const unsub = eventSource.subscribe((eventSource) => {
 	if (eventSource) {
 		eventSource.addEventListener("new_question", (event) => {
-			console.log(event)
 			const data = JSON.parse(event.data)
 			questionAdded(data)
 		})
@@ -41,7 +40,6 @@ export const getQuestions = async () => {
 		if (repsonse.ok) {
 			activeSessison.set(true)
 			const data = await repsonse.json()
-			console.log(data)
 			data.forEach((question) => {
 				questionMap.set(question.Id, question)
 			})
@@ -91,9 +89,9 @@ const questionDeleted = (payload: { Id: string }) => {
 	sortAndUpdateQuestions()
 }
 
-const questionVoted = (payload: { Id: string; Votes: number }) => {
+const questionVoted = (payload: { Id: string; Votes: number; Voted: boolean }) => {
 	const votedQuestion = questionMap.get(payload.Id)
-	questionMap.set(payload.Id, Object.assign({}, votedQuestion, { Votes: payload.Votes }))
+	questionMap.set(payload.Id, Object.assign({}, votedQuestion, { Votes: payload.Votes, Voted: payload.Voted }))
 	sortAndUpdateQuestions()
 }
 
