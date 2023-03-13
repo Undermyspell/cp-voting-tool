@@ -4,8 +4,6 @@ RUN npm i -g pnpm
 
 WORKDIR /app
 
-ENV VITE_API_BASE_URL=https://cp-voting-tool-api.azurewebsites.net
-
 COPY pnpm-lock.yaml /app/
 RUN pnpm fetch
 COPY . .
@@ -23,7 +21,7 @@ RUN chown -R nginx:nginx /app && chmod -R 755 /app && \
     chown -R nginx:nginx /var/cache/nginx && \
     chown -R nginx:nginx /var/log/nginx && \
     chown -R nginx:nginx /etc/nginx/conf.d && \
-    chown -R nginx:nginx /usr/share/nginx/html
+    chown -R nginx:nginx /usr/share/nginx/html 
 
 RUN touch /var/run/nginx.pid && \
     chown -R nginx:nginx /var/run/nginx.pid
