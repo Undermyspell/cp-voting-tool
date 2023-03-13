@@ -1,7 +1,6 @@
 package broker
 
 import (
-	"fmt"
 	"io"
 	"sse/internal/models"
 	"sse/internal/sse"
@@ -56,22 +55,9 @@ func (broker *ChannelBroker) Listen() {
 		case s := <-broker.NewClients:
 			broker.Clients[s] = true
 			logrus.Infof("🟢 Client added. %d registered clients", len(broker.Clients))
-
-			event := sse.Event{
-				EventType: sse.CLIENT_CONNECT_CHANGE,
-				Payload:   fmt.Sprint(len(broker.Clients)),
-			}
-
-			broker.NotifyAll(event)
 		case s := <-broker.ClosingClients:
 			delete(broker.Clients, s)
 			logrus.Infof("🔴 Removed client. %d registered clients", len(broker.Clients))
-			event := sse.Event{
-				EventType: sse.CLIENT_CONNECT_CHANGE,
-				Payload:   fmt.Sprint(len(broker.Clients)),
-			}
-
-			broker.NotifyAll(event)
 		case event := <-broker.NotifierAll:
 			for clientMessageChan := range broker.Clients {
 				clientMessageChan.Channel <- event
