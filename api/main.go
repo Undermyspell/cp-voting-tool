@@ -81,10 +81,13 @@ func main() {
 		s.POST("/stop", middleware.RequireRole(roles.Admin), questionService.Stop)
 		s.GET("", questionService.GetSession)
 
-		u := v1.Group("/user/test")
-		u.POST("/contributor", userService.GetContributor)
-		u.POST("/admin", userService.GetAdmin)
-		u.POST("/sessionadmin", userService.GetAdmin)
+		ut := v1.Group("/user/test")
+		ut.POST("/contributor", userService.GetContributor)
+		ut.POST("/admin", userService.GetAdmin)
+		ut.POST("/sessionadmin", userService.GetAdmin)
+
+		u := v1.Group("/users", middleware.RequireAuth(jwksProvider))
+		u.GET("/count", questionService.GetUserCount)
 	}
 
 	start(r)
