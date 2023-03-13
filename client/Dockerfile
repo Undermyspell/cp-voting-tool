@@ -4,6 +4,8 @@ RUN npm i -g pnpm
 
 WORKDIR /app
 
+ENV VITE_API_BASE_URL=https://cp-voting-tool-api.azurewebsites.net
+
 COPY pnpm-lock.yaml /app/
 RUN pnpm fetch
 COPY . .
@@ -13,7 +15,7 @@ RUN pnpm run build
 FROM nginx:stable-alpine
 
 COPY ./nginx/default.conf /etc/nginx/conf.d/default.conf
-COPY --from=build /app/dist/ /usr/share/nginx/html
+COPY --from=build /app/dist /usr/share/nginx/html
 
 WORKDIR /app
 
