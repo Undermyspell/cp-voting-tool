@@ -41,6 +41,7 @@ export const getQuestions = async () => {
 		if (repsonse.ok) {
 			activeSessison.set(true)
 			const data = await repsonse.json()
+			console.log(data)
 			data.forEach((question) => {
 				questionMap.set(question.Id, question)
 			})
@@ -55,8 +56,13 @@ export function getQuestion(id: string) {
 	return questionMap.get(id)
 }
 
-export const postQuestion = async (questionText) => {
-	await postRequest({ path: "/question/new", body: JSON.stringify({ anonymous: true, text: questionText }) })
+export function clearQuestions() {
+	questionMap.clear()
+	sortAndUpdateQuestions()
+}
+
+export const postQuestion = async (questionText, anonymous) => {
+	await postRequest({ path: "/question/new", body: JSON.stringify({ anonymous: anonymous, text: questionText }) })
 }
 
 export const updateQuestion = async (payload: { Id: string; Anonymous: boolean; Text: string }) => {
