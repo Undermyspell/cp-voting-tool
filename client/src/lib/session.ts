@@ -4,11 +4,15 @@ import { eventSource } from "./eventsource"
 import { clearQuestions } from "./questions"
 
 export const activeSessison = writable(false)
+export const userOnline = writable(0)
 
 const unsub = eventSource.subscribe((eventSource) => {
 	if (eventSource) {
 		eventSource.addEventListener("start_session", (event) => {
 			activeSessison.set(true)
+		})
+		eventSource.addEventListener("client_connect_change", (event) => {
+			userOnline.set(+event.data)
 		})
 		eventSource.addEventListener("stop_session", (event) => {
 			activeSessison.set(false)
