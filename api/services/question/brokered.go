@@ -353,6 +353,20 @@ func (service *BrokeredQuestionsService) GetSession(c *gin.Context) {
 	c.JSON(http.StatusOK, questions)
 }
 
+// GetSession         godoc
+// @Security 	 JWT
+// @Summary      Gets the current connected users count
+// @Description  Gets the current connected users count
+// @Tags         User
+// @Produce      json
+// @Success      200 {integer} usercount
+// @Failure      401
+// @Router       /api/v1/users/count [get]
+func (service *BrokeredQuestionsService) GetUserCount(c *gin.Context) {
+	userCount := service.Broker.DistinctClientsCount()
+	c.JSON(http.StatusOK, userCount)
+}
+
 func (service *BrokeredQuestionsService) newQuestion(text string, anonymous bool, creator models.UserContext) (*models.Question, *validation.ValidationError) {
 	if service.Session == nil {
 		return nil, &validation.ValidationError{

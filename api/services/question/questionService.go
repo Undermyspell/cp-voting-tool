@@ -13,4 +13,5 @@ type QuestionService interface {
 	Stop(c *gin.Context)
 	Start(c *gin.Context)
 	GetSession(c *gin.Context)
+	GetUserCount(c *gin.Context)
 }

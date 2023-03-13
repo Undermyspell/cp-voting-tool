@@ -1,6 +1,7 @@
 package broker
 
 import (
+	"encoding/json"
 	"io"
 	"sse/internal/models"
 	"sse/internal/sse"
@@ -54,9 +55,17 @@ func (broker *ChannelBroker) Listen() {
 		select {
 		case s := <-broker.NewClients:
 			broker.Clients[s] = true
+			event := broker.createUserConnectionSseEvent(sse.USER_CONNECTED)
+			for clientMessageChan := range broker.Clients {
+				clientMessageChan.Channel <- event
+			}
 			logrus.Infof("🟢 Client added. %d registered clients", len(broker.Clients))
 		case s := <-broker.ClosingClients:
 			delete(broker.Clients, s)
+			event := broker.createUserConnectionSseEvent(sse.USER_DISCONNECTED)
+			for clientMessageChan := range broker.Clients {
+				clientMessageChan.Channel <- event
+			}
 			logrus.Infof("🔴 Removed client. %d registered clients", len(broker.Clients))
 		case event := <-broker.NotifierAll:
 			for clientMessageChan := range broker.Clients {
@@ -94,4 +103,28 @@ func (broker *ChannelBroker) NotifyAllButUser(event sse.Event, user models.UserC
 		Event: event,
 		User:  user,
 	}
+}
+
+func (broker *ChannelBroker) DistinctClientsCount() int {
+	distinctClients := make(map[models.UserContext]bool)
+	for clientMessageChan := range broker.Clients {
+		if _, ok := distinctClients[clientMessageChan.User]; !ok {
+			distinctClients[clientMessageChan.User] = true
+		}
+	}
+
+	return len(distinctClients)
+}
+
+func (broker *ChannelBroker) createUserConnectionSseEvent(eventType sse.EventType) sse.Event {
+	event := sse.UserConnected{
+		UserCount: broker.DistinctClientsCount(),
+	}
+	eventByteArray, _ := json.Marshal(event)
+	disconnectedEvent := sse.Event{
+		EventType: eventType,
+		Payload:   string(eventByteArray),
+	}
+
+	return disconnectedEvent
 }
