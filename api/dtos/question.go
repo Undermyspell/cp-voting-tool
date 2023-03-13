@@ -15,6 +15,7 @@ type QuestionDto struct {
 	Id        string
 	Text      string
 	Votes     int
+	Voted     bool
 	Answered  bool
 	Creator   string
 	Anonymous bool

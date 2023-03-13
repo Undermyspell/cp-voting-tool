@@ -24,16 +24,23 @@
 
 <div class="card">
     <section class="flex gap-4 p-2">
-        <div class="flex flex-col items-center justify-center">
-            <div
-                on:click={() => voteQuestion(question.Id)}
-                class="cursor-pointer"
-            >
-                <Icon src={ArrowUpCircle} size="48" />
+        {#if !question.Answered}
+            <div class="flex flex-col items-center justify-center">
+                <div
+                    class:opacity-20={question.Voted}
+                    class={question.Voted
+                        ? "cursor-not-allowed"
+                        : "cursor-pointer"}
+                    class:cursor-not-allowed={question.Voted}
+                    on:click={question.Voted
+                        ? null
+                        : () => voteQuestion(question.Id)}
+                >
+                    <Icon src={ArrowUpCircle} size="48" />
+                </div>
+                <h3>{question.Votes}</h3>
             </div>
-            <h3>{question.Votes}</h3>
-        </div>
-
+        {/if}
         <div class="questiontext">{question.Text}</div>
     </section>
     <hr class="opacity-50" />

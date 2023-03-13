@@ -4,11 +4,20 @@ import { eventSource } from "./eventsource"
 import { clearQuestions } from "./questions"
 
 export const activeSessison = writable(false)
+export const userOnline = writable(0)
 
 const unsub = eventSource.subscribe((eventSource) => {
 	if (eventSource) {
 		eventSource.addEventListener("start_session", (event) => {
 			activeSessison.set(true)
+		})
+		eventSource.addEventListener("user_connected", (event) => {
+			const data = JSON.parse(event.data)
+			userOnline.set(data.UserCount)
+		})
+		eventSource.addEventListener("user_disconnected", (event) => {
+			const data = JSON.parse(event.data)
+			userOnline.set(data.UserCount)
 		})
 		eventSource.addEventListener("stop_session", (event) => {
 			activeSessison.set(false)

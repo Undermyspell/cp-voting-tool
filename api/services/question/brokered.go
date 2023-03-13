@@ -60,6 +60,7 @@ func (service *BrokeredQuestionsService) Add(c *gin.Context) {
 		Creator:   question.Creator.Name,
 		Answered:  question.Answered,
 		Votes:     question.Votes.Value(),
+		Voted:     question.Voted,
 		Anonymous: question.Anonymous,
 		Owned:     true,
 	}
@@ -214,9 +215,21 @@ func (service *BrokeredQuestionsService) Upvote(c *gin.Context) {
 		Votes int
 	}{questionId, votes}
 
+	questionUpVoteForUserSseMessage := struct {
+		Id    string
+		Votes int
+		Voted bool
+	}{questionId, votes, true}
+
+	questionForUserPaylod, errf := json.Marshal(questionUpVoteForUserSseMessage)
 	questionPayload, errj := json.Marshal(questionUpvoteSseMessage)
 
 	if errj != nil {
+		c.JSON(http.StatusBadRequest, "cant marshal question")
+		return
+	}
+
+	if errf != nil {
 		c.JSON(http.StatusBadRequest, "cant marshal question")
 		return
 	}
@@ -226,7 +239,13 @@ func (service *BrokeredQuestionsService) Upvote(c *gin.Context) {
 		Payload:   string(questionPayload),
 	}
 
-	service.Broker.NotifyAll(event)
+	userevent := sse.Event{
+		EventType: sse.UPVOTE_QUESTION,
+		Payload:   string(questionForUserPaylod),
+	}
+
+	service.Broker.NotifyUser(userevent, *userContext)
+	service.Broker.NotifyAllButUser(event, *userContext)
 }
 
 // AnswerQuestion         godoc
@@ -329,7 +348,7 @@ func (service *BrokeredQuestionsService) GetSession(c *gin.Context) {
 
 	user, _ := c.Get(models.User)
 	userContext := user.(*models.UserContext)
-
+	hash := userContext.GetHash(service.SessionSecret)
 	questions := []dtos.QuestionDto{}
 
 	for _, v := range service.Session {
@@ -344,6 +363,7 @@ func (service *BrokeredQuestionsService) GetSession(c *gin.Context) {
 			Text:      v.Text,
 			Votes:     v.Votes.Value(),
 			Answered:  v.Answered,
+			Voted:     service.UserVotes.Value()[hash][v.Id],
 			Anonymous: v.Anonymous,
 			Creator:   creator,
 			Owned:     owned,
