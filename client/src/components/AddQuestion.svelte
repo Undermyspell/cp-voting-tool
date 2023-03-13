@@ -3,9 +3,9 @@
     import { Icon } from "@steeze-ui/svelte-icon";
     import { MailAdd } from "@steeze-ui/remix-icons";
     let value = "";
-
+    let anonymous = true;
     const addNewQuestion = async () => {
-        await postQuestion(value);
+        await postQuestion(value, anonymous);
         value = "";
     };
 </script>
@@ -19,6 +19,10 @@
             bind:value
             name="Text1"
         />
+        <label class="text-token">
+            <input type="checkbox" class="checkbox" bind:checked={anonymous} />
+            Frage anonym stellen
+        </label>
     </label>
     <button
         class="btn variant-filled self-center"

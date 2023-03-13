@@ -61,8 +61,8 @@ export function clearQuestions() {
 	sortAndUpdateQuestions()
 }
 
-export const postQuestion = async (questionText) => {
-	await postRequest({ path: "/question/new", body: JSON.stringify({ anonymous: true, text: questionText }) })
+export const postQuestion = async (questionText, anonymous) => {
+	await postRequest({ path: "/question/new", body: JSON.stringify({ anonymous: anonymous, text: questionText }) })
 }
 
 export const updateQuestion = async (payload: { Id: string; Anonymous: boolean; Text: string }) => {

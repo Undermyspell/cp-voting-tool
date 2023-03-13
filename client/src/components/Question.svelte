@@ -37,30 +37,34 @@
         <div class="questiontext">{question.Text}</div>
     </section>
     <hr class="opacity-50" />
-    <footer class="card-footer flex justify-end gap-4 p-2">
-        {#if question.Owned}
-            <button
-                type="button"
-                class="btn btn-sm variant-filled"
-                on:click={() => edit()}
-            >
-                Bearbeiten
-            </button>
-        {/if}
-        {#if isAdmin || isSessionAdmin}
-            <button
-                type="button"
-                class="btn btn-sm variant-filled-success"
-                on:click={() => answerQuestion(question.Id)}>Beantworten</button
-            >
-        {/if}
-        {#if isAdmin || isSessionAdmin || question.Owned}
-            <button
-                type="button"
-                class="btn btn-sm variant-filled-error"
-                on:click={() => deleteQuestion(question.Id)}>Löschen</button
-            >
-        {/if}
+    <footer class="card-footer flex justify-between gap-4 p-2">
+        <div>{question.Anonymous ? "Anonym" : question.Creator}</div>
+        <div>
+            {#if question.Owned}
+                <button
+                    type="button"
+                    class="btn btn-sm variant-filled"
+                    on:click={() => edit()}
+                >
+                    Bearbeiten
+                </button>
+            {/if}
+            {#if isAdmin || isSessionAdmin}
+                <button
+                    type="button"
+                    class="btn btn-sm variant-filled-success"
+                    on:click={() => answerQuestion(question.Id)}
+                    >Beantworten</button
+                >
+            {/if}
+            {#if question.Owned}
+                <button
+                    type="button"
+                    class="btn btn-sm variant-filled-error"
+                    on:click={() => deleteQuestion(question.Id)}>Löschen</button
+                >
+            {/if}
+        </div>
     </footer>
 </div>
 
