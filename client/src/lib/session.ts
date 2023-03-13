@@ -11,8 +11,13 @@ const unsub = eventSource.subscribe((eventSource) => {
 		eventSource.addEventListener("start_session", (event) => {
 			activeSessison.set(true)
 		})
-		eventSource.addEventListener("client_connect_change", (event) => {
-			userOnline.set(+event.data)
+		eventSource.addEventListener("user_connected", (event) => {
+			const data = JSON.parse(event.data)
+			userOnline.set(data.UserCount)
+		})
+		eventSource.addEventListener("user_disconnected", (event) => {
+			const data = JSON.parse(event.data)
+			userOnline.set(data.UserCount)
 		})
 		eventSource.addEventListener("stop_session", (event) => {
 			activeSessison.set(false)
