@@ -32,6 +32,8 @@ definitions:
         type: boolean
       text:
         type: string
+      voted:
+        type: boolean
       votes:
         type: integer
     type: object
@@ -292,23 +294,6 @@ paths:
       security:
       - JWT: []
       summary: Gets a test user with session admin role
-      tags:
-      - User
-  /api/v1/users/count:
-    get:
-      description: Gets the current connected users count
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            type: integer
-        "401":
-          description: Unauthorized
-      security:
-      - JWT: []
-      summary: Gets the current connected users count
       tags:
       - User
 securityDefinitions:
