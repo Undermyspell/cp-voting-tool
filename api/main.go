@@ -85,9 +85,6 @@ func main() {
 		ut.POST("/contributor", userService.GetContributor)
 		ut.POST("/admin", userService.GetAdmin)
 		ut.POST("/sessionadmin", userService.GetAdmin)
-
-		u := v1.Group("/users", middleware.RequireAuth(jwksProvider))
-		u.GET("/count", questionService.GetUserCount)
 	}
 
 	start(r)

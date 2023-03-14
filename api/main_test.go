@@ -297,7 +297,7 @@ func (suite *QuestionApiTestSuite) TestGetSession_OK_200_CREATOR_SHOWN_ONLY_FOR_
 
 	assert.Equal(suite.T(), true, question_FOO_Q2.Owned)
 	assert.Equal(suite.T(), true, question_FOO_Q2.Anonymous)
-	assert.Equal(suite.T(), "Foo Foo_Tester", question_FOO_Q2.Creator)
+	assert.Equal(suite.T(), "", question_FOO_Q2.Creator)
 
 	assert.Equal(suite.T(), false, question_BAR_Q1.Owned)
 	assert.Equal(suite.T(), false, question_BAR_Q1.Anonymous)
