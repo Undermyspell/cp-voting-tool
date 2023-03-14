@@ -408,6 +408,10 @@ func (service *BrokeredQuestionsService) updateQuestion(question dtos.UpdateQues
 
 	questionToUpdate.Text = question.Text
 	questionToUpdate.Anonymous = question.Anonymous
+	questionToUpdate.CreatorName = ""
+	if !questionToUpdate.Anonymous {
+		questionToUpdate.CreatorName = creator.Name
+	}
 
 	return questionToUpdate, nil
 }
