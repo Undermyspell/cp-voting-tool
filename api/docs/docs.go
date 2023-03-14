@@ -402,34 +402,6 @@ const docTemplate = `{
                     }
                 }
             }
-        },
-        "/api/v1/users/count": {
-            "get": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "Gets the current connected users count",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User"
-                ],
-                "summary": "Gets the current connected users count",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized"
-                    }
-                }
-            }
         }
     },
     "definitions": {
@@ -482,6 +454,9 @@ const docTemplate = `{
                 },
                 "text": {
                     "type": "string"
+                },
+                "voted": {
+                    "type": "boolean"
                 },
                 "votes": {
                     "type": "integer"

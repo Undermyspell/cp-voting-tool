@@ -57,7 +57,7 @@ func (service *BrokeredQuestionsService) Add(c *gin.Context) {
 	newQuestionForUserSseMessage := dtos.QuestionDto{
 		Id:        question.Id,
 		Text:      question.Text,
-		Creator:   question.Creator.Name,
+		Creator:   question.CreatorName,
 		Answered:  question.Answered,
 		Votes:     question.Votes.Value(),
 		Voted:     question.Voted,
@@ -68,7 +68,7 @@ func (service *BrokeredQuestionsService) Add(c *gin.Context) {
 	creatorForAllButUser := ""
 
 	if !question.Anonymous {
-		creatorForAllButUser = question.Creator.Name
+		creatorForAllButUser = question.CreatorName
 	}
 
 	newQuestionForAllButUserSseMessage := dtos.QuestionDto{
@@ -135,7 +135,7 @@ func (service *BrokeredQuestionsService) Update(c *gin.Context) {
 		Text      string
 		Creator   string
 		Anonymous bool
-	}{questionToUpdate.Id, questionToUpdate.Text, questionToUpdate.Creator.Name, questionToUpdate.Anonymous}
+	}{questionToUpdate.Id, questionToUpdate.Text, questionToUpdate.CreatorName, questionToUpdate.Anonymous}
 
 	newQuestionByteString, _ := json.Marshal(questionToUpdateSseMessage)
 
@@ -352,11 +352,8 @@ func (service *BrokeredQuestionsService) GetSession(c *gin.Context) {
 	questions := []dtos.QuestionDto{}
 
 	for _, v := range service.Session {
-		creator := v.Creator.Name
-		owned := v.Creator.Email == userContext.Email
-		if v.Anonymous && !owned {
-			creator = ""
-		}
+		creator := v.CreatorName
+		owned := v.CreatorHash == userContext.GetHash(service.SessionSecret)
 
 		questions = append(questions, dtos.QuestionDto{
 			Id:        v.Id,
@@ -373,20 +370,6 @@ func (service *BrokeredQuestionsService) GetSession(c *gin.Context) {
 	c.JSON(http.StatusOK, questions)
 }
 
-// GetSession         godoc
-// @Security 	 JWT
-// @Summary      Gets the current connected users count
-// @Description  Gets the current connected users count
-// @Tags         User
-// @Produce      json
-// @Success      200 {integer} usercount
-// @Failure      401
-// @Router       /api/v1/users/count [get]
-func (service *BrokeredQuestionsService) GetUserCount(c *gin.Context) {
-	userCount := service.Broker.DistinctClientsCount()
-	c.JSON(http.StatusOK, userCount)
-}
-
 func (service *BrokeredQuestionsService) newQuestion(text string, anonymous bool, creator models.UserContext) (*models.Question, *validation.ValidationError) {
 	if service.Session == nil {
 		return nil, &validation.ValidationError{
@@ -395,7 +378,7 @@ func (service *BrokeredQuestionsService) newQuestion(text string, anonymous bool
 		}
 	}
 
-	question := models.NewQuestion(text, anonymous, creator)
+	question := models.NewQuestion(text, anonymous, creator.Name, creator.GetHash(service.SessionSecret))
 	service.Session[question.Id] = question
 	return question, nil
 }
@@ -416,7 +399,7 @@ func (service *BrokeredQuestionsService) updateQuestion(question dtos.UpdateQues
 		}
 	}
 
-	if questionToUpdate.Creator.Email != creator.Email {
+	if questionToUpdate.CreatorHash != creator.GetHash(service.SessionSecret) {
 		return nil, &validation.ValidationError{
 			ValidationError: "you do not own this question",
 			HttpStatus:      http.StatusForbidden,
@@ -445,7 +428,7 @@ func (service *BrokeredQuestionsService) deleteQuestion(id string, creator model
 		}
 	}
 
-	if questionToDelete.Creator.Email != creator.Email {
+	if questionToDelete.CreatorHash != creator.GetHash(service.SessionSecret) {
 		return &validation.ValidationError{
 			ValidationError: "you do not own this question",
 			HttpStatus:      http.StatusForbidden,
