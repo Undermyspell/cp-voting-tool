@@ -6,11 +6,19 @@
   <link rel="icon" type="image/svg+xml" href="/vite.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src=/eventsource.polyfill.min.js></script>
+  <script>
+    // On page load or when changing themes, best to add inline in `head` to avoid FOUC
+    if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  </script>
   <title>Vite + Svelte + TS</title>
 </head>
 
 <body>
-  <div id="app" style="display: contents" class="h-full overflow-hidden"></div>
+  <div id="app" class="h-full overflow-y-auto"></div>
   <script type="module" src="/src/main.ts"></script>
 </body>
 

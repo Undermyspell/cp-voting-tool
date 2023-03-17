@@ -2,6 +2,8 @@
     import { postQuestion } from "../lib/questions";
     import { Icon } from "@steeze-ui/svelte-icon";
     import { MailAdd } from "@steeze-ui/remix-icons";
+    import { Textarea, Checkbox, Label, Button } from "flowbite-svelte";
+
     let value = "";
     let anonymous = true;
     const addNewQuestion = async () => {
@@ -11,24 +13,20 @@
 </script>
 
 <div class="flex flex-col gap-4 mb-8">
-    <label class="label">
-        <strong>Frage eingeben</strong>
-        <textarea
-            class="textarea resize-none"
-            rows="4"
-            bind:value
-            name="Text1"
-        />
-        <label class="text-token">
-            <input type="checkbox" class="checkbox" bind:checked={anonymous} />
-            Frage anonym stellen
-        </label>
-    </label>
-    <button
-        class="btn variant-filled self-center"
-        type="button"
-        on:click={addNewQuestion}
-        ><span><Icon src={MailAdd} size="20" /></span><span>Posten</span
-        ></button
-    >
+    <Label for="message" class="mb-2">Frage eingeben</Label>
+    <Textarea
+        id="message"
+        class="resize-none"
+        rows="4"
+        bind:value
+        placeholder="Stelle eine Frage..."
+    />
+
+    <Checkbox bind:checked={anonymous}>Frage anonym stellen</Checkbox>
+
+    <Button on:click={addNewQuestion}>
+        <span><Icon src={MailAdd} size="20" /></span><span class="ml-2"
+            >Posten</span
+        >
+    </Button>
 </div>
