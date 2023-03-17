@@ -8,7 +8,8 @@
         updateQuestion,
     } from "../lib/questions";
     import { activeSessison } from "../lib/session";
-    import { Button, Checkbox, Hr, Modal, Textarea } from "flowbite-svelte";
+    import { Button, Checkbox, Hr, Modal, P, Textarea } from "flowbite-svelte";
+    import Session from "./Session.svelte";
 
     let showModal = false;
     let activeQuestion = { Text: "", Anonymous: true, Id: "" };
@@ -27,7 +28,7 @@
 </script>
 
 {#if !$activeSessison}
-    <div>keine aktive Q & A Session</div>
+    <P size="2xl" class="text-center">keine aktive Q & A Session</P>
 {:else}
     <AddQuestion />
     <div class="py-4">

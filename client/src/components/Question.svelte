@@ -39,6 +39,7 @@
                     outline={true}
                     size="xl"
                     class="!p-2"
+                    disabled={question.Voted || null}
                     on:click={question.Voted
                         ? null
                         : () => voteQuestion(question.Id)}
@@ -55,32 +56,34 @@
             class="flex-col sm:flex-row gap-2 sm:gap-0 flex items-center justify-between"
         >
             <P size="sm">{question.Anonymous ? "Anonym" : question.Creator}</P>
-            <div
-                class="flex-col sm:flex-row flex gap-4 sm:gap-2 w-full sm:w-auto"
-            >
-                {#if question.Owned}
-                    <Button outline size="sm" on:click={() => edit()}
-                        >Bearbeiten</Button
-                    >
-                {/if}
-                {#if isAdmin || isSessionAdmin}
-                    <Button
-                        outline
-                        size="sm"
-                        color="green"
-                        on:click={() => answerQuestion(question.Id)}
-                        >Beantworten</Button
-                    >
-                {/if}
-                {#if question.Owned}
-                    <Button
-                        outline
-                        size="sm"
-                        color="red"
-                        on:click={() => (popupModal = true)}>Löschen</Button
-                    >
-                {/if}
-            </div>
+            {#if !question.Answered}
+                <div
+                    class="flex-col sm:flex-row flex gap-4 sm:gap-2 w-full sm:w-auto"
+                >
+                    {#if question.Owned}
+                        <Button outline size="sm" on:click={() => edit()}
+                            >Bearbeiten</Button
+                        >
+                    {/if}
+                    {#if isAdmin || isSessionAdmin}
+                        <Button
+                            outline
+                            size="sm"
+                            color="green"
+                            on:click={() => answerQuestion(question.Id)}
+                            >Beantworten</Button
+                        >
+                    {/if}
+                    {#if question.Owned}
+                        <Button
+                            outline
+                            size="sm"
+                            color="red"
+                            on:click={() => (popupModal = true)}>Löschen</Button
+                        >
+                    {/if}
+                </div>
+            {/if}
         </div>
     </div>
     <Modal bind:open={popupModal} size="xs" autoclose>
