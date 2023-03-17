@@ -6,8 +6,10 @@
   // Finally, your application's global stylesheet (sometimes labeled 'app.css')
   import "./app.postcss";
   import HeaderBar from "./components/HeaderBar.svelte";
-  import Session from "./components/Session.svelte";
-  import { P } from "flowbite-svelte";
+  import { P, TabItem, Tabs } from "flowbite-svelte";
+  import { Icon } from "@steeze-ui/svelte-icon";
+  import { Chat1, Chat2, ChatCheck } from "@steeze-ui/remix-icons";
+  import AnsweredQuestions from "./components/AnsweredQuestions.svelte";
 </script>
 
 <div class="h-full">
@@ -15,11 +17,26 @@
   {#await authenticate()}
     <P size="xl" class="text-center">logging in</P>
   {:then _}
-    <main class="container mx-auto p-8 space-y-8 overlow-y-auto h-full">
-      {#if isAdmin}
-        <Session />
-      {/if}
-      <Questions />
+    <main class="container mx-auto md:p-8 space-y-8 overlow-y-auto h-full">
+      <Tabs
+        style="underline"
+        contentClass="pt-2 bg-white rounded-lg dark:bg-gray-800"
+      >
+        <TabItem open>
+          <div slot="title" class="flex items-center gap-2">
+            <Icon src={Chat2} size="20" />
+            <div>Aktive Fragen</div>
+          </div>
+          <Questions />
+        </TabItem>
+        <TabItem>
+          <div slot="title" class="flex items-center gap-2">
+            <Icon src={ChatCheck} size="20" />
+            <div>Beantwortete Fragen</div>
+          </div>
+          <AnsweredQuestions />
+        </TabItem>
+      </Tabs>
     </main>
   {/await}
 </div>
