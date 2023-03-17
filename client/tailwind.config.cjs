@@ -1,18 +1,17 @@
-/** @type {import('tailwindcss').Config} */
-module.exports = {
-  darkMode: 'class',
+const config = {
   content: [
-    './src/**/*.{html,js,svelte,ts}',
-    require('path').join(require.resolve(
-      '@skeletonlabs/skeleton'),
-      '../**/*.{html,js,svelte,ts}'
-    )
+    "./src/**/*.{html,js,svelte,ts}",
+    "./node_modules/flowbite-svelte/**/*.{html,js,svelte,ts}",
   ],
+
   theme: {
     extend: {},
   },
+
   plugins: [
-    require('@tailwindcss/forms'),
-    ...require('@skeletonlabs/skeleton/tailwind/skeleton.cjs')()
-  ]
-}
+    require('flowbite/plugin')
+  ],
+  darkMode: 'class',
+};
+
+module.exports = config;
