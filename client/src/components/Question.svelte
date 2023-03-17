@@ -39,6 +39,7 @@
                     outline={true}
                     size="xl"
                     class="!p-2"
+                    disabled={question.Voted || null}
                     on:click={question.Voted
                         ? null
                         : () => voteQuestion(question.Id)}

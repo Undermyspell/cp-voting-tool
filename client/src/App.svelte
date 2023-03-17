@@ -10,7 +10,7 @@
   import { P } from "flowbite-svelte";
 </script>
 
-<div class="bg-white dark:bg-gray-800 h-full">
+<div class="h-full">
   <HeaderBar />
   {#await authenticate()}
     <P size="xl" class="text-center">logging in</P>
