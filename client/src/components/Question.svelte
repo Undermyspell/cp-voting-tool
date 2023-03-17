@@ -55,7 +55,9 @@
             class="flex-col sm:flex-row gap-2 sm:gap-0 flex items-center justify-between"
         >
             <P size="sm">{question.Anonymous ? "Anonym" : question.Creator}</P>
-            <div class="flex-col sm:flex-row flex gap-2">
+            <div
+                class="flex-col sm:flex-row flex gap-4 sm:gap-2 w-full sm:w-auto"
+            >
                 {#if question.Owned}
                     <Button outline size="sm" on:click={() => edit()}
                         >Bearbeiten</Button
@@ -87,7 +89,7 @@
                 <Icon src={ErrorWarning} size="64" />
                 <P size="base">Willst du die Frage wirklich löschen?</P>
             </div>
-            <div class="flex w-full justify-end gap-4">
+            <div class="flex w-full justify-end md:gap-4">
                 <Button color="alternative">Abbrechen</Button>
                 <Button
                     color="red"
