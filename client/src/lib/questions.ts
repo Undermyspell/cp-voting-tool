@@ -1,10 +1,12 @@
-import { get, writable, type Writable } from "svelte/store"
+import { derived, get, writable, type Writable } from "svelte/store"
 import type { Question } from "../models/question"
 import { deleteRequest, getRequest, postRequest, putRequest } from "./api"
 import { eventSource } from "./eventsource"
 import { activeSessison } from "./session"
 
-export const questions: Writable<Question[]> = writable([])
+const allQuestions: Writable<Question[]> = writable([])
+export const questions = derived(allQuestions, ($allQuestions: Question[]) => $allQuestions.filter((q) => q.Answered === false))
+export const answeredQuestions = derived(allQuestions, ($allQuestions: Question[]) => $allQuestions.filter((q) => q.Answered === true))
 export const sessionActive = writable(false)
 
 const unsub = eventSource.subscribe((eventSource) => {
@@ -108,5 +110,5 @@ const questionAnswered = (payload: { Id: string }) => {
 }
 
 const sortAndUpdateQuestions = () => {
-	questions.set([...questionMap.values()].sort((a, b) => b.Votes - a.Votes))
+	allQuestions.set([...questionMap.values()].sort((a, b) => b.Votes - a.Votes))
 }

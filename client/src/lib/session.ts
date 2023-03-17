@@ -21,6 +21,7 @@ const unsub = eventSource.subscribe((eventSource) => {
 		})
 		eventSource.addEventListener("stop_session", (event) => {
 			activeSessison.set(false)
+			clearQuestions()
 		})
 	}
 })
