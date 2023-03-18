@@ -65,6 +65,7 @@ func main() {
 	}
 	config.AllowOrigins = []string{"*"}
 	r.Use(cors.New(config))
+	r.Use(middleware.Options)
 
 	v1 := r.Group("/api/v1")
 	{
