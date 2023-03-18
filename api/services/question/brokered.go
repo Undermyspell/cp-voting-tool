@@ -54,7 +54,7 @@ func (service *BrokeredQuestionsService) Add(c *gin.Context) {
 		return
 	}
 
-	newQuestionForUserSseMessage := dtos.QuestionDto{
+	newQuestionForUserSseMessage := sse.QuestionCreated{
 		Id:        question.Id,
 		Text:      question.Text,
 		Creator:   question.CreatorName,
@@ -71,7 +71,7 @@ func (service *BrokeredQuestionsService) Add(c *gin.Context) {
 		creatorForAllButUser = question.CreatorName
 	}
 
-	newQuestionForAllButUserSseMessage := dtos.QuestionDto{
+	newQuestionForAllButUserSseMessage := sse.QuestionCreated{
 		Id:        question.Id,
 		Text:      question.Text,
 		Creator:   creatorForAllButUser,
@@ -130,12 +130,12 @@ func (service *BrokeredQuestionsService) Update(c *gin.Context) {
 		return
 	}
 
-	questionToUpdateSseMessage := struct {
-		Id        string
-		Text      string
-		Creator   string
-		Anonymous bool
-	}{questionToUpdate.Id, questionToUpdate.Text, questionToUpdate.CreatorName, questionToUpdate.Anonymous}
+	questionToUpdateSseMessage := sse.QuestionUpdated{
+		Id:        questionToUpdate.Id,
+		Text:      questionToUpdate.Text,
+		Creator:   questionToUpdate.CreatorName,
+		Anonymous: questionToUpdate.Anonymous,
+	}
 
 	newQuestionByteString, _ := json.Marshal(questionToUpdateSseMessage)
 
@@ -172,9 +172,9 @@ func (service *BrokeredQuestionsService) Delete(c *gin.Context) {
 		return
 	}
 
-	questionDeletedSseMessage := struct {
-		Id string
-	}{questionId}
+	questionDeletedSseMessage := sse.QuestionDeleted{
+		Id: questionId,
+	}
 	questionDeletedByteString, _ := json.Marshal(questionDeletedSseMessage)
 
 	event := sse.Event{
@@ -215,11 +215,11 @@ func (service *BrokeredQuestionsService) Upvote(c *gin.Context) {
 		Votes int
 	}{questionId, votes}
 
-	questionUpVoteForUserSseMessage := struct {
-		Id    string
-		Votes int
-		Voted bool
-	}{questionId, votes, true}
+	questionUpVoteForUserSseMessage := sse.QuestionUpvoted{
+		Id:    questionId,
+		Votes: votes,
+		Voted: true,
+	}
 
 	questionForUserPaylod, errf := json.Marshal(questionUpVoteForUserSseMessage)
 	questionPayload, errj := json.Marshal(questionUpvoteSseMessage)
@@ -271,9 +271,9 @@ func (service *BrokeredQuestionsService) Answer(c *gin.Context) {
 		return
 	}
 
-	questionMessage := struct {
-		Id string
-	}{questionId}
+	questionMessage := sse.QuestionAnswered{
+		Id: questionId,
+	}
 	questionPayload, errj := json.Marshal(questionMessage)
 
 	if errj != nil {
