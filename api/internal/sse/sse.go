@@ -14,6 +14,7 @@ const (
 	START_SESSION     EventType = "start_session"
 	USER_CONNECTED    EventType = "user_connected"
 	USER_DISCONNECTED EventType = "user_disconnected"
+	HEART_BEAT        EventType = "heart_beat"
 )
 
 type Event struct {

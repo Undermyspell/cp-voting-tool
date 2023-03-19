@@ -14,4 +14,5 @@ type Broker interface {
 	NotifyUser(event sse.Event, user models.UserContext)
 	NotifyAllButUser(event sse.Event, user models.UserContext)
 	DistinctClientsCount() int
+	SendHeartBeat()
 }

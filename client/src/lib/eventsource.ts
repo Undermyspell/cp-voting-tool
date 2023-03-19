@@ -9,9 +9,14 @@ export const initEventSource = () => {
 			Authorization: `Bearer ${get(idToken)}`
 		}
 	} as any)
+	source.addEventListener("heart_beat", () => console.log("[Heart Beat]"))
 	source.addEventListener("error", (event: any) => {
+		console.log("[ERROR]", event)
+		source.close()
 		if (event.status === 401) {
 			refreshToken()
+		} else {
+			initEventSource()
 		}
 	})
 

@@ -5,6 +5,7 @@ import (
 	"io"
 	"sse/internal/models"
 	"sse/internal/sse"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -114,6 +115,19 @@ func (broker *ChannelBroker) DistinctClientsCount() int {
 	}
 
 	return len(distinctClients)
+}
+
+func (broker *ChannelBroker) SendHeartBeat() {
+	event := sse.Event{
+		EventType: sse.HEART_BEAT,
+		Payload:   "",
+	}
+
+	ticker := time.NewTicker(30 * 1000 * time.Millisecond)
+	for range ticker.C {
+		logrus.Info("Send heartbeat...")
+		broker.NotifyAll(event)
+	}
 }
 
 func (broker *ChannelBroker) createUserConnectionSseEvent(eventType sse.EventType) sse.Event {

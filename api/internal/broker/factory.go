@@ -14,6 +14,7 @@ func New() Broker {
 	}
 
 	go broker.Listen()
+	go broker.SendHeartBeat()
 
 	return broker
 }
