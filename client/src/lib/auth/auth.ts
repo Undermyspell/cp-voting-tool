@@ -9,11 +9,11 @@ const authResult: Writable<AuthenticationResult> = writable(null)
 
 export const refreshToken = async () => {
 	try {
-		const forceRefresh = !!get(authResult) && +get(authResult).idTokenClaims["exp"] * 1000 < Date.now()
-		console.log("[Force refresh] ", forceRefresh)
+		const tokenExpired = !!get(authResult) && +get(authResult).idTokenClaims["exp"] * 1000 < Date.now()
+		console.log("[Force refresh] ", tokenExpired)
 		const refreshResult: AuthenticationResult = await msalInstance.acquireTokenSilent({
 			scopes: ["User.Read"],
-			forceRefresh
+			forceRefresh: tokenExpired
 		})
 		const initEvSource = get(authResult)?.idTokenClaims["exp"] !== refreshResult.idTokenClaims["exp"]
 		authResult.set(refreshResult)
