@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { idToken } from "./auth/auth"
+import { idToken, refreshToken } from "./auth/auth"
 
 export interface RequestData {
 	path: string
@@ -10,6 +10,7 @@ const baseUrl = `${import.meta.env.VITE_API_BASE_URL}/api/v1`
 
 export const getRequest = async ({ path }: RequestData) => {
 	try {
+		await refreshToken()
 		return await fetch(`${baseUrl}${path}`, {
 			method: "GET",
 			headers: {
@@ -23,6 +24,7 @@ export const getRequest = async ({ path }: RequestData) => {
 
 export const postRequest = async ({ path, body }: RequestData) => {
 	try {
+		await refreshToken()
 		return await fetch(`${baseUrl}${path}`, {
 			method: "POST",
 			headers: {
@@ -37,6 +39,7 @@ export const postRequest = async ({ path, body }: RequestData) => {
 
 export const putRequest = async ({ path, body }: RequestData) => {
 	try {
+		await refreshToken()
 		return await fetch(`${baseUrl}${path}`, {
 			method: "PUT",
 			headers: {
@@ -51,6 +54,7 @@ export const putRequest = async ({ path, body }: RequestData) => {
 
 export const deleteRequest = async ({ path }: RequestData) => {
 	try {
+		await refreshToken()
 		return await fetch(`${baseUrl}${path}`, {
 			method: "DELETE",
 			headers: {
