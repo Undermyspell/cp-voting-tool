@@ -406,6 +406,13 @@ func (service *BrokeredQuestionsService) updateQuestion(question dtos.UpdateQues
 		}
 	}
 
+	if questionToUpdate.Answered {
+		return nil, &validation.ValidationError{
+			ValidationError: "question has already been answered",
+			HttpStatus:      http.StatusNotAcceptable,
+		}
+	}
+
 	questionToUpdate.Text = question.Text
 	questionToUpdate.Anonymous = question.Anonymous
 	questionToUpdate.CreatorName = ""
@@ -436,6 +443,13 @@ func (service *BrokeredQuestionsService) deleteQuestion(id string, creator model
 		return &validation.ValidationError{
 			ValidationError: "you do not own this question",
 			HttpStatus:      http.StatusForbidden,
+		}
+	}
+
+	if questionToDelete.Answered {
+		return &validation.ValidationError{
+			ValidationError: "question has already been answered",
+			HttpStatus:      http.StatusNotAcceptable,
 		}
 	}
 
