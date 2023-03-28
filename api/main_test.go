@@ -92,7 +92,9 @@ func (suite *QuestionApiTestSuite) TestApi_NOTACCEPTABLE_406_WHEN_NO_SESSION_RUN
 		{"Question_New_NOTACCEPTABLE_406", http.MethodPost, "/question/new", bytes.NewBuffer([]byte(`{"text": "test question?" }`))},
 		{"Question_Upvote_NOTACCEPTABLE_406", http.MethodPut, "/question/upvote/question1", nil},
 		{"Question_Answer_NOTACCEPTABLE_406", http.MethodPut, "/question/answer/question1", nil},
-		{"Question_Rest_NOTACCEPTABLE_406", http.MethodGet, "/question/session", nil},
+		{"Question_Update_NOTACCEPTABLE_406", http.MethodPut, "/question/update", bytes.NewBuffer([]byte(`{"id": "1","text": "test question?" }`))},
+		{"Question_Delete_NOTACCEPTABLE_406", http.MethodDelete, "/question/delete/question1", nil},
+		{"Question_GetSession_NOTACCEPTABLE_406", http.MethodGet, "/question/session", nil},
 	}
 
 	for _, test := range tests {
@@ -234,6 +236,45 @@ func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTACCEPTABLE_406_WHEN_VOT
 
 	w2 := httptest.NewRecorder()
 	upvoteQuestion(suite, w2, questionList[0].Id, token)
+
+	assert.Equal(suite.T(), http.StatusNotAcceptable, w2.Code)
+}
+
+func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTACCEPTABLE_406_WHEN_DELETING_ANSWERED_QUESTION() {
+	w := httptest.NewRecorder()
+
+	token := suite.tokenUser_SessionAdmin
+
+	jsonData := dtos.NewQuestionDto{Text: "new question"}
+
+	postNewQuestion(suite, w, jsonData, token)
+
+	questionList := getSession(suite, w, token)
+
+	answerQuestion(suite, w, questionList[0].Id, token)
+
+	w2 := httptest.NewRecorder()
+	deleteQuestion(suite, w2, questionList[0].Id, token)
+
+	assert.Equal(suite.T(), http.StatusNotAcceptable, w2.Code)
+}
+
+func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTACCEPTABLE_406_WHEN_UPDATING_ANSWERED_QUESTION() {
+	w := httptest.NewRecorder()
+
+	token := suite.tokenUser_SessionAdmin
+
+	jsonData := dtos.NewQuestionDto{Text: "new question"}
+
+	postNewQuestion(suite, w, jsonData, token)
+
+	questionList := getSession(suite, w, token)
+
+	answerQuestion(suite, w, questionList[0].Id, token)
+
+	w2 := httptest.NewRecorder()
+	updateQuestionDto := dtos.UpdateQuestionDto{Id: questionList[0].Id, Text: "Updated Question", Anonymous: true}
+	putUpdateQuestion(suite, w2, updateQuestionDto, token)
 
 	assert.Equal(suite.T(), http.StatusNotAcceptable, w2.Code)
 }
