@@ -62,12 +62,14 @@
     </div>
     <Hr height="h-px" />
 
-    <div
-        class="flex-col sm:flex-row gap-2 sm:gap-0 flex items-center justify-between"
-    >
-        <P size="sm">{question.Anonymous ? "Anonym" : question.Creator}</P>
+    <div class="flex-col sm:flex-row gap-2 flex items-center justify-between">
+        <P size="sm" class="sm:w-full"
+            >{question.Anonymous ? "Anonym" : question.Creator}</P
+        >
 
-        <div class="flex gap-4  w-full sm:gap-2 sm:w-full justify-end">
+        <div
+            class="flex gap-4 justify-between sm:justify-end w-full sm:gap-2 sm:w-full justify-end"
+        >
             {#if isAdmin || isSessionAdmin}
                 <Button
                     size="xs"

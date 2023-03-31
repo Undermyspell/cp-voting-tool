@@ -22,7 +22,7 @@
         placeholder="Stelle eine Frage..."
     />
 
-    <div class="flex justify-end gap-4">
+    <div class="flex justify-around sm:justify-end gap-4">
         <Checkbox bind:checked={anonymous}>Frage anonym stellen</Checkbox>
 
         <Button size="xs" on:click={addNewQuestion}>
