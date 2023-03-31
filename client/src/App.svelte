@@ -1,14 +1,12 @@
 <script lang="ts">
-  import svelteLogo from "./assets/svelte.svg";
   import { authenticate, isAdmin } from "./lib/auth/auth";
   import Questions from "./components/Questions.svelte";
 
-  // Finally, your application's global stylesheet (sometimes labeled 'app.css')
   import "./app.postcss";
   import HeaderBar from "./components/HeaderBar.svelte";
   import { P, TabItem, Tabs } from "flowbite-svelte";
   import { Icon } from "@steeze-ui/svelte-icon";
-  import { Chat1, Chat2, ChatCheck } from "@steeze-ui/remix-icons";
+  import { Chat2, ChatCheck } from "@steeze-ui/remix-icons";
   import AnsweredQuestions from "./components/AnsweredQuestions.svelte";
 </script>
 

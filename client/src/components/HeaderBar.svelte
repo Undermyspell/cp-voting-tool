@@ -1,5 +1,7 @@
 <script lang="ts">
     import { startSession, stopSession, userOnline } from "../lib/session";
+    import pollerrLogo from "../assets/logo.svg";
+
     import {
         DarkMode,
         Navbar,
@@ -13,8 +15,9 @@
 
 <Navbar let:hidden let:toggle>
     <NavBrand href="/">
+        <img src={pollerrLogo} class="h-8" alt="" />
         <span
-            class="self-center whitespace-nowrap text-xl font-semibold dark:text-white"
+            class="ml-4 self-center whitespace-nowrap text-xl font-semibold dark:text-white"
         >
             Pollerr
         </span>
@@ -22,8 +25,12 @@
     <NavHamburger on:click={toggle} />
     <NavUl {hidden}>
         {#if isAdmin}
-            <NavLi on:click={startSession}>Fragerunde starten</NavLi>
-            <NavLi on:click={stopSession}>Fragerunde beenden</NavLi>
+            <NavLi class="cursor-pointer" on:click={startSession}
+                >Fragerunde starten</NavLi
+            >
+            <NavLi class="cursor-pointer" on:click={stopSession}
+                >Fragerunde beenden</NavLi
+            >
         {/if}
     </NavUl>
 

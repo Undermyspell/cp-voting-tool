@@ -11,11 +11,15 @@
 {:else}
     <div class="py-4">
         {#if $answeredQuestions.length === 0}
-            <div>keine Fragen beantwortet bisher</div>
+            <P size="2xl" class="text-center"
+                >keine beantwortete Fragen vorhanden.</P
+            >
         {:else}
             <div class="flex flex-col gap-4 ">
                 {#each $answeredQuestions as question, i}
-                    <div class="border border-gray-600 p-4 rounded">
+                    <div
+                        class="border border-gray-400 shadow-lg shadow-gray-400/40 dark:border-gray-900 dark:shadow-gray-900/40 p-4 rounded"
+                    >
                         <div class="flex w-full items-center gap-4 ">
                             <Icon
                                 src={CheckDouble}
