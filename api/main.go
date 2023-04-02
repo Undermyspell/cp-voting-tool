@@ -7,6 +7,7 @@ import (
 	"sse/internal/middleware"
 	"sse/internal/mocks"
 	"sse/internal/models/roles"
+	"sse/internal/votingstorage"
 	questionService "sse/services/question"
 	userService "sse/services/user"
 	"time"
@@ -19,8 +20,8 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-var initQuestionService = func(broker broker.Broker) questionService.QuestionService {
-	return questionService.NewBrokered(broker)
+var initQuestionService = func(broker broker.Broker, votingStorage votingstorage.VotingStorage) questionService.QuestionService {
+	return questionService.NewBrokered(broker, votingStorage)
 }
 
 var start = func(r *gin.Engine) {
@@ -53,8 +54,13 @@ func main() {
 		jwksProvider = mocks.NewJwks()
 	}
 
+	var votingStorage votingstorage.VotingStorage
+	if env.Env.VotingStorageInMemory {
+		votingStorage = votingstorage.NewInMemory()
+	}
+
 	broker := broker.New()
-	questionService := initQuestionService(broker)
+	questionService := initQuestionService(broker, votingStorage)
 	userService := userService.NewTestUser()
 
 	config := cors.Config{

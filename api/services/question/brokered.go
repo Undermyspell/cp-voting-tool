@@ -5,20 +5,18 @@ import (
 	"net/http"
 	"sse/dtos"
 	"sse/internal/broker"
-	"sse/internal/helper"
 	"sse/internal/models"
 	"sse/internal/sse"
 	"sse/internal/validation"
+	"sse/internal/votingstorage"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
 
 type BrokeredQuestionsService struct {
-	Broker        broker.Broker
-	Session       map[string]*models.Question
-	UserVotes     *models.SafeUserVotes
-	SessionSecret string
+	Broker          broker.Broker
+	QuestionSession votingstorage.VotingStorage
 }
 
 // AddQuestion         godoc
@@ -59,7 +57,7 @@ func (service *BrokeredQuestionsService) Add(c *gin.Context) {
 		Text:      question.Text,
 		Creator:   question.CreatorName,
 		Answered:  question.Answered,
-		Votes:     question.Votes.Value(),
+		Votes:     question.Votes,
 		Voted:     question.Voted,
 		Anonymous: question.Anonymous,
 		Owned:     true,
@@ -76,7 +74,7 @@ func (service *BrokeredQuestionsService) Add(c *gin.Context) {
 		Text:      question.Text,
 		Creator:   creatorForAllButUser,
 		Answered:  question.Answered,
-		Votes:     question.Votes.Value(),
+		Votes:     question.Votes,
 		Anonymous: question.Anonymous,
 		Owned:     false,
 	}
@@ -299,7 +297,7 @@ func (service *BrokeredQuestionsService) Answer(c *gin.Context) {
 // @Failure      401
 // @Router       /api/v1/question/session/stop [post]
 func (service *BrokeredQuestionsService) Stop(c *gin.Context) {
-	service.stop()
+	service.QuestionSession.Stop()
 
 	event := sse.Event{
 		EventType: sse.STOP_SESSION,
@@ -319,7 +317,7 @@ func (service *BrokeredQuestionsService) Stop(c *gin.Context) {
 // @Failure      401
 // @Router       /api/v1/question/session/start [post]
 func (service *BrokeredQuestionsService) Start(c *gin.Context) {
-	service.start()
+	service.QuestionSession.Start()
 
 	event := sse.Event{
 		EventType: sse.START_SESSION,
@@ -339,7 +337,7 @@ func (service *BrokeredQuestionsService) Start(c *gin.Context) {
 // @Failure      401
 // @Router       /api/v1/question/session [get]
 func (service *BrokeredQuestionsService) GetSession(c *gin.Context) {
-	if service.Session == nil {
+	if !service.QuestionSession.IsRunning() {
 		c.JSON(http.StatusNotAcceptable, gin.H{
 			"error": "no questions session currently running",
 		})
@@ -348,19 +346,19 @@ func (service *BrokeredQuestionsService) GetSession(c *gin.Context) {
 
 	user, _ := c.Get(models.User)
 	userContext := user.(*models.UserContext)
-	hash := userContext.GetHash(service.SessionSecret)
+	hash := userContext.GetHash(service.QuestionSession.GetSecret())
 	questions := []dtos.QuestionDto{}
 
-	for _, v := range service.Session {
+	for _, v := range service.QuestionSession.GetQuestions() {
 		creator := v.CreatorName
-		owned := v.CreatorHash == userContext.GetHash(service.SessionSecret)
+		owned := v.CreatorHash == userContext.GetHash(service.QuestionSession.GetSecret())
 
 		questions = append(questions, dtos.QuestionDto{
 			Id:        v.Id,
 			Text:      v.Text,
-			Votes:     v.Votes.Value(),
+			Votes:     v.Votes,
 			Answered:  v.Answered,
-			Voted:     service.UserVotes.Value()[hash][v.Id],
+			Voted:     service.QuestionSession.GetUserVotes()[hash][v.Id],
 			Anonymous: v.Anonymous,
 			Creator:   creator,
 			Owned:     owned,
@@ -370,68 +368,62 @@ func (service *BrokeredQuestionsService) GetSession(c *gin.Context) {
 	c.JSON(http.StatusOK, questions)
 }
 
-func (service *BrokeredQuestionsService) newQuestion(text string, anonymous bool, creator models.UserContext) (*models.Question, *validation.ValidationError) {
-	if service.Session == nil {
-		return nil, &validation.ValidationError{
+func (service *BrokeredQuestionsService) newQuestion(text string, anonymous bool, creator models.UserContext) (models.Question, *validation.ValidationError) {
+	if !service.QuestionSession.IsRunning() {
+		return models.Question{}, &validation.ValidationError{
 			ValidationError: "no questions session currently running",
 			HttpStatus:      http.StatusNotAcceptable,
 		}
 	}
 
-	question := models.NewQuestion(text, anonymous, creator.Name, creator.GetHash(service.SessionSecret))
-	service.Session[question.Id] = question
+	question := service.QuestionSession.AddQuestion(text, anonymous, creator.Name, creator.GetHash(service.QuestionSession.GetSecret()))
 	return question, nil
 }
 
-func (service *BrokeredQuestionsService) updateQuestion(question dtos.UpdateQuestionDto, creator models.UserContext) (*models.Question, *validation.ValidationError) {
-	if service.Session == nil {
-		return nil, &validation.ValidationError{
+func (service *BrokeredQuestionsService) updateQuestion(question dtos.UpdateQuestionDto, creator models.UserContext) (models.Question, *validation.ValidationError) {
+	if !service.QuestionSession.IsRunning() {
+		return models.Question{}, &validation.ValidationError{
 			ValidationError: "no questions session currently running",
 			HttpStatus:      http.StatusNotAcceptable,
 		}
 	}
 
-	questionToUpdate, ok := service.Session[question.Id]
+	updatedQuestion, ok := service.QuestionSession.GetQuestion(question.Id)
 	if !ok {
-		return nil, &validation.ValidationError{
+		return models.Question{}, &validation.ValidationError{
 			ValidationError: "question not found",
 			HttpStatus:      http.StatusNotFound,
 		}
 	}
 
-	if questionToUpdate.CreatorHash != creator.GetHash(service.SessionSecret) {
-		return nil, &validation.ValidationError{
+	if updatedQuestion.CreatorHash != creator.GetHash(service.QuestionSession.GetSecret()) {
+		return models.Question{}, &validation.ValidationError{
 			ValidationError: "you do not own this question",
 			HttpStatus:      http.StatusForbidden,
 		}
 	}
 
-	if questionToUpdate.Answered {
-		return nil, &validation.ValidationError{
+	if updatedQuestion.Answered {
+		return models.Question{}, &validation.ValidationError{
 			ValidationError: "question has already been answered",
 			HttpStatus:      http.StatusNotAcceptable,
 		}
 	}
 
-	questionToUpdate.Text = question.Text
-	questionToUpdate.Anonymous = question.Anonymous
-	questionToUpdate.CreatorName = ""
-	if !questionToUpdate.Anonymous {
-		questionToUpdate.CreatorName = creator.Name
-	}
+	updatedQuestion = service.QuestionSession.UpdateQuestion(question.Id, question.Text, creator.Name, question.Anonymous)
 
-	return questionToUpdate, nil
+	return updatedQuestion, nil
 }
 
 func (service *BrokeredQuestionsService) deleteQuestion(id string, creator models.UserContext) *validation.ValidationError {
-	if service.Session == nil {
+	if !service.QuestionSession.IsRunning() {
 		return &validation.ValidationError{
 			ValidationError: "no questions session currently running",
 			HttpStatus:      http.StatusNotAcceptable,
 		}
 	}
 
-	questionToDelete, ok := service.Session[id]
+	questionToDelete, ok := service.QuestionSession.GetQuestion(id)
 	if !ok {
 		return &validation.ValidationError{
 			ValidationError: "question not found",
@@ -439,7 +431,7 @@ func (service *BrokeredQuestionsService) deleteQuestion(id string, creator model
 		}
 	}
 
-	if questionToDelete.CreatorHash != creator.GetHash(service.SessionSecret) {
+	if questionToDelete.CreatorHash != creator.GetHash(service.QuestionSession.GetSecret()) {
 		return &validation.ValidationError{
 			ValidationError: "you do not own this question",
 			HttpStatus:      http.StatusForbidden,
@@ -453,20 +445,20 @@ func (service *BrokeredQuestionsService) deleteQuestion(id string, creator model
 		}
 	}
 
-	delete(service.Session, questionToDelete.Id)
+	service.QuestionSession.DeleteQuestion(questionToDelete.Id)
 
 	return nil
 }
 
 func (service *BrokeredQuestionsService) upVote(id string, user models.UserContext) (int, *validation.ValidationError) {
-	if service.Session == nil {
+	if !service.QuestionSession.IsRunning() {
 		return 0, &validation.ValidationError{
 			ValidationError: "no questions session currently running",
 			HttpStatus:      http.StatusNotAcceptable,
 		}
 	}
 
-	question, ok := service.Session[id]
+	question, ok := service.QuestionSession.GetQuestion(id)
 
 	if !ok {
 		return 0, &validation.ValidationError{
@@ -483,8 +475,8 @@ func (service *BrokeredQuestionsService) upVote(id string, user models.UserConte
 		}
 	}
 
-	hash := user.GetHash(service.SessionSecret)
-	_, ok = service.UserVotes.Value()[hash][id]
+	hash := user.GetHash(service.QuestionSession.GetSecret())
+	_, ok = service.QuestionSession.GetUserVotes()[hash][id]
 
 	if ok {
 		return 0, &validation.ValidationError{
@@ -493,21 +485,22 @@ func (service *BrokeredQuestionsService) upVote(id string, user models.UserConte
 		}
 	}
 
-	service.UserVotes.SetUserVote(hash, id)
-	question.Votes.Increment()
+	service.QuestionSession.Vote(hash, id)
 
-	return question.Votes.Value(), nil
+	question, _ = service.QuestionSession.GetQuestion(question.Id)
+
+	return question.Votes, nil
 }
 
 func (service *BrokeredQuestionsService) answer(id string) *validation.ValidationError {
-	if service.Session == nil {
+	if !service.QuestionSession.IsRunning() {
 		return &validation.ValidationError{
 			ValidationError: "no questions session currently running",
 			HttpStatus:      http.StatusNotAcceptable,
 		}
 	}
 
-	question, ok := service.Session[id]
+	_, ok := service.QuestionSession.GetQuestion(id)
 
 	if !ok {
 		return &validation.ValidationError{
@@ -516,19 +509,7 @@ func (service *BrokeredQuestionsService) answer(id string) *validation.Validatio
 		}
 	}
 
-	question.Answered = true
+	service.QuestionSession.AnswerQuestion(id)
 
 	return nil
-}
-
-func (service *BrokeredQuestionsService) stop() {
-	service.UserVotes = nil
-	service.Session = nil
-	service.SessionSecret = ""
-}
-
-func (service *BrokeredQuestionsService) start() {
-	service.UserVotes = models.NewSafeUserVotes()
-	service.Session = make(map[string]*models.Question)
-	service.SessionSecret = helper.GetRandomId()
 }
