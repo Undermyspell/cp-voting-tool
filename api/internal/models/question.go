@@ -1,15 +1,9 @@
 package models
 
-import (
-	"sync"
-
-	"github.com/oklog/ulid/v2"
-)
-
 type Question struct {
-	Id          string `json:"id"`
-	Text        string `json:"text"`
-	Votes       SafeCounter
+	Id          string
+	Text        string
+	Votes       int
 	Answered    bool
 	Voted       bool
 	CreatorHash string
@@ -17,16 +11,16 @@ type Question struct {
 	Anonymous   bool
 }
 
-func NewQuestion(text string, anonymous bool, creatorName, creatorHash string) *Question {
+func NewQuestion(id, text string, votes int, answered, voted, anonymous bool, creatorName, creatorHash string) Question {
 	if anonymous {
 		creatorName = ""
 	}
-	return &Question{
-		Id:          ulid.Make().String(),
+	return Question{
+		Id:          id,
 		Text:        text,
-		Votes:       SafeCounter{mu: sync.Mutex{}},
-		Answered:    false,
-		Voted:       false,
+		Votes:       votes,
+		Answered:    answered,
+		Voted:       voted,
 		CreatorHash: creatorHash,
 		CreatorName: creatorName,
 		Anonymous:   anonymous,

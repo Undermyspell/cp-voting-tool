@@ -2,12 +2,12 @@ package services
 
 import (
 	"sse/internal/broker"
-	"sse/internal/votingsession"
+	"sse/internal/votingstorage"
 )
 
-func NewBrokered(broker broker.Broker) QuestionService {
+func NewBrokered(broker broker.Broker, storage votingstorage.VotingStorage) QuestionService {
 	return &BrokeredQuestionsService{
-		QuestionSession: &votingsession.InMemory{},
+		QuestionSession: storage,
 		Broker:          broker,
 	}
 }

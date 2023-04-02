@@ -31,6 +31,7 @@ type QuestionApiTestSuite struct {
 
 func (suite *QuestionApiTestSuite) SetupSuite() {
 	os.Setenv("USE_MOCK_JWKS", "true")
+	os.Setenv("VOTING_STORAGE_IN_MEMORY", "true")
 	start = func(r *gin.Engine) {}
 
 	main()
