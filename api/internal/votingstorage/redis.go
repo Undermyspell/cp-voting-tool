@@ -19,7 +19,6 @@ type redisQuestion struct {
 	Text        string
 	Votes       int
 	Answered    bool
-	Voted       bool
 	CreatorHash string
 	CreatorName string
 	Anonymous   bool
@@ -34,7 +33,6 @@ func newRedisQuestion(text string, anonymous bool, creatorName, creatorHash stri
 		Text:        text,
 		Votes:       0,
 		Answered:    false,
-		Voted:       false,
 		CreatorHash: creatorHash,
 		CreatorName: creatorName,
 		Anonymous:   anonymous,
@@ -287,7 +285,7 @@ func questionFromRedisQuestion(question redisQuestion) models.Question {
 		question.Text,
 		question.Votes,
 		question.Answered,
-		question.Voted,
+		false,
 		question.Anonymous,
 		question.CreatorName,
 		question.CreatorHash)
