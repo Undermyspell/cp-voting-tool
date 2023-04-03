@@ -4,4 +4,4 @@
 creation_rules:
   - path_regex: ""
     azure_keyvault: https://cp-voting-tool-kv.vault.azure.net/keys/cp-voting-tool-key/42c71d17f13a4e64bff388cc469c4db1
-    encrypted_suffix: _secret
+    encrypted_suffix: _SECRET
