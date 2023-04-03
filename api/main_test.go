@@ -12,6 +12,7 @@ import (
 	"sse/internal/mocks"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -289,7 +290,7 @@ func (suite *QuestionApiTestSuite) TestUpvoteQuestion_SAME_QUESTION_PARALLEL_100
 
 	suite.T().Run("Parallel_Question_Upvote", func(t *testing.T) {
 		var wg sync.WaitGroup
-		for i := 1; i <= 100; i++ {
+		for i := 1; i <= 1000; i++ {
 			wg.Add(1)
 			tokenUser := mocks.GetUserToken(fmt.Sprintf("User_%d", i), fmt.Sprintf("User_%d", i))
 			go func(tokenUser string, w *httptest.ResponseRecorder, questionId string) {
@@ -307,7 +308,9 @@ func (suite *QuestionApiTestSuite) TestUpvoteQuestion_SAME_QUESTION_PARALLEL_100
 		questionList := getSession(suite, w1, suite.tokenUser_Bar)
 		question := questionList[0]
 
-		assert.Equal(suite.T(), 100, question.Votes)
+		time.Sleep(time.Second * 5)
+
+		assert.Equal(suite.T(), 1000, question.Votes)
 	})
 }
 
