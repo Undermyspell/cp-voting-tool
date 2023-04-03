@@ -57,6 +57,8 @@ func main() {
 	var votingStorage votingstorage.VotingStorage
 	if env.Env.VotingStorageInMemory {
 		votingStorage = votingstorage.NewInMemory()
+	} else {
+		votingStorage = votingstorage.NewRedis()
 	}
 
 	broker := broker.New()
