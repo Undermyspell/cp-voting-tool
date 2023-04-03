@@ -303,6 +303,7 @@ func (suite *QuestionApiTestSuite) TestUpvoteQuestion_SAME_QUESTION_PARALLEL_100
 		wg.Wait()
 
 		w1 := httptest.NewRecorder()
+
 		questionList := getSession(suite, w1, suite.tokenUser_Bar)
 		question := questionList[0]
 

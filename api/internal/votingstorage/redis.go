@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"sse/internal/helper"
 	"sse/internal/models"
+	"time"
 
 	goredis "github.com/go-redis/redis/v8"
 	"github.com/nitishm/go-rejson/v4"
@@ -49,7 +49,7 @@ type VotingSession struct {
 
 type Redis struct {
 	redisHandler *rejson.Handler
-	goRedisCli   *goredis.Client
+	redisClient  *goredis.Client
 }
 
 func (session *Redis) Start() {
@@ -61,88 +61,124 @@ func (session *Redis) Start() {
 
 	_, err := session.redisHandler.JSONSet("voting_session", ".", votingSession)
 	if err != nil {
-		log.Fatalf(err.Error())
+		logrus.Error(err.Error())
 		return
 	}
 }
 
 func (session *Redis) Stop() {
-	if err := session.goRedisCli.FlushAll(context.Background()).Err(); err != nil {
-		logrus.Fatalf("goredis - failed to flush: %v", err)
+	if err := session.redisClient.FlushAll(context.Background()).Err(); err != nil {
+		logrus.Errorf("goredis - failed to flush: %v", err)
 	}
 }
 
 func (session *Redis) GetQuestion(id string) (models.Question, bool) {
-	res, err := session.redisHandler.JSONGet("voting_session", fmt.Sprintf(".Questions.%s", id))
-	if err != nil {
-		return models.Question{}, false
+	for {
+		res, err := session.redisHandler.JSONGet("voting_session", fmt.Sprintf(".Questions.%s", id))
+		if err != nil && err.Error() == "ERR max number of clients reached" {
+			logrus.Error(err.Error())
+			time.Sleep(time.Millisecond * 100)
+		} else if err != nil {
+			logrus.Error(err.Error())
+			return models.Question{}, false
+		} else {
+			redisQuestion := redisQuestion{}
+			json.Unmarshal(res.([]byte), &redisQuestion)
+
+			question := questionFromRedisQuestion(redisQuestion)
+
+			return question, true
+		}
 	}
-
-	redisQuestion := redisQuestion{}
-	json.Unmarshal(res.([]byte), &redisQuestion)
-
-	question := questionFromRedisQuestion(redisQuestion)
-
-	return question, true
 }
 
 func (session *Redis) IsRunning() bool {
-	_, err := session.redisHandler.JSONGet("voting_session", ".Questions")
-	return err == nil
+	for {
+		_, err := session.redisHandler.JSONGet("voting_session", ".Questions")
+		if err != nil && err.Error() == "ERR max number of clients reached" {
+			logrus.Error(err.Error())
+			time.Sleep(time.Millisecond * 100)
+		} else if err != nil {
+			logrus.Error(err.Error())
+			return false
+		} else {
+			return true
+		}
+	}
 }
 
 func (session *Redis) GetSecret() string {
-	res, err := session.redisHandler.JSONGet("voting_session", ".SessionSecret")
-	if err != nil {
-		log.Fatalf(err.Error())
-		return ""
+	for {
+		res, err := session.redisHandler.JSONGet("voting_session", ".SessionSecret")
+		if err != nil && err.Error() == "ERR max number of clients reached" {
+			logrus.Error(err.Error())
+			time.Sleep(time.Millisecond * 100)
+		} else if err != nil {
+			logrus.Error(err.Error())
+		} else {
+			return string(res.([]byte))
+		}
 	}
-
-	return string(res.([]byte))
 }
 
 func (session *Redis) GetQuestions() map[string]models.Question {
-	res, err := session.redisHandler.JSONGet("voting_session", ".Questions")
-	if err != nil {
-		log.Fatalf(err.Error())
-		return make(map[string]models.Question)
+	for {
+		res, err := session.redisHandler.JSONGet("voting_session", ".Questions")
+		if err != nil && err.Error() == "ERR max number of clients reached" {
+			logrus.Error(err.Error())
+			time.Sleep(time.Millisecond * 100)
+		} else if err != nil {
+			logrus.Error(err.Error())
+			return make(map[string]models.Question)
+		} else {
+			redisQuestions := make(map[string]redisQuestion)
+			json.Unmarshal(res.([]byte), &redisQuestions)
+
+			questions := make(map[string]models.Question)
+
+			for id, question := range redisQuestions {
+				questions[id] = questionFromRedisQuestion(question)
+			}
+
+			return questions
+		}
 	}
-
-	redisQuestions := make(map[string]redisQuestion)
-	json.Unmarshal(res.([]byte), &redisQuestions)
-
-	questions := make(map[string]models.Question)
-
-	for id, question := range redisQuestions {
-		questions[id] = questionFromRedisQuestion(question)
-	}
-
-	return questions
 }
 
 func (session *Redis) GetUserVotes() map[string]map[string]bool {
-	res, err := session.redisHandler.JSONGet("voting_session", ".UserVotes")
-	if err != nil {
-		log.Fatalf(err.Error())
-		return map[string]map[string]bool{}
+	for {
+		res, err := session.redisHandler.JSONGet("voting_session", ".UserVotes")
+		if err != nil && err.Error() == "ERR max number of clients reached" {
+			logrus.Error(err.Error())
+			time.Sleep(time.Millisecond * 100)
+		} else if err != nil {
+			logrus.Error(err.Error())
+			return make(map[string]map[string]bool)
+		} else {
+			userVotes := make(map[string]map[string]bool)
+			json.Unmarshal(res.([]byte), &userVotes)
+
+			return userVotes
+		}
 	}
 
-	userVotes := make(map[string]map[string]bool)
-	json.Unmarshal(res.([]byte), &userVotes)
-
-	return userVotes
 }
 
 func (session *Redis) AddQuestion(text string, anonymous bool, creatorName, creatorHash string) models.Question {
 	question := newRedisQuestion(text, anonymous, creatorName, creatorHash)
 
-	_, err := session.redisHandler.JSONSet("voting_session", fmt.Sprintf(".Questions.%s", question.Id), question)
-	if err != nil {
-		log.Fatalf(err.Error())
-		return models.Question{}
+	for {
+		_, err := session.redisHandler.JSONSet("voting_session", fmt.Sprintf(".Questions.%s", question.Id), question)
+		if err != nil && err.Error() == "ERR max number of clients reached" {
+			logrus.Error(err.Error())
+			time.Sleep(time.Millisecond * 100)
+		} else if err != nil {
+			logrus.Error(err.Error())
+			return models.Question{}
+		} else {
+			return questionFromRedisQuestion(question)
+		}
 	}
-
-	return models.Question{}
 }
 
 func (session *Redis) UpdateQuestion(id, text, creatorName string, anonymous bool) models.Question {
@@ -150,41 +186,131 @@ func (session *Redis) UpdateQuestion(id, text, creatorName string, anonymous boo
 		creatorName = ""
 	}
 
-	session.redisHandler.JSONSet("voting_session", fmt.Sprintf(".Questions.%s.Text", id), text)
-	session.redisHandler.JSONSet("voting_session", fmt.Sprintf(".Questions.%s.Anonymous", id), anonymous)
-	session.redisHandler.JSONSet("voting_session", fmt.Sprintf(".Questions.%s.CreatorName", id), creatorName)
-
-	res, err := session.redisHandler.JSONGet("voting_session", fmt.Sprintf(".Questions.%s", id))
-	if err != nil {
-		log.Fatalf(err.Error())
-		return models.Question{}
+	for {
+		_, err := session.redisHandler.JSONSet("voting_session", fmt.Sprintf(".Questions.%s.Text", id), text)
+		if err != nil && err.Error() == "ERR max number of clients reached" {
+			logrus.Error(err.Error())
+			time.Sleep(time.Millisecond * 100)
+		} else if err != nil {
+			logrus.Error(err.Error())
+			return models.Question{}
+		} else {
+			break
+		}
 	}
 
-	redisQuestion := redisQuestion{}
-	json.Unmarshal(res.([]byte), &redisQuestion)
+	for {
+		_, err := session.redisHandler.JSONSet("voting_session", fmt.Sprintf(".Questions.%s.Anonymous", id), anonymous)
+		if err != nil && err.Error() == "ERR max number of clients reached" {
+			logrus.Error(err.Error())
+			time.Sleep(time.Millisecond * 100)
+		} else if err != nil {
+			logrus.Error(err.Error())
+			return models.Question{}
+		} else {
+			break
+		}
+	}
 
-	return questionFromRedisQuestion(redisQuestion)
+	for {
+		_, err := session.redisHandler.JSONSet("voting_session", fmt.Sprintf(".Questions.%s.CreatorName", id), creatorName)
+		if err != nil && err.Error() == "ERR max number of clients reached" {
+			logrus.Error(err.Error())
+			time.Sleep(time.Millisecond * 100)
+		} else if err != nil {
+			logrus.Error(err.Error())
+			return models.Question{}
+		} else {
+			break
+		}
+	}
+
+	for {
+		res, err := session.redisHandler.JSONGet("voting_session", fmt.Sprintf(".Questions.%s", id))
+		if err != nil && err.Error() == "ERR max number of clients reached" {
+			logrus.Error(err.Error())
+			time.Sleep(time.Millisecond * 100)
+		} else if err != nil {
+			logrus.Error(err.Error())
+			return models.Question{}
+		} else {
+			redisQuestion := redisQuestion{}
+			json.Unmarshal(res.([]byte), &redisQuestion)
+
+			return questionFromRedisQuestion(redisQuestion)
+		}
+	}
 }
 
 func (session *Redis) AnswerQuestion(id string) {
-	session.redisHandler.JSONSet("voting_session", fmt.Sprintf(".Questions.%s.Answered", id), true)
+	for {
+		_, err := session.redisHandler.JSONSet("voting_session", fmt.Sprintf(".Questions.%s.Answered", id), true)
+		if err != nil && err.Error() == "ERR max number of clients reached" {
+			logrus.Error(err.Error())
+			time.Sleep(time.Millisecond * 100)
+		} else if err != nil {
+			logrus.Error(err.Error())
+			return
+		} else {
+			break
+		}
+	}
 }
 
 func (session *Redis) DeleteQuestion(id string) {
-	session.redisHandler.JSONDel("voting_session", fmt.Sprintf(".Questions.%s", id))
+	for {
+		_, err := session.redisHandler.JSONDel("voting_session", fmt.Sprintf(".Questions.%s", id))
+		if err != nil && err.Error() == "ERR max number of clients reached" {
+			logrus.Error(err.Error())
+			time.Sleep(time.Millisecond * 100)
+		} else if err != nil {
+			logrus.Error(err.Error())
+			return
+		} else {
+			break
+		}
+	}
 }
 
 func (session *Redis) Vote(userHash, id string) {
-	if _, err := session.redisHandler.JSONGet("voting_session", fmt.Sprintf(".UserVotes.%s", userHash)); err != nil {
-		votedQuestions := make(map[string]bool)
-		session.redisHandler.JSONSet("voting_session", fmt.Sprintf(".UserVotes.%s", userHash), votedQuestions)
+	for {
+		_, err := session.redisHandler.JSONGet("voting_session", fmt.Sprintf(".UserVotes.%s", userHash))
+		if err != nil && err.Error() == "ERR max number of clients reached" {
+			logrus.Error(err.Error())
+			time.Sleep(time.Millisecond * 100)
+		} else {
+			votedQuestions := make(map[string]bool)
+			session.redisHandler.JSONSet("voting_session", fmt.Sprintf(".UserVotes.%s", userHash), votedQuestions)
+			break
+		}
 	}
 
-	if _, err := session.redisHandler.JSONSet("voting_session", fmt.Sprintf(".UserVotes.%s.%s", userHash, id), true); err != nil {
-		logrus.Fatal(err.Error())
+	for {
+		// ERR max number of clients reached
+		_, err := session.redisHandler.JSONSet("voting_session", fmt.Sprintf(".UserVotes.%s.%s", userHash, id), true)
+		if err != nil && err.Error() == "ERR max number of clients reached" {
+			logrus.Error(err.Error())
+			time.Sleep(time.Millisecond * 100)
+		} else if err != nil {
+			logrus.Error(err.Error())
+			return
+		} else {
+			break
+		}
 	}
 
-	session.redisHandler.JSONNumIncrBy("voting_session", fmt.Sprintf(".Questions.%s.Votes", id), 1)
+	for {
+		_, err := session.redisHandler.JSONNumIncrBy("voting_session", fmt.Sprintf(".Questions.%s.Votes", id), 1)
+		if err != nil && err.Error() == "ERR max number of clients reached" {
+			logrus.Error(err.Error())
+			time.Sleep(time.Millisecond * 100)
+		} else if err != nil {
+			logrus.Error(err.Error())
+			return
+		} else {
+			break
+		}
+	}
 }
 
 func questionFromRedisQuestion(question redisQuestion) models.Question {

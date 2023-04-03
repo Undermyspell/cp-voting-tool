@@ -3,7 +3,7 @@ package votingstorage
 import (
 	"flag"
 
-	goredis "github.com/go-redis/redis/v8"
+	goredisv8 "github.com/go-redis/redis/v8"
 	"github.com/nitishm/go-rejson/v4"
 )
 
@@ -14,7 +14,8 @@ func NewInMemory() *InMemory {
 func NewRedis() *Redis {
 	var addr = flag.String("Server", "redis-11436.c250.eu-central-1-1.ec2.cloud.redislabs.com:11436", "Redis server address")
 	rh := rejson.NewReJSONHandler()
-	cli := goredis.NewClient(&goredis.Options{
+
+	cli := goredisv8.NewClient(&goredisv8.Options{
 		Addr:     *addr,
 		Password: "ZfSUj5EMRm7WilIOZnw0kORB8dWizA9A",
 		DB:       0,
@@ -22,6 +23,6 @@ func NewRedis() *Redis {
 	rh.SetGoRedisClient(cli)
 	return &Redis{
 		redisHandler: rh,
-		goRedisCli:   cli,
+		redisClient:  cli,
 	}
 }
