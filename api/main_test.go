@@ -12,6 +12,7 @@ import (
 	"sse/internal/mocks"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -31,7 +32,7 @@ type QuestionApiTestSuite struct {
 
 func (suite *QuestionApiTestSuite) SetupSuite() {
 	os.Setenv("USE_MOCK_JWKS", "true")
-	os.Setenv("VOTING_STORAGE_IN_MEMORY", "true")
+	os.Setenv("JWKS_URL", "https://test/discovery/v2.0/keys")
 	start = func(r *gin.Engine) {}
 
 	main()
@@ -303,8 +304,11 @@ func (suite *QuestionApiTestSuite) TestUpvoteQuestion_SAME_QUESTION_PARALLEL_100
 		wg.Wait()
 
 		w1 := httptest.NewRecorder()
+
 		questionList := getSession(suite, w1, suite.tokenUser_Bar)
 		question := questionList[0]
+
+		time.Sleep(time.Second * 5)
 
 		assert.Equal(suite.T(), 100, question.Votes)
 	})

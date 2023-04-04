@@ -1,7 +1,6 @@
 package votingstorage
 
 import (
-	"sse/internal/broker"
 	"sse/internal/helper"
 	"sse/internal/models"
 
@@ -36,7 +35,6 @@ func newQuestion(text string, anonymous bool, creatorName, creatorHash string) *
 }
 
 type InMemory struct {
-	Broker        broker.Broker
 	Questions     map[string]*questionInMemory
 	UserVotes     *models.SafeUserVotes
 	SessionSecret string

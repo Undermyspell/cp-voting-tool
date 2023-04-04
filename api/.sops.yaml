@@ -1,0 +1,7 @@
+# azure_keyvault is configured with an ID of the key which should be used to decrypt specified config files.
+# Decryption will work, if the currently logged-in user has access to the specified key. All team developers should
+# per default have access to the non-prod key, while prod key access should only be granted to the cicd service principal.
+creation_rules:
+  - path_regex: ""
+    azure_keyvault: https://cp-voting-tool-kv.vault.azure.net/keys/cp-voting-tool-key/42c71d17f13a4e64bff388cc469c4db1
+    encrypted_suffix: _SECRET
