@@ -49,6 +49,10 @@ func (suite *QuestionApiTestSuite) SetupTest() {
 	startSession(suite)
 }
 
+func (suite *QuestionApiTestSuite) TearDownSuite() {
+	stopSession(suite)
+}
+
 func (suite *QuestionApiTestSuite) TestApi_UNAUTHORIZED_401() {
 	type test struct {
 		name       string
