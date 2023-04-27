@@ -33,8 +33,8 @@ export const refreshToken = async () => {
 export const idToken = derived(authResult, ($values) => $values?.idToken)
 export const user = derived(authResult, ($values) => $values?.account)
 const roles = derived(authResult, ($values) => {return $values?.idTokenClaims["roles"] as string[] ?? [] })
-export const isAdmin = () => derived(roles, ($values => $values.filter((role) => role === "admin").length > 0))
-export const isSessionAdmin = () => derived(roles, ($values) => $values.filter((role) => role === "session_admin").length > 0)
+export const isAdmin = derived(roles, ($values) => $values.filter((role) => role === "admin").length > 0)
+export const isSessionAdmin = derived(roles, ($values) => $values.filter((role) => role === "session_admin").length > 0)
 export const authenticate = async () => {
 	try {
 		await msalInstance.handleRedirectPromise()

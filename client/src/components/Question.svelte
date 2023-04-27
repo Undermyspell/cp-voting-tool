@@ -70,7 +70,7 @@
         <div
             class="flex gap-4 justify-between sm:justify-end w-full sm:gap-2 sm:w-full justify-end"
         >
-            {#if isAdmin() || isSessionAdmin()}
+            {#if isAdmin || isSessionAdmin}
                 <Button
                     size="xs"
                     color="green"

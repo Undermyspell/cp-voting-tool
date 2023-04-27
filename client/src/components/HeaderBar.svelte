@@ -24,7 +24,7 @@
     </NavBrand>
     <NavHamburger on:click={toggle} />
     <NavUl {hidden}>
-        {#if isAdmin()}
+        {#if isAdmin}
             <NavLi class="cursor-pointer" on:click={startSession}
                 >Fragerunde starten</NavLi
             >
