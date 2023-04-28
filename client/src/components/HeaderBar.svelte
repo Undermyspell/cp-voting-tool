@@ -24,7 +24,7 @@
     </NavBrand>
     <NavHamburger on:click={toggle} />
     <NavUl {hidden}>
-        {#if isAdmin}
+        {#if $isAdmin}
             <NavLi class="cursor-pointer" on:click={startSession}
                 >Fragerunde starten</NavLi
             >
@@ -37,5 +37,6 @@
     <div class="flex flex-row items-center gap-4">
         <DarkMode />
         <div class=" dark:text-white">online: {$userOnline}</div>
+        <div class="text-sm">Version: {import.meta.env.VITE_VERSION_INFO}</div>
     </div>
 </Navbar>

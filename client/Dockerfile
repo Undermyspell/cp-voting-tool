@@ -1,5 +1,8 @@
 FROM node:19-alpine As build
 
+ARG version_info
+ENV VITE_VERSION_INFO=${version_info}
+
 RUN npm i -g pnpm
 
 WORKDIR /app
