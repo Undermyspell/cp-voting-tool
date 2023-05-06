@@ -1,6 +1,8 @@
 <script lang="ts">
     import { startSession, stopSession, userOnline } from "../lib/session";
     import pollerrLogo from "../assets/logo.svg";
+    import { Icon } from "@steeze-ui/svelte-icon";
+    import { Github } from "@steeze-ui/remix-icons";
 
     import {
         DarkMode,
@@ -36,7 +38,12 @@
 
     <div class="flex flex-row items-center gap-4">
         <DarkMode />
-        <div class=" dark:text-white">online: {$userOnline}</div>
-        <div class="text-sm">Version: {import.meta.env.VITE_VERSION_INFO}</div>
+        <div class="dark:text-white">online: {$userOnline}</div>
+        <a
+            href="https://github.com/Undermyspell/cp-voting-tool"
+            target="_blank"
+        >
+            <Icon src={Github} theme="solid" size="20" class="cursor-pointer" />
+        </a>
     </div>
 </Navbar>
