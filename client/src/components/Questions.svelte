@@ -28,13 +28,13 @@
 {#if !$activeSessison}
     <P size="2xl" class="text-center">keine aktive Q & A Session</P>
 {:else}
-    <div class="flex flex-col">
+    <div class="flex flex-col h-full">
         <AddQuestion />
-        <div class="gap-4">
+        <div class="gap-4 overflow-auto">
             {#if $questions.length === 0}
                 <P size="2xl" class="text-center">keine Fragen vorhanden</P>
             {:else}
-                <div class="flex-col flex gap-4">
+                <div class="flex-col flex gap-4 pb-12">
                     {#each $questions as question, i}
                         <Question on:edit={editMessage} {question} />
                     {/each}

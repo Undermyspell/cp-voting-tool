@@ -17,9 +17,18 @@
   <title>Pollerr</title>
 </head>
 
-<body class="bg-white dark:bg-gray-800">
-  <div id="app" class="h-full overflow-y-auto"></div>
+<body class="bg-white dark:bg-gray-800 h-screen overflow-hidden">
+  <div id="app" class="h-full"></div>
   <script type="module" src="/src/main.ts"></script>
 </body>
 
 </html>
+<style>
+  body {
+    height: 100vh
+  }
+
+  [role="tabpanel"] > div {
+    height: 100%;
+  }
+</style>

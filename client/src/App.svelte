@@ -1,24 +1,28 @@
 <script lang="ts">
-  import { authenticate, isAdmin } from "./lib/auth/auth";
+  import { authenticate } from "./lib/auth/auth";
   import Questions from "./components/Questions.svelte";
 
   import "./app.postcss";
   import HeaderBar from "./components/HeaderBar.svelte";
+  import FooterBar from "./components/FooterBar.svelte";
   import { P, TabItem, Tabs } from "flowbite-svelte";
   import { Icon } from "@steeze-ui/svelte-icon";
   import { Chat2, ChatCheck } from "@steeze-ui/remix-icons";
   import AnsweredQuestions from "./components/AnsweredQuestions.svelte";
 </script>
 
-<div class="h-full">
-  <HeaderBar />
+<div class="q-container h-full">
+  <header>
+    <HeaderBar />
+  </header>
+
   {#await authenticate()}
     <P size="xl" class="text-center">logging in</P>
   {:then _}
-    <main class="container mx-auto md:p-8 space-y-8 overlow-y-auto h-full">
+    <main class="mx-auto md:p-8 h-full w-full max-w-[80rem] overflow-hidden">
       <Tabs
         style="underline"
-        contentClass="pt-2 bg-white rounded-lg dark:bg-gray-800"
+        contentClass="pt-2 bg-white rounded-lg dark:bg-gray-800 h-full tab"
       >
         <TabItem open>
           <div slot="title" class="flex items-center gap-2">
@@ -37,4 +41,30 @@
       </Tabs>
     </main>
   {/await}
+
+  <footer>
+    <FooterBar />
+  </footer>
 </div>
+
+<style>
+  .q-container {
+    display: grid;
+    grid-template-areas:
+      "header"
+      "content"
+      "footer";
+  }
+
+  header {
+    grid-area: header;
+  }
+
+  main {
+    grid-area: content;
+  }
+
+  footer {
+    grid-area: footer;
+  }
+</style>
