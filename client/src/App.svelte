@@ -42,7 +42,7 @@
     </main>
   {/await}
 
-  <footer>
+  <footer class="flex justify-center items-center">
     <FooterBar />
   </footer>
 </div>
@@ -54,6 +54,7 @@
       "header"
       "content"
       "footer";
+    grid-template-rows: auto 1fr 4rem;
   }
 
   header {
