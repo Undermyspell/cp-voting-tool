@@ -12,7 +12,6 @@ type questionInMemory struct {
 	Text        string `json:"text"`
 	Votes       models.SafeCounter
 	Answered    bool
-	Voted       bool
 	CreatorHash string
 	CreatorName string
 	Anonymous   bool
@@ -27,7 +26,6 @@ func newQuestion(text string, anonymous bool, creatorName, creatorHash string) *
 		Text:        text,
 		Votes:       models.SafeCounter{},
 		Answered:    false,
-		Voted:       false,
 		CreatorHash: creatorHash,
 		CreatorName: creatorName,
 		Anonymous:   anonymous,
@@ -88,6 +86,7 @@ func (session *InMemory) GetUserVotes() map[string]map[string]bool {
 func (session *InMemory) AddQuestion(text string, anonymous bool, creatorName, creatorHash string) models.Question {
 	question := newQuestion(text, anonymous, creatorName, creatorHash)
 	session.Questions[question.Id] = question
+	session.Vote(creatorHash, question.Id)
 	return questionFromInMemoryQuestion(question)
 }
 
@@ -122,7 +121,7 @@ func questionFromInMemoryQuestion(question *questionInMemory) models.Question {
 		question.Text,
 		question.Votes.Value(),
 		question.Answered,
-		question.Voted,
+		false,
 		question.Anonymous,
 		question.CreatorName,
 		question.CreatorHash)
