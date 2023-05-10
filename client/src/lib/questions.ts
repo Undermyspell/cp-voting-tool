@@ -20,6 +20,11 @@ const unsub = eventSource.subscribe((eventSource) => {
 			const data = JSON.parse(event.data)
 			questionVoted(data)
 		})
+		eventSource.addEventListener("undo_upvote_question", (event) => {
+			console.log(event)
+			const data = JSON.parse(event.data)
+			questionVoteUndone(data)
+		})
 		eventSource.addEventListener("update_question", (event) => {
 			const data = JSON.parse(event.data)
 			questionEdited(data)
@@ -93,6 +98,12 @@ const questionDeleted = (payload: { Id: string }) => {
 }
 
 const questionVoted = (payload: { Id: string; Votes: number; Voted: boolean }) => {
+	const votedQuestion = questionMap.get(payload.Id)
+	questionMap.set(payload.Id, Object.assign({}, votedQuestion, { Votes: payload.Votes, Voted: payload.Voted }))
+	sortAndUpdateQuestions()
+}
+
+const questionVoteUndone = (payload: { Id: string; Votes: number; Voted: boolean }) => {
 	const votedQuestion = questionMap.get(payload.Id)
 	questionMap.set(payload.Id, Object.assign({}, votedQuestion, { Votes: payload.Votes, Voted: payload.Voted }))
 	sortAndUpdateQuestions()

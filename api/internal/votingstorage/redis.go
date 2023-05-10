@@ -267,6 +267,34 @@ func (session *Redis) Vote(userHash, id string) {
 	}
 }
 
+func (session *Redis) UndoVote(userHash, id string) {
+	_, err := session.executeWithRetryOnConnectionLimit(func() (res interface{}, err error) {
+		return session.redisHandler.JSONGet("voting_session", fmt.Sprintf(".UserVotes.%s", userHash))
+	})
+
+	if err != nil {
+		return
+	}
+
+	_, err = session.executeWithRetryOnConnectionLimit(func() (res interface{}, err error) {
+		return session.redisHandler.JSONDel("voting_session", fmt.Sprintf(".UserVotes.%s.%s", userHash, id))
+	})
+
+	if err != nil {
+		logrus.Error(err.Error())
+		return
+	}
+
+	_, err = session.executeWithRetryOnConnectionLimit(func() (res interface{}, err error) {
+		return session.redisHandler.JSONNumIncrBy("voting_session", fmt.Sprintf(".Questions.%s.Votes", id), -1)
+	})
+
+	if err != nil {
+		logrus.Error(err.Error())
+		return
+	}
+}
+
 func (session *Redis) executeWithRetryOnConnectionLimit(redisFunc func() (res interface{}, err error)) (interface{}, error) {
 	for {
 		res, err := redisFunc()
