@@ -57,8 +57,8 @@ func (service *BrokeredQuestionsService) Add(c *gin.Context) {
 		Text:      question.Text,
 		Creator:   question.CreatorName,
 		Answered:  question.Answered,
-		Votes:     question.Votes,
-		Voted:     question.Voted,
+		Votes:     1,
+		Voted:     true,
 		Anonymous: question.Anonymous,
 		Owned:     true,
 	}
@@ -74,7 +74,7 @@ func (service *BrokeredQuestionsService) Add(c *gin.Context) {
 		Text:      question.Text,
 		Creator:   creatorForAllButUser,
 		Answered:  question.Answered,
-		Votes:     question.Votes,
+		Votes:     1,
 		Anonymous: question.Anonymous,
 		Owned:     false,
 	}

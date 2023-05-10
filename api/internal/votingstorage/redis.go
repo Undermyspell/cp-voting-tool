@@ -165,6 +165,8 @@ func (session *Redis) AddQuestion(text string, anonymous bool, creatorName, crea
 		return models.Question{}
 	}
 
+	session.Vote(creatorHash, question.Id)
+
 	return questionFromRedisQuestion(question)
 }
 

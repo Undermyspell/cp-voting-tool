@@ -136,7 +136,11 @@ func (suite *QuestionApiTestSuite) TestNewQuestion_OK_200() {
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 	suite.router.ServeHTTP(w, req)
 
+	questionList := getSession(suite, w, token)
+
 	assert.Equal(suite.T(), http.StatusOK, w.Code)
+	assert.Equal(suite.T(), 1, questionList[0].Votes)
+	assert.Equal(suite.T(), true, questionList[0].Voted)
 }
 
 func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTFOUND_404() {
@@ -294,7 +298,7 @@ func (suite *QuestionApiTestSuite) TestUpvoteQuestion_SAME_QUESTION_PARALLEL_100
 
 	suite.T().Run("Parallel_Question_Upvote", func(t *testing.T) {
 		var wg sync.WaitGroup
-		for i := 1; i <= 100; i++ {
+		for i := 1; i <= 99; i++ {
 			wg.Add(1)
 			tokenUser := mocks.GetUserToken(fmt.Sprintf("User_%d", i), fmt.Sprintf("User_%d", i))
 			go func(tokenUser string, w *httptest.ResponseRecorder, questionId string) {
