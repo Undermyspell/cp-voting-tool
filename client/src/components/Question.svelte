@@ -6,6 +6,7 @@
         answerQuestion,
         deleteQuestion,
         voteQuestion,
+        undoVoteQuestion,
     } from "../lib/questions";
     import type { Question } from "../models/question";
     import { Button, Hr, Modal, P } from "flowbite-svelte";
@@ -38,9 +39,9 @@
                 outline={true}
                 size="sm"
                 class="!p-2"
-                disabled={question.Voted || null}
+                color={question.Voted ? "green" : "light"}
                 on:click={question.Voted
-                    ? null
+                    ? () => undoVoteQuestion(question.Id)
                     : () => voteQuestion(question.Id)}
             >
                 <Icon src={ThumbUp} size="20" />
@@ -51,6 +52,7 @@
             <P class="grow whitespace-pre-line" size="base">{question.Text}</P>
             {#if question.Owned}
                 <Button
+                    color="blue"
                     pill={true}
                     outline
                     class="!p-2 self-start"
@@ -68,7 +70,7 @@
         >
 
         <div
-            class="flex gap-4 justify-between sm:justify-end w-full sm:gap-2 sm:w-full justify-end"
+            class="flex gap-4 justify-between sm:justify-end w-full sm:gap-2 sm:w-full"
         >
             {#if $isAdmin || $isSessionAdmin}
                 <Button

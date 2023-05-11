@@ -12,7 +12,6 @@ export const sessionActive = writable(false)
 const unsub = eventSource.subscribe((eventSource) => {
 	if (eventSource) {
 		eventSource.addEventListener("new_question", (event) => {
-			console.log(event)
 			const data = JSON.parse(event.data)
 			questionAdded(data)
 		})
@@ -21,7 +20,6 @@ const unsub = eventSource.subscribe((eventSource) => {
 			questionVoted(data)
 		})
 		eventSource.addEventListener("undo_upvote_question", (event) => {
-			console.log(event)
 			const data = JSON.parse(event.data)
 			questionVoteUndone(data)
 		})
@@ -77,6 +75,10 @@ export const updateQuestion = async (payload: { Id: string; Anonymous: boolean; 
 
 export const voteQuestion = async (questionId) => {
 	await putRequest({ path: `/question/upvote/${questionId}` })
+}
+
+export const undoVoteQuestion = async (questionId) => {
+	await putRequest({ path: `/question/undovote/${questionId}` })
 }
 
 export const answerQuestion = async (questionId) => {
