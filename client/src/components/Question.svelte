@@ -16,6 +16,7 @@
         Edit,
         ErrorWarning,
         ThumbUp,
+        ThumbDown,
     } from "@steeze-ui/remix-icons";
 
     const dispatch = createEventDispatcher();
@@ -39,12 +40,17 @@
                 outline={true}
                 size="sm"
                 class="!p-2"
-                color={question.Voted ? "green" : "light"}
+                color={question.Voted ? "yellow" : "green"}
                 on:click={question.Voted
                     ? () => undoVoteQuestion(question.Id)
                     : () => voteQuestion(question.Id)}
             >
-                <Icon src={ThumbUp} size="20" />
+                {#if question.Voted}
+                    <Icon src={ThumbDown} size="20" />
+                {/if}
+                {#if !question.Voted}
+                    <Icon src={ThumbUp} size="20" />
+                {/if}
             </Button>
             <P size="lg">{question.Votes}</P>
         </div>

@@ -128,21 +128,26 @@ func (suite *QuestionApiTestSuite) TestNewQuestion_OK_200() {
 	w := httptest.NewRecorder()
 
 	token := suite.tokenUser_Foo
+	newQuestion := dtos.NewQuestionDto{Text: "Foo Question", Anonymous: false}
 
-	jsonData := []byte(`{
-		"text": "test question?"
-	}`)
-
-	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/question/new", suite.apiPrefix), bytes.NewBuffer(jsonData))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
-	suite.router.ServeHTTP(w, req)
+	postNewQuestion(suite, w, newQuestion, token)
 
 	questionList := getSession(suite, w, token)
 
 	assert.Equal(suite.T(), http.StatusOK, w.Code)
 	assert.Equal(suite.T(), 1, questionList[0].Votes)
 	assert.Equal(suite.T(), true, questionList[0].Voted)
+}
+
+func (suite *QuestionApiTestSuite) TestNewQuestion_404_WHEN_TEXT_LENTGH_OVER_MAX_LENGTH() {
+	w := httptest.NewRecorder()
+
+	token := suite.tokenUser_Foo
+	newQuestion := dtos.NewQuestionDto{Text: "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.", Anonymous: false}
+
+	postNewQuestion(suite, w, newQuestion, token)
+
+	assert.Equal(suite.T(), http.StatusBadRequest, w.Code)
 }
 
 func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTFOUND_404() {
