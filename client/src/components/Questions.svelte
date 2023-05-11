@@ -54,7 +54,7 @@
                     <svelte:fragment slot="footer">
                         <div class="flex gap-4 w-full justify-end">
                             <Button color="alternative">Abbrechen</Button>
-                            <Button on:click={() => saveEdit()}
+                            <Button color="blue" on:click={() => saveEdit()}
                                 >Speichern</Button
                             >
                         </div>

@@ -12,13 +12,16 @@ export const sessionActive = writable(false)
 const unsub = eventSource.subscribe((eventSource) => {
 	if (eventSource) {
 		eventSource.addEventListener("new_question", (event) => {
-			console.log(event)
 			const data = JSON.parse(event.data)
 			questionAdded(data)
 		})
 		eventSource.addEventListener("upvote_question", (event) => {
 			const data = JSON.parse(event.data)
 			questionVoted(data)
+		})
+		eventSource.addEventListener("undo_upvote_question", (event) => {
+			const data = JSON.parse(event.data)
+			questionVoteUndone(data)
 		})
 		eventSource.addEventListener("update_question", (event) => {
 			const data = JSON.parse(event.data)
@@ -74,6 +77,10 @@ export const voteQuestion = async (questionId) => {
 	await putRequest({ path: `/question/upvote/${questionId}` })
 }
 
+export const undoVoteQuestion = async (questionId) => {
+	await putRequest({ path: `/question/undovote/${questionId}` })
+}
+
 export const answerQuestion = async (questionId) => {
 	await putRequest({ path: `/question/answer/${questionId}` })
 }
@@ -93,6 +100,12 @@ const questionDeleted = (payload: { Id: string }) => {
 }
 
 const questionVoted = (payload: { Id: string; Votes: number; Voted: boolean }) => {
+	const votedQuestion = questionMap.get(payload.Id)
+	questionMap.set(payload.Id, Object.assign({}, votedQuestion, { Votes: payload.Votes, Voted: payload.Voted }))
+	sortAndUpdateQuestions()
+}
+
+const questionVoteUndone = (payload: { Id: string; Votes: number; Voted: boolean }) => {
 	const votedQuestion = questionMap.get(payload.Id)
 	questionMap.set(payload.Id, Object.assign({}, votedQuestion, { Votes: payload.Votes, Voted: payload.Voted }))
 	sortAndUpdateQuestions()

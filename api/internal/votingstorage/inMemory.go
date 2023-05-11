@@ -115,6 +115,11 @@ func (session *InMemory) Vote(userHash, id string) {
 	session.Questions[id].Votes.Increment()
 }
 
+func (session *InMemory) UndoVote(userHash, id string) {
+	session.UserVotes.RemoveUserVote(userHash, id)
+	session.Questions[id].Votes.Decrement()
+}
+
 func questionFromInMemoryQuestion(question *questionInMemory) models.Question {
 	return models.NewQuestion(
 		question.Id,

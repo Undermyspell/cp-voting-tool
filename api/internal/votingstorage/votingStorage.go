@@ -17,4 +17,5 @@ type VotingStorage interface {
 	GetQuestions() map[string]models.Question
 	GetUserVotes() map[string]map[string]bool
 	Vote(userHash, id string)
+	UndoVote(userHash, id string)
 }

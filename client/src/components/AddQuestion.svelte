@@ -25,7 +25,7 @@
     <div class="flex justify-around sm:justify-end gap-4">
         <Checkbox bind:checked={anonymous}>Frage anonym stellen</Checkbox>
 
-        <Button size="xs" on:click={addNewQuestion}>
+        <Button color="blue" size="xs" on:click={addNewQuestion}>
             <span><Icon src={MailAdd} size="20" /></span><span class="ml-2"
                 >Posten</span
             >

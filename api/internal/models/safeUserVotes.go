@@ -19,6 +19,16 @@ func (userVotes *SafeUserVotes) SetUserVote(userHash, questionId string) {
 	userVotes.value[userHash][questionId] = true
 }
 
+func (userVotes *SafeUserVotes) RemoveUserVote(userHash, questionId string) {
+	userVotes.mu.Lock()
+	defer userVotes.mu.Unlock()
+	_, ok := userVotes.value[userHash]
+
+	if ok {
+		delete(userVotes.value, userHash)
+	}
+}
+
 func (userVotes *SafeUserVotes) Value() map[string]map[string]bool {
 	userVotes.mu.Lock()
 	defer userVotes.mu.Unlock()

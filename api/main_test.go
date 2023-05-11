@@ -63,6 +63,7 @@ func (suite *QuestionApiTestSuite) TestApi_UNAUTHORIZED_401() {
 	tests := []test{
 		{"Question_New_UNAUTHORIZED_401", http.MethodPost, "/question/new"},
 		{"Question_Upvote_UNAUTHORIZED_401", http.MethodPut, "/question/upvote/question1"},
+		{"Question_Undovote_UNAUTHORIZED_401", http.MethodPut, "/question/undovote/question1"},
 		{"Question_Answer_UNAUTHORIZED_401", http.MethodPut, "/question/answer/question1"},
 		{"Question_Rest_UNAUTHORIZED_401", http.MethodGet, "/question/session"},
 		{"Question_Rest_UNAUTHORIZED_401", http.MethodPost, "/question/session/start"},
@@ -97,6 +98,7 @@ func (suite *QuestionApiTestSuite) TestApi_NOTACCEPTABLE_406_WHEN_NO_SESSION_RUN
 	tests := []test{
 		{"Question_New_NOTACCEPTABLE_406", http.MethodPost, "/question/new", bytes.NewBuffer([]byte(`{"text": "test question?" }`))},
 		{"Question_Upvote_NOTACCEPTABLE_406", http.MethodPut, "/question/upvote/question1", nil},
+		{"Question_Undovote_NOTACCEPTABLE_406", http.MethodPut, "/question/undovote/question1", nil},
 		{"Question_Answer_NOTACCEPTABLE_406", http.MethodPut, "/question/answer/question1", nil},
 		{"Question_Update_NOTACCEPTABLE_406", http.MethodPut, "/question/update", bytes.NewBuffer([]byte(`{"id": "1","text": "test question?" }`))},
 		{"Question_Delete_NOTACCEPTABLE_406", http.MethodDelete, "/question/delete/question1", nil},
@@ -148,14 +150,7 @@ func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTFOUND_404() {
 
 	token := suite.tokenUser_Foo
 
-	jsonData := []byte(`{
-		"id": "invalid"
-	}`)
-
-	req, _ := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/question/upvote", suite.apiPrefix), bytes.NewBuffer(jsonData))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
-	suite.router.ServeHTTP(w, req)
+	upvoteQuestion(suite, w, "invalid_id", token)
 
 	assert.Equal(suite.T(), http.StatusNotFound, w.Code)
 }
@@ -250,7 +245,7 @@ func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTACCEPTABLE_406_WHEN_VOT
 	assert.Equal(suite.T(), http.StatusNotAcceptable, w2.Code)
 }
 
-func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTACCEPTABLE_406_WHEN_DELETING_ANSWERED_QUESTION() {
+func (suite *QuestionApiTestSuite) TestDeleteQuestion_NOTACCEPTABLE_406_WHEN_DELETING_ANSWERED_QUESTION() {
 	w := httptest.NewRecorder()
 
 	token := suite.tokenUser_SessionAdmin
@@ -269,7 +264,7 @@ func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTACCEPTABLE_406_WHEN_DEL
 	assert.Equal(suite.T(), http.StatusNotAcceptable, w2.Code)
 }
 
-func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTACCEPTABLE_406_WHEN_UPDATING_ANSWERED_QUESTION() {
+func (suite *QuestionApiTestSuite) TestUpdateQuestion_NOTACCEPTABLE_406_WHEN_UPDATING_ANSWERED_QUESTION() {
 	w := httptest.NewRecorder()
 
 	token := suite.tokenUser_SessionAdmin
@@ -303,10 +298,7 @@ func (suite *QuestionApiTestSuite) TestUpvoteQuestion_SAME_QUESTION_PARALLEL_100
 			tokenUser := mocks.GetUserToken(fmt.Sprintf("User_%d", i), fmt.Sprintf("User_%d", i))
 			go func(tokenUser string, w *httptest.ResponseRecorder, questionId string) {
 				defer wg.Done()
-				req, _ := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/question/upvote/%s", suite.apiPrefix, questionId), nil)
-				req.Header.Set("Content-Type", "application/json")
-				req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tokenUser))
-				suite.router.ServeHTTP(w, req)
+				upvoteQuestion(suite, w, questionId, tokenUser)
 			}(tokenUser, w, questionId)
 		}
 		wg.Wait()
@@ -316,9 +308,99 @@ func (suite *QuestionApiTestSuite) TestUpvoteQuestion_SAME_QUESTION_PARALLEL_100
 		questionList := getSession(suite, w1, suite.tokenUser_Bar)
 		question := questionList[0]
 
-		time.Sleep(time.Second * 5)
+		time.Sleep(time.Second * 20)
 
 		assert.Equal(suite.T(), 100, question.Votes)
+	})
+}
+
+func (suite *QuestionApiTestSuite) TestUndVoteQuestion_NOTACCEPTABLE_406_WHEN_USER_NOT_VOTED() {
+	w := httptest.NewRecorder()
+
+	token := suite.tokenUser_Foo
+	newQuestion := dtos.NewQuestionDto{Text: "new question"}
+	postNewQuestion(suite, w, newQuestion, token)
+
+	questionList := getSession(suite, w, token)
+
+	undoVoteQuestion(suite, w, questionList[0].Id, token)
+
+	w2 := httptest.NewRecorder()
+	undoVoteQuestion(suite, w2, questionList[0].Id, token)
+
+	assert.Equal(suite.T(), http.StatusNotAcceptable, w2.Code)
+}
+
+func (suite *QuestionApiTestSuite) TestUndovoteQuestion_NOTACCEPTABLE_406_WHEN_UNDO_VOTE_ANSWERED_QUESTION() {
+	w := httptest.NewRecorder()
+
+	token := suite.tokenUser_SessionAdmin
+
+	jsonData := dtos.NewQuestionDto{Text: "new question"}
+
+	postNewQuestion(suite, w, jsonData, token)
+
+	questionList := getSession(suite, w, token)
+
+	answerQuestion(suite, w, questionList[0].Id, token)
+
+	w2 := httptest.NewRecorder()
+	undoVoteQuestion(suite, w2, questionList[0].Id, token)
+
+	assert.Equal(suite.T(), http.StatusNotAcceptable, w2.Code)
+}
+
+func (suite *QuestionApiTestSuite) TestUndovoteeQuestion_NOTFOUND_404() {
+	w := httptest.NewRecorder()
+
+	token := suite.tokenUser_Foo
+
+	undoVoteQuestion(suite, w, "invalid_id", token)
+
+	assert.Equal(suite.T(), http.StatusNotFound, w.Code)
+}
+
+func (suite *QuestionApiTestSuite) TestUndovoteQuestion_SAME_QUESTION_PARALLEL_100_SHOULD_RETURN_0() {
+	w := httptest.NewRecorder()
+	jsonData := dtos.NewQuestionDto{Text: "new question"}
+	postNewQuestion(suite, w, jsonData, suite.tokenUser_Bar)
+	questionList := getSession(suite, w, suite.tokenUser_Bar)
+	questionId := questionList[0].Id
+
+	suite.T().Run("Parallel_Question_Upvote", func(t *testing.T) {
+		var wg sync.WaitGroup
+		for i := 1; i <= 99; i++ {
+			wg.Add(1)
+			tokenUser := mocks.GetUserToken(fmt.Sprintf("User_%d", i), fmt.Sprintf("User_%d", i))
+			go func(tokenUser string, w *httptest.ResponseRecorder, questionId string) {
+				defer wg.Done()
+				upvoteQuestion(suite, w, questionId, tokenUser)
+			}(tokenUser, w, questionId)
+		}
+		wg.Wait()
+	})
+
+	suite.T().Run("Parallel_Question_Undoupvote", func(t *testing.T) {
+		var wg sync.WaitGroup
+		undoVoteQuestion(suite, w, questionId, suite.tokenUser_Bar)
+		for i := 1; i <= 99; i++ {
+			wg.Add(1)
+			tokenUser := mocks.GetUserToken(fmt.Sprintf("User_%d", i), fmt.Sprintf("User_%d", i))
+			go func(tokenUser string, w *httptest.ResponseRecorder, questionId string) {
+				defer wg.Done()
+				undoVoteQuestion(suite, w, questionId, tokenUser)
+			}(tokenUser, w, questionId)
+		}
+		wg.Wait()
+
+		w1 := httptest.NewRecorder()
+
+		questionList := getSession(suite, w1, suite.tokenUser_Bar)
+		question := questionList[0]
+
+		time.Sleep(time.Second * 20)
+
+		assert.Equal(suite.T(), 0, question.Votes)
 	})
 }
 
@@ -521,6 +603,13 @@ func (suite *QuestionApiTestSuite) TestStopSession_FORBIDDEN_403_WHEN_USER_NOT_A
 
 func TestQuestionApiSuite(t *testing.T) {
 	suite.Run(t, new(QuestionApiTestSuite))
+}
+
+func undoVoteQuestion(suite *QuestionApiTestSuite, w *httptest.ResponseRecorder, questionId, token string) {
+	reqv, _ := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/question/undovote/%s", suite.apiPrefix, questionId), nil)
+	reqv.Header.Set("Content-Type", "application/json")
+	reqv.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	suite.router.ServeHTTP(w, reqv)
 }
 
 func upvoteQuestion(suite *QuestionApiTestSuite, w *httptest.ResponseRecorder, questionId, token string) {
