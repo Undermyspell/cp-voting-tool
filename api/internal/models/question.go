@@ -1,5 +1,9 @@
 package models
 
+const (
+	MaxLength int = 500
+)
+
 type Question struct {
 	Id          string
 	Text        string

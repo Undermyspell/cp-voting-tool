@@ -2,6 +2,7 @@ package services
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"sse/dtos"
 	"sse/internal/broker"
@@ -436,6 +437,13 @@ func (service *BrokeredQuestionsService) newQuestion(text string, anonymous bool
 		return models.Question{}, &validation.ValidationError{
 			ValidationError: "no questions session currently running",
 			HttpStatus:      http.StatusNotAcceptable,
+		}
+	}
+
+	if len(text) > models.MaxLength {
+		return models.Question{}, &validation.ValidationError{
+			ValidationError: fmt.Sprintf("Question text must have a max length of %d", models.MaxLength),
+			HttpStatus:      http.StatusBadRequest,
 		}
 	}
 
