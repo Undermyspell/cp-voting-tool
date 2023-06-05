@@ -24,14 +24,19 @@
         style="underline"
         contentClass="pt-2 bg-white rounded-lg dark:bg-gray-800 h-full tab"
       >
-        <TabItem open>
+        <TabItem
+          open
+          activeClasses="inline-block text-sm font-medium text-center disabled:cursor-not-allowed p-4 text-primary-600 border-b-2 border-primary-600 dark:text-white dark:border-white"
+        >
           <div slot="title" class="flex items-center gap-2">
             <Icon src={Chat2} size="20" />
             <div>Aktive Fragen</div>
           </div>
           <Questions />
         </TabItem>
-        <TabItem>
+        <TabItem
+          activeClasses="inline-block text-sm font-medium text-center disabled:cursor-not-allowed p-4 text-primary-600 border-b-2 border-primary-600 dark:text-white dark:border-white"
+        >
           <div slot="title" class="flex items-center gap-2">
             <Icon src={ChatCheck} size="20" />
             <div>Beantwortete Fragen</div>
