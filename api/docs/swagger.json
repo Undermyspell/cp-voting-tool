@@ -208,6 +208,46 @@
                 }
             }
         },
+        "/api/v1/question/undovote/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Undo the upvote of a question of the current session",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Question"
+                ],
+                "summary": "Undo the upvote for a question",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Id of question to undo the vote",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/question/update": {
             "put": {
                 "security": [
