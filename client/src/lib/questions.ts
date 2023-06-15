@@ -101,13 +101,13 @@ const questionDeleted = (payload: { Id: string }) => {
 
 const questionVoted = (payload: { Id: string; Votes: number; Voted: boolean }) => {
 	const votedQuestion = questionMap.get(payload.Id)
-	questionMap.set(payload.Id, Object.assign({}, votedQuestion, { Votes: payload.Votes, Voted: payload.Voted }))
+	questionMap.set(payload.Id, { ...votedQuestion, Votes: payload.Votes, Voted: payload.Voted !== undefined ? payload.Voted : votedQuestion.Voted })
 	sortAndUpdateQuestions()
 }
 
 const questionVoteUndone = (payload: { Id: string; Votes: number; Voted: boolean }) => {
 	const votedQuestion = questionMap.get(payload.Id)
-	questionMap.set(payload.Id, Object.assign({}, votedQuestion, { Votes: payload.Votes, Voted: payload.Voted }))
+	questionMap.set(payload.Id, { ...votedQuestion, Votes: payload.Votes, Voted: payload.Voted !== undefined ? payload.Voted : votedQuestion.Voted })
 	sortAndUpdateQuestions()
 }
 
