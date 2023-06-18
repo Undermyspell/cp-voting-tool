@@ -8,7 +8,15 @@
         updateQuestion,
     } from "../lib/questions";
     import { activeSessison } from "../lib/session";
-    import { Button, Checkbox, Hr, Modal, P, Textarea } from "flowbite-svelte";
+    import {
+        Button,
+        Checkbox,
+        Modal,
+        P,
+        Textarea,
+        Helper,
+    } from "flowbite-svelte";
+    import { Constants } from "../lib/constants";
 
     let showModal = false;
     let activeQuestion = { Text: "", Anonymous: true, Id: "" };
@@ -23,6 +31,8 @@
     }
 
     $: promise = getQuestions();
+    $: showMaxLengthHint =
+        activeQuestion.Text.length === Constants.QuestionMaxLength;
 </script>
 
 {#if !$activeSessison}
@@ -40,13 +50,23 @@
                     {/each}
                 </div>
                 <Modal bind:open={showModal} title="Frage bearbeiten" autoclose>
-                    <div class="space-y-4 pb-4">
+                    <div class="flex flex-col gap-4 pb-4">
                         <Textarea
                             class="resize-none"
                             rows="4"
                             cols="80"
+                            maxlength={Constants.QuestionMaxLength}
                             bind:value={activeQuestion.Text}
                         />
+                        {#if showMaxLengthHint}
+                            <Helper
+                                color="red"
+                                class="mr-auto text-sm font-medium"
+                                ><span
+                                    >{`Die Frage muss kürzer als ${Constants.QuestionMaxLength} Zeichen sein`}</span
+                                ></Helper
+                            >
+                        {/if}
                         <Checkbox bind:checked={activeQuestion.Anonymous}
                             >Frage anonym stellen</Checkbox
                         >

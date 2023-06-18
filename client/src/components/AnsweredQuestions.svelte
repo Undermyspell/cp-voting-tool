@@ -1,7 +1,7 @@
 <script lang="ts">
     import { answeredQuestions } from "../lib/questions";
     import { activeSessison } from "../lib/session";
-    import { Button, Checkbox, Hr, Modal, P, Textarea } from "flowbite-svelte";
+    import { Hr, P } from "flowbite-svelte";
     import { Icon } from "@steeze-ui/svelte-icon";
     import { CheckDouble } from "@steeze-ui/remix-icons";
 </script>
@@ -15,12 +15,12 @@
                 >keine beantwortete Fragen vorhanden.</P
             >
         {:else}
-            <div class="flex flex-col gap-4 ">
+            <div class="flex flex-col gap-4">
                 {#each $answeredQuestions as question, i}
                     <div
                         class="border border-gray-400 shadow-lg shadow-gray-400/40 dark:border-gray-900 dark:shadow-gray-900/40 p-4 rounded"
                     >
-                        <div class="flex w-full items-center gap-4 ">
+                        <div class="flex w-full items-center gap-4">
                             <Icon
                                 src={CheckDouble}
                                 size="48"
