@@ -1,14 +1,9 @@
 <script lang="ts">
     import AddQuestion from "./AddQuestion.svelte";
     import Question from "./Question.svelte";
-    import {
-        getQuestions,
-        questions,
-        getQuestion,
-        updateQuestion,
-    } from "../lib/questions";
+    import { questions, getQuestion, updateQuestion } from "../lib/questions";
     import { activeSessison } from "../lib/session";
-    import { Button, Checkbox, Hr, Modal, P, Textarea } from "flowbite-svelte";
+    import { Button, Checkbox, Modal, P, Textarea } from "flowbite-svelte";
 
     let showModal = false;
     let activeQuestion = { Text: "", Anonymous: true, Id: "" };
@@ -21,8 +16,6 @@
     async function saveEdit() {
         await updateQuestion(activeQuestion);
     }
-
-    $: promise = getQuestions();
 </script>
 
 {#if !$activeSessison}
@@ -45,6 +38,7 @@
                             class="resize-none"
                             rows="4"
                             cols="80"
+                            maxlength="500"
                             bind:value={activeQuestion.Text}
                         />
                         <Checkbox bind:checked={activeQuestion.Anonymous}
