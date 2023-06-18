@@ -12,7 +12,7 @@
         value = "";
     };
 
-    $: showMaxLengthHinth = value.length === Constants.QuestionMaxLength;
+    $: showMaxLengthHint = value.length === Constants.QuestionMaxLength;
 </script>
 
 <div class="flex flex-col gap-4 mb-8">
@@ -27,7 +27,7 @@
     />
 
     <div class="flex justify-around sm:justify-end gap-4 items-center">
-        {#if showMaxLengthHinth}
+        {#if showMaxLengthHint}
             <Helper color="red" class="mr-auto text-sm font-medium"
                 ><span
                     >{`Die Frage muss kürzer als ${Constants.QuestionMaxLength} Zeichen sein`}</span

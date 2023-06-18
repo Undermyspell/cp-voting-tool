@@ -31,7 +31,7 @@
     }
 
     $: promise = getQuestions();
-    $: showMaxLengthHinth =
+    $: showMaxLengthHint =
         activeQuestion.Text.length === Constants.QuestionMaxLength;
 </script>
 
@@ -58,7 +58,7 @@
                             maxlength={Constants.QuestionMaxLength}
                             bind:value={activeQuestion.Text}
                         />
-                        {#if showMaxLengthHinth}
+                        {#if showMaxLengthHint}
                             <Helper
                                 color="red"
                                 class="mr-auto text-sm font-medium"
