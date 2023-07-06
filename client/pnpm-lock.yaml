@@ -38,8 +38,8 @@ devDependencies:
     specifier: ^10.4.14
     version: 10.4.14(postcss@8.4.24)
   flowbite-svelte:
-    specifier: ^0.39.1
-    version: 0.39.1(svelte@3.59.2)
+    specifier: ^0.39.2
+    version: 0.39.2(svelte@3.59.2)
   postcss:
     specifier: ^8.4.24
     version: 8.4.24
@@ -784,8 +784,8 @@ packages:
       to-regex-range: 5.0.1
     dev: true
 
-  /flowbite-svelte@0.39.1(svelte@3.59.2):
-    resolution: {integrity: sha512-HhqP0+RITqisIDOJf5+UprkIf2Vi8Lioq52MMEUKqS8xET33luAiqtQU/1RRLJABCijm1pcbPIO/QDZFJ/TtTA==}
+  /flowbite-svelte@0.39.2(svelte@3.59.2):
+    resolution: {integrity: sha512-wNv5f4ZbXBQgOiqMCSzbdCdUas+DuWVrOCYZQFMGc2m+GNbEk5q6V+WCfN9Uiw15DaJp2Y3GC/iA945TiQYMFA==}
     engines: {node: '>=16.0.0', npm: '>=7.0.0'}
     peerDependencies:
       svelte: ^3.55.1 || ^4.0.0
