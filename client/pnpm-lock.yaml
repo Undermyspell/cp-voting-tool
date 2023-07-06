@@ -21,8 +21,8 @@ dependencies:
     specifier: ^2.3.2
     version: 2.3.2
   flowbite:
-    specifier: ^1.6.6
-    version: 1.6.6
+    specifier: ^1.7.0
+    version: 1.7.0
 
 devDependencies:
   '@sveltejs/vite-plugin-svelte':
@@ -791,13 +791,13 @@ packages:
       svelte: ^3.55.1 || ^4.0.0
     dependencies:
       '@popperjs/core': 2.11.8
-      flowbite: 1.6.6
+      flowbite: 1.7.0
       svelte: 3.59.2
       tailwind-merge: 1.13.2
     dev: true
 
-  /flowbite@1.6.6:
-    resolution: {integrity: sha512-T+IaFikHELo1PBKfT/axDqhAmKQLfm/dxVch2r07TZ+IcKwkorZjzwkVuw3OslTETniRIUf2qQvEhxk3bQCaew==}
+  /flowbite@1.7.0:
+    resolution: {integrity: sha512-OTTmnhRgv85Rs+mcMaVU7zB6EvRQs7BaQziyMUsZLRjW9aUpeQyqKjLmxsVMMCdr8isYPCLd6UL7X1IaSVI0WQ==}
     dependencies:
       '@popperjs/core': 2.11.8
       mini-svg-data-uri: 1.4.4
