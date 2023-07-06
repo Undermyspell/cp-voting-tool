@@ -12,8 +12,8 @@ dependencies:
     specifier: ^2.11.8
     version: 2.11.8
   '@steeze-ui/remix-icons':
-    specifier: ^1.1.0
-    version: 1.1.0(svelte@3.59.2)
+    specifier: ^1.1.1
+    version: 1.1.1
   '@steeze-ui/svelte-icon':
     specifier: ^1.4.1
     version: 1.4.1(svelte@3.59.2)
@@ -470,12 +470,8 @@ packages:
   /@popperjs/core@2.11.8:
     resolution: {integrity: sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==}
 
-  /@steeze-ui/remix-icons@1.1.0(svelte@3.59.2):
-    resolution: {integrity: sha512-avoeJF2fA0trD1aJK9zgN1li2hLWdwoJZcujxaYS+Zx/4Y5lQE+zd4BPe7ynW4WGyZpJ8PtihSio5HwvzoKJqg==}
-    peerDependencies:
-      svelte: ^3.54.0
-    dependencies:
-      svelte: 3.59.2
+  /@steeze-ui/remix-icons@1.1.1:
+    resolution: {integrity: sha512-oRkWg1xMwhAs0UTJMTl36Kq+pr4B3NQvEFyTjZT62Dd0XDhkiHjOAEqA3k1iZLsec/bfhBl63pfkSZ9Yi52S2A==}
     dev: false
 
   /@steeze-ui/svelte-icon@1.4.1(svelte@3.59.2):
