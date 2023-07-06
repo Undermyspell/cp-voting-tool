@@ -6,8 +6,8 @@ settings:
 
 dependencies:
   '@azure/msal-browser':
-    specifier: ^2.37.1
-    version: 2.37.1
+    specifier: ^2.38.0
+    version: 2.38.0
   '@popperjs/core':
     specifier: ^2.11.8
     version: 2.11.8
@@ -78,15 +78,15 @@ packages:
     engines: {node: '>=10'}
     dev: true
 
-  /@azure/msal-browser@2.37.1:
-    resolution: {integrity: sha512-EoKQISEpIY39Ru1OpWkeFZBcwp6Y0bG81bVmdyy4QJebPPDdVzfm62PSU0XFIRc3bqjZ4PBKBLMYLuo9NZYAow==}
+  /@azure/msal-browser@2.38.0:
+    resolution: {integrity: sha512-gxBh83IumHgEP9uMCm9pJLKLRwICMQTxG9TX3AytdNt3oLUI3tytm/szYD5u5zKJgSkhHvwFSM+NPnM04hYw3w==}
     engines: {node: '>=0.8.0'}
     dependencies:
-      '@azure/msal-common': 13.1.0
+      '@azure/msal-common': 13.2.0
     dev: false
 
-  /@azure/msal-common@13.1.0:
-    resolution: {integrity: sha512-wj+ULrRB0HTuMmtrMjg8j3guCx32GE2BCPbsMCZkHgL1BZetC3o/Su5UJEQMX1HNc9CrIaQNx5WaKWHygYDe0g==}
+  /@azure/msal-common@13.2.0:
+    resolution: {integrity: sha512-rnstQ7Zgn3fSTKNQO+/YNV34/QXJs0vni7IA0/3QB1EEyrJg14xyRmTqlw9ta+pdSuT5OJwUP8kI3D/rBwUIBw==}
     engines: {node: '>=0.8.0'}
     dev: false
 
