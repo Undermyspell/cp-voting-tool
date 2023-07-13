@@ -15,7 +15,7 @@
     "@tsconfig/svelte": "^4.0.1",
     "autoprefixer": "^10.4.14",
     "flowbite-svelte": "^0.39.2",
-    "postcss": "^8.4.24",
+    "postcss": "^8.4.25",
     "postcss-load-config": "^4.0.1",
     "svelte": "^3.59.2",
     "svelte-check": "^3.4.4",
