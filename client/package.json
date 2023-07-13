@@ -17,7 +17,7 @@
     "flowbite-svelte": "^0.39.2",
     "postcss": "^8.4.25",
     "postcss-load-config": "^4.0.1",
-    "svelte": "^3.59.2",
+    "svelte": "^4.0.5",
     "svelte-check": "^3.4.4",
     "svelte-preprocess": "^5.0.4",
     "tailwindcss": "^3.3.2",
@@ -30,7 +30,7 @@
     "@azure/msal-browser": "^2.38.0",
     "@popperjs/core": "^2.11.8",
     "@steeze-ui/remix-icons": "^1.1.1",
-    "@steeze-ui/svelte-icon": "^1.4.1",
+    "@steeze-ui/svelte-icon": "^1.5.0",
     "classnames": "^2.3.2",
     "flowbite": "^1.7.0"
   }
