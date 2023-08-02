@@ -2,7 +2,6 @@ package jwks
 
 import (
 	"context"
-	"fmt"
 	"sse/internal/env"
 	"time"
 
@@ -21,7 +20,6 @@ func (provider *JwksKeyfuncProvider) GetKeyFunc() func(token *jwt.Token) (interf
 
 func Init() *JwksKeyfuncProvider {
 	jwksURL := env.Env.JwksUrl
-	fmt.Print(jwksURL)
 
 	options := keyfunc.Options{
 		Ctx: context.TODO(),
