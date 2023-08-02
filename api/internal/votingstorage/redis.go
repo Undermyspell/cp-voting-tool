@@ -48,16 +48,17 @@ type VotingSession struct {
 type Redis struct {
 	redisHandler *rejson.Handler
 	redisClient  *goredis.Client
+	redisRootKey string
 }
 
 func (session *Redis) Start() {
 	votingSession := VotingSession{
 		UserVotes:     make(map[string]map[string]bool),
 		Questions:     make(map[string]redisQuestion),
-		SessionSecret: helper.GetRandomId(),
+		SessionSecret: helper.GetRandomId(30),
 	}
 
-	_, err := session.redisHandler.JSONSet("voting_session", ".", votingSession)
+	_, err := session.redisHandler.JSONSet(session.redisRootKey, ".", votingSession)
 	if err != nil {
 		logrus.Error(err.Error())
 		return
@@ -65,14 +66,13 @@ func (session *Redis) Start() {
 }
 
 func (session *Redis) Stop() {
-	if err := session.redisClient.FlushAll(context.Background()).Err(); err != nil {
-		logrus.Errorf("goredis - failed to flush: %v", err)
-	}
+	session.redisClient.Del(context.Background(), session.redisRootKey)
+	logrus.Info("Redis: cleared root key: " + session.redisRootKey)
 }
 
 func (session *Redis) GetQuestion(id string) (models.Question, bool) {
 	res, err := session.executeWithRetryOnConnectionLimit(func() (res interface{}, err error) {
-		r, e := session.redisHandler.JSONGet("voting_session", fmt.Sprintf(".Questions.%s", id))
+		r, e := session.redisHandler.JSONGet(session.redisRootKey, fmt.Sprintf(".Questions.%s", id))
 		return r, e
 	})
 
@@ -91,7 +91,7 @@ func (session *Redis) GetQuestion(id string) (models.Question, bool) {
 
 func (session *Redis) IsRunning() bool {
 	_, err := session.executeWithRetryOnConnectionLimit(func() (res interface{}, err error) {
-		return session.redisHandler.JSONGet("voting_session", ".Questions")
+		return session.redisHandler.JSONGet(session.redisRootKey, ".Questions")
 	})
 
 	if err != nil {
@@ -104,7 +104,7 @@ func (session *Redis) IsRunning() bool {
 
 func (session *Redis) GetSecret() string {
 	res, err := session.executeWithRetryOnConnectionLimit(func() (res interface{}, err error) {
-		return session.redisHandler.JSONGet("voting_session", ".SessionSecret")
+		return session.redisHandler.JSONGet(session.redisRootKey, ".SessionSecret")
 	})
 
 	if err != nil {
@@ -117,7 +117,7 @@ func (session *Redis) GetSecret() string {
 
 func (session *Redis) GetQuestions() map[string]models.Question {
 	res, err := session.executeWithRetryOnConnectionLimit(func() (res interface{}, err error) {
-		return session.redisHandler.JSONGet("voting_session", ".Questions")
+		return session.redisHandler.JSONGet(session.redisRootKey, ".Questions")
 	})
 
 	if err != nil {
@@ -139,7 +139,7 @@ func (session *Redis) GetQuestions() map[string]models.Question {
 
 func (session *Redis) GetUserVotes() map[string]map[string]bool {
 	res, err := session.executeWithRetryOnConnectionLimit(func() (res interface{}, err error) {
-		return session.redisHandler.JSONGet("voting_session", ".UserVotes")
+		return session.redisHandler.JSONGet(session.redisRootKey, ".UserVotes")
 	})
 
 	if err != nil {
@@ -157,7 +157,7 @@ func (session *Redis) AddQuestion(text string, anonymous bool, creatorName, crea
 	question := newRedisQuestion(text, anonymous, creatorName, creatorHash)
 
 	_, err := session.executeWithRetryOnConnectionLimit(func() (res interface{}, err error) {
-		return session.redisHandler.JSONSet("voting_session", fmt.Sprintf(".Questions.%s", question.Id), question)
+		return session.redisHandler.JSONSet(session.redisRootKey, fmt.Sprintf(".Questions.%s", question.Id), question)
 	})
 
 	if err != nil {
@@ -176,7 +176,7 @@ func (session *Redis) UpdateQuestion(id, text, creatorName string, anonymous boo
 	}
 
 	_, err := session.executeWithRetryOnConnectionLimit(func() (res interface{}, err error) {
-		return session.redisHandler.JSONSet("voting_session", fmt.Sprintf(".Questions.%s.Text", id), text)
+		return session.redisHandler.JSONSet(session.redisRootKey, fmt.Sprintf(".Questions.%s.Text", id), text)
 	})
 
 	if err != nil {
@@ -185,7 +185,7 @@ func (session *Redis) UpdateQuestion(id, text, creatorName string, anonymous boo
 	}
 
 	_, err = session.executeWithRetryOnConnectionLimit(func() (res interface{}, err error) {
-		return session.redisHandler.JSONSet("voting_session", fmt.Sprintf(".Questions.%s.Anonymous", id), anonymous)
+		return session.redisHandler.JSONSet(session.redisRootKey, fmt.Sprintf(".Questions.%s.Anonymous", id), anonymous)
 	})
 
 	if err != nil {
@@ -194,7 +194,7 @@ func (session *Redis) UpdateQuestion(id, text, creatorName string, anonymous boo
 	}
 
 	_, err = session.executeWithRetryOnConnectionLimit(func() (res interface{}, err error) {
-		return session.redisHandler.JSONSet("voting_session", fmt.Sprintf(".Questions.%s.CreatorName", id), creatorName)
+		return session.redisHandler.JSONSet(session.redisRootKey, fmt.Sprintf(".Questions.%s.CreatorName", id), creatorName)
 	})
 
 	if err != nil {
@@ -203,7 +203,7 @@ func (session *Redis) UpdateQuestion(id, text, creatorName string, anonymous boo
 	}
 
 	res, err1 := session.executeWithRetryOnConnectionLimit(func() (res interface{}, err error) {
-		return session.redisHandler.JSONGet("voting_session", fmt.Sprintf(".Questions.%s", id))
+		return session.redisHandler.JSONGet(session.redisRootKey, fmt.Sprintf(".Questions.%s", id))
 	})
 
 	if err1 != nil {
@@ -219,7 +219,7 @@ func (session *Redis) UpdateQuestion(id, text, creatorName string, anonymous boo
 
 func (session *Redis) AnswerQuestion(id string) {
 	_, err := session.executeWithRetryOnConnectionLimit(func() (res interface{}, err error) {
-		return session.redisHandler.JSONSet("voting_session", fmt.Sprintf(".Questions.%s.Answered", id), true)
+		return session.redisHandler.JSONSet(session.redisRootKey, fmt.Sprintf(".Questions.%s.Answered", id), true)
 	})
 
 	if err != nil {
@@ -230,7 +230,7 @@ func (session *Redis) AnswerQuestion(id string) {
 func (session *Redis) DeleteQuestion(id string) {
 
 	_, err := session.executeWithRetryOnConnectionLimit(func() (res interface{}, err error) {
-		return session.redisHandler.JSONDel("voting_session", fmt.Sprintf(".Questions.%s", id))
+		return session.redisHandler.JSONDel(session.redisRootKey, fmt.Sprintf(".Questions.%s", id))
 	})
 
 	if err != nil {
@@ -240,16 +240,16 @@ func (session *Redis) DeleteQuestion(id string) {
 
 func (session *Redis) Vote(userHash, id string) {
 	_, err := session.executeWithRetryOnConnectionLimit(func() (res interface{}, err error) {
-		return session.redisHandler.JSONGet("voting_session", fmt.Sprintf(".UserVotes.%s", userHash))
+		return session.redisHandler.JSONGet(session.redisRootKey, fmt.Sprintf(".UserVotes.%s", userHash))
 	})
 
 	if err != nil {
 		votedQuestions := make(map[string]bool)
-		session.redisHandler.JSONSet("voting_session", fmt.Sprintf(".UserVotes.%s", userHash), votedQuestions)
+		session.redisHandler.JSONSet(session.redisRootKey, fmt.Sprintf(".UserVotes.%s", userHash), votedQuestions)
 	}
 
 	_, err = session.executeWithRetryOnConnectionLimit(func() (res interface{}, err error) {
-		return session.redisHandler.JSONSet("voting_session", fmt.Sprintf(".UserVotes.%s.%s", userHash, id), true)
+		return session.redisHandler.JSONSet(session.redisRootKey, fmt.Sprintf(".UserVotes.%s.%s", userHash, id), true)
 	})
 
 	if err != nil {
@@ -258,7 +258,7 @@ func (session *Redis) Vote(userHash, id string) {
 	}
 
 	_, err = session.executeWithRetryOnConnectionLimit(func() (res interface{}, err error) {
-		return session.redisHandler.JSONNumIncrBy("voting_session", fmt.Sprintf(".Questions.%s.Votes", id), 1)
+		return session.redisHandler.JSONNumIncrBy(session.redisRootKey, fmt.Sprintf(".Questions.%s.Votes", id), 1)
 	})
 
 	if err != nil {
@@ -269,7 +269,7 @@ func (session *Redis) Vote(userHash, id string) {
 
 func (session *Redis) UndoVote(userHash, id string) {
 	_, err := session.executeWithRetryOnConnectionLimit(func() (res interface{}, err error) {
-		return session.redisHandler.JSONGet("voting_session", fmt.Sprintf(".UserVotes.%s", userHash))
+		return session.redisHandler.JSONGet(session.redisRootKey, fmt.Sprintf(".UserVotes.%s", userHash))
 	})
 
 	if err != nil {
@@ -277,7 +277,7 @@ func (session *Redis) UndoVote(userHash, id string) {
 	}
 
 	_, err = session.executeWithRetryOnConnectionLimit(func() (res interface{}, err error) {
-		return session.redisHandler.JSONDel("voting_session", fmt.Sprintf(".UserVotes.%s.%s", userHash, id))
+		return session.redisHandler.JSONDel(session.redisRootKey, fmt.Sprintf(".UserVotes.%s.%s", userHash, id))
 	})
 
 	if err != nil {
@@ -286,7 +286,7 @@ func (session *Redis) UndoVote(userHash, id string) {
 	}
 
 	_, err = session.executeWithRetryOnConnectionLimit(func() (res interface{}, err error) {
-		return session.redisHandler.JSONNumIncrBy("voting_session", fmt.Sprintf(".Questions.%s.Votes", id), -1)
+		return session.redisHandler.JSONNumIncrBy(session.redisRootKey, fmt.Sprintf(".Questions.%s.Votes", id), -1)
 	})
 
 	if err != nil {

@@ -5,14 +5,13 @@ import (
 	"time"
 )
 
-func GetRandomId() string {
-	length := 30
-	rand.Seed(time.Now().UnixNano())
+func GetRandomId(length int) string {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	charset := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ12456789"
 
 	randId := make([]byte, length)
 	for i := 0; i < length; i++ {
-		randId[i] = charset[rand.Intn(len(charset))]
+		randId[i] = charset[r.Intn(len(charset))]
 	}
 
 	return string(randId)
