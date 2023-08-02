@@ -32,7 +32,9 @@ type QuestionApiTestSuite struct {
 
 func (suite *QuestionApiTestSuite) SetupSuite() {
 	os.Setenv("USE_MOCK_JWKS", "true")
+	os.Setenv("GENERATE_REDIS_STORAGE_ROOT_KEY", "true")
 	os.Setenv("JWKS_URL", "https://test/discovery/v2.0/keys")
+
 	start = func(r *gin.Engine) {}
 
 	main()
