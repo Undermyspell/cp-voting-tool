@@ -41,7 +41,7 @@ type InMemory struct {
 func (session *InMemory) Start() {
 	session.UserVotes = models.NewSafeUserVotes()
 	session.Questions = make(map[string]*questionInMemory)
-	session.SessionSecret = helper.GetRandomId()
+	session.SessionSecret = helper.GetRandomId(30)
 }
 
 func (session *InMemory) Stop() {
