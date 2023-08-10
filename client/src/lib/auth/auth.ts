@@ -4,6 +4,7 @@ import { PublicClientApplication, InteractionRequiredAuthError, type Authenticat
 import { initEventSource } from "../eventsource"
 
 const msalInstance = new PublicClientApplication(msalConfig)
+await msalInstance.initialize()
 
 const authResult: Writable<AuthenticationResult> = writable(null)
 
@@ -27,12 +28,13 @@ export const refreshToken = async () => {
 			msalInstance.acquireTokenRedirect({ scopes: ["User.Read"] })
 		}
 	}
-
 }
 
 export const idToken = derived(authResult, ($values) => $values?.idToken)
 export const user = derived(authResult, ($values) => $values?.account)
-const roles = derived(authResult, ($values) => {return $values?.idTokenClaims["roles"] as string[] ?? [] })
+const roles = derived(authResult, ($values) => {
+	return ($values?.idTokenClaims["roles"] as string[]) ?? []
+})
 export const isAdmin = derived(roles, ($values) => $values.includes("admin"))
 
 export const isSessionAdmin = derived(roles, ($values) => $values.includes("session_admin"))
