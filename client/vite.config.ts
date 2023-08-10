@@ -5,5 +5,8 @@ import mkcert from "vite-plugin-mkcert"
 // https://vitejs.dev/config/
 export default defineConfig({
 	server: { https: false },
-	plugins: [svelte(), mkcert()]
+	plugins: [svelte(), mkcert()],
+	build: {
+		target: "esnext"
+	}
 })
