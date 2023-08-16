@@ -4,7 +4,7 @@ import (
 	"errors"
 	"sse/internal/jwks"
 
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/mock"
 )
 
