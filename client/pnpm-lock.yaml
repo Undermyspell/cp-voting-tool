@@ -6,8 +6,8 @@ settings:
 
 dependencies:
   '@azure/msal-browser':
-    specifier: ^3.0.2
-    version: 3.0.2
+    specifier: ^3.1.0
+    version: 3.1.0
   '@popperjs/core':
     specifier: ^2.11.8
     version: 2.11.8
@@ -85,15 +85,15 @@ packages:
       '@jridgewell/gen-mapping': 0.3.3
       '@jridgewell/trace-mapping': 0.3.19
 
-  /@azure/msal-browser@3.0.2:
-    resolution: {integrity: sha512-a2lIzWGV8EJhxVTHu2Vd5sRdK6DTisueq2HCXt49CQqc1hG/j9pK+ds+hJi+QLlZHPo3FPMwiTCHEA9sNgX3HA==}
+  /@azure/msal-browser@3.1.0:
+    resolution: {integrity: sha512-zQpL/mR6Xif+WltcRMej8wRsBQu+lW8e1/su8SMkF41i+Pnn/a/a/l+VoT4D+cQrBAq3PL5IaLfuUoNVTRUjKw==}
     engines: {node: '>=0.8.0'}
     dependencies:
-      '@azure/msal-common': 14.0.2
+      '@azure/msal-common': 14.0.3
     dev: false
 
-  /@azure/msal-common@14.0.2:
-    resolution: {integrity: sha512-yvVP63oXe20JFzvooTVxiX9UorxcL8VFoVwEtKuGlQnEnNGzrOpQZ6lKa1lqwGqxMtwKpW7oAFQhbbskG5RbYA==}
+  /@azure/msal-common@14.0.3:
+    resolution: {integrity: sha512-Vl5SsC3zvQ8913GnO5Typox+35M6CaXmO/2FXi35LfMAV3ZB/HLCsldLxylI01c3CmtOm7pICWpOjp/DlQ9RWA==}
     engines: {node: '>=0.8.0'}
     dev: false
 
