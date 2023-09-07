@@ -38,8 +38,8 @@ devDependencies:
     specifier: ^10.4.15
     version: 10.4.15(postcss@8.4.29)
   flowbite-svelte:
-    specifier: ^0.44.4
-    version: 0.44.4(svelte@4.2.0)
+    specifier: ^0.44.11
+    version: 0.44.11(svelte@4.2.0)
   postcss:
     specifier: ^8.4.29
     version: 8.4.29
@@ -553,6 +553,10 @@ packages:
     resolution: {integrity: sha512-SnHmG9wN1UVmagJOnyo/qkk0Z7gejYxOYYmaAwr5u2yFYfsupN3sg10kyzN8Hep/2zbHxCnsumxOoRIRMBwKCg==}
     dev: true
 
+  /@yr/monotone-cubic-spline@1.0.3:
+    resolution: {integrity: sha512-FQXkOta0XBSUPHndIKON2Y9JeQz5ZeMqLYZVVK93FliNBFm7LNMIZmY6FrMEB9XPcDbE2bekMbZD6kzDkxwYjA==}
+    dev: true
+
   /acorn@8.10.0:
     resolution: {integrity: sha512-F0SAmZ8iUtS//m8DmCTA0jlh6TDKkHQyK6xc6V4KDTyZKA9dnvX9/3sRTVQrWm79glUAZbnmmNcdYwUIHWVybw==}
     engines: {node: '>=0.4.0'}
@@ -570,9 +574,10 @@ packages:
       picomatch: 2.3.1
     dev: true
 
-  /apexcharts@3.41.1:
-    resolution: {integrity: sha512-kta8fhXrfZYqW7K9kF7FqZ6imQaC6moyRgcUZjwIky/oeHVVISSN/2rjUIvZXnwxWHiSdDHMqLy+TqJhB4DXFA==}
+  /apexcharts@3.42.0:
+    resolution: {integrity: sha512-hYhzZqh2Efny9uiutkGU2M/EarJ4Nn8s6dxZ0C7E7N+SV4d1xjTioXi2NLn4UKVJabZkb3HnpXDoumXgtAymwg==}
     dependencies:
+      '@yr/monotone-cubic-spline': 1.0.3
       svg.draggable.js: 2.2.2
       svg.easing.js: 2.0.0
       svg.filter.js: 2.0.2
@@ -853,14 +858,14 @@ packages:
       to-regex-range: 5.0.1
     dev: true
 
-  /flowbite-svelte@0.44.4(svelte@4.2.0):
-    resolution: {integrity: sha512-hyoyQ6xPoMyBECBJ2sE6tvoe1bQXLor83aY1a33teKDtOwy2BE//4J5oKAKY624BVXF/NQ5TASy5/aXIwymAyA==}
+  /flowbite-svelte@0.44.11(svelte@4.2.0):
+    resolution: {integrity: sha512-tIAF0TE+jDgsKJqBNvVH7zGUXZPxmu2BtahjNk2xYcPGad6zOZRMw+OHZrTu7WBf+/Th1aBTVM9gE201d9P2uA==}
     engines: {node: '>=16.0.0', npm: '>=7.0.0'}
     peerDependencies:
       svelte: ^3.55.1 || ^4.0.0
     dependencies:
       '@floating-ui/dom': 1.5.1
-      apexcharts: 3.41.1
+      apexcharts: 3.42.0
       flowbite: 1.8.1
       svelte: 4.2.0
       tailwind-merge: 1.14.0
