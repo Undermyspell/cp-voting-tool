@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { startSession, stopSession, userOnline } from "../lib/session";
+    import { activeSessison, startSession, stopSession, userOnline } from "../lib/session";
     import pollerrLogo from "../assets/logo.svg";
     import { Icon } from "@steeze-ui/svelte-icon";
     import { Github } from "@steeze-ui/remix-icons";
@@ -13,6 +13,7 @@
         NavUl,
     } from "flowbite-svelte";
     import { isAdmin } from "../lib/auth/auth";
+    import { export2csv } from "../lib/export";
 </script>
 
 <Navbar let:hidden let:toggle>
@@ -27,12 +28,16 @@
     <NavHamburger on:click={toggle} />
     <NavUl {hidden}>
         {#if $isAdmin}
+            {#if !$activeSessison}
             <NavLi class="cursor-pointer" on:click={startSession}
                 >Fragerunde starten</NavLi
             >
+            {:else}
             <NavLi class="cursor-pointer" on:click={stopSession}
                 >Fragerunde beenden</NavLi
             >
+            <NavLi class="cursor-pointer" on:click={export2csv}>Fragen exportieren</NavLi>
+            {/if}
         {/if}
     </NavUl>
 
