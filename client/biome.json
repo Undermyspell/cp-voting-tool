@@ -1,5 +1,9 @@
 {
-    "linter": {
+	"$schema": "https://biomejs.dev/schemas/1.2.2/schema.json",
+	"organizeImports": {
+		"enabled": true
+	},
+	"linter": {
       "enabled": true,
       "rules": {
         "recommended": true,
@@ -13,7 +17,7 @@
       },
       "ignore": []
     },
-    "formatter": {
+		  "formatter": {
       "enabled": true,
       "formatWithErrors": false,
       "indentStyle": "tab",
@@ -31,5 +35,4 @@
     "files": {
       "ignore": []
     }
-  }
-  
+}
