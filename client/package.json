@@ -15,7 +15,7 @@
     "@tailwindcss/forms": "^0.5.6",
     "@tsconfig/svelte": "^5.0.2",
     "autoprefixer": "^10.4.16",
-    "flowbite-svelte": "^0.44.15",
+    "flowbite-svelte": "^0.44.17",
     "postcss": "^8.4.30",
     "postcss-load-config": "^4.0.1",
     "svelte": "^4.2.1",
