@@ -24,11 +24,11 @@
     "tailwindcss": "^3.3.3",
     "tslib": "^2.6.2",
     "typescript": "^5.2.2",
-    "vite": "^4.4.10",
+    "vite": "^4.4.11",
     "vite-plugin-mkcert": "^1.16.0"
   },
   "dependencies": {
-    "@azure/msal-browser": "^3.1.0",
+    "@azure/msal-browser": "^3.2.0",
     "@popperjs/core": "^2.11.8",
     "@steeze-ui/remix-icons": "^1.1.1",
     "@steeze-ui/svelte-icon": "^1.5.0",
