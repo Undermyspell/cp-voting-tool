@@ -24,8 +24,8 @@ dependencies:
     specifier: ^1.8.1
     version: 1.8.1
   json-2-csv:
-    specifier: ^4.1.0
-    version: 4.1.0
+    specifier: ^4.1.1
+    version: 4.1.1
 
 devDependencies:
   '@biomejs/biome':
@@ -829,8 +829,8 @@ packages:
       ms: 2.1.2
     dev: true
 
-  /deeks@3.0.1:
-    resolution: {integrity: sha512-rBAWIXSKXvGQOdG5GLGaGMfOCHvvHln2fFJ2UW8cvJouoAhOiNiLGHLYYcyqpeNQ93vPBeRuzv1bAr8bvceakw==}
+  /deeks@3.0.2:
+    resolution: {integrity: sha512-c6OmjIygIB/avwXwEQOiODS+nw6fEX4cvOdDMqdL7dt3dicV/xykAJ9AeVc/8/JTVQDuacjRc9KCMmXafL1Y4A==}
     engines: {node: '>= 16'}
     dev: false
 
@@ -865,8 +865,8 @@ packages:
     resolution: {integrity: sha512-+HlytyjlPKnIG8XuRG8WvmBP8xs8P71y+SKKS6ZXWoEgLuePxtDoUEiH7WkdePWrQ5JBpE6aoVqfZfJUQkjXwA==}
     dev: true
 
-  /doc-path@4.0.1:
-    resolution: {integrity: sha512-3EpO6FV6R1f4dimmTBhDCqqWZFZGTLGoagojNONcH3fWabtCh+SwSlzk2xNeajzaPvDAOxUUN6euh0JajTQ4Zg==}
+  /doc-path@4.0.2:
+    resolution: {integrity: sha512-OqZEk7EM1aP3JpO+mq0pv1msEJWrzZVXu4q3YjEYJKc+Wt3/chac4KJdaGueK5IGemOwfptrLctG9I8xkb59qQ==}
     engines: {node: '>=16'}
     dev: false
 
@@ -1107,12 +1107,12 @@ packages:
     hasBin: true
     dev: true
 
-  /json-2-csv@4.1.0:
-    resolution: {integrity: sha512-O/8UMNeXOuQ3ztsuMpkr7ybE+GEL3KVwOX5qdXBt44Qabt3UdNCIuUMGPNMQ6LPxZZZHfw5UxjMclxZ4IU2lTQ==}
+  /json-2-csv@4.1.1:
+    resolution: {integrity: sha512-xqP/61jVw6hlW5a+JuffbfGneYxuKOIixdSjmLtBY/qeNgMIzTc+vLRkTkLwb+ZVLHMqmJz64brY9U34BvIHZA==}
     engines: {node: '>= 16'}
     dependencies:
-      deeks: 3.0.1
-      doc-path: 4.0.1
+      deeks: 3.0.2
+      doc-path: 4.0.2
     dev: false
 
   /kleur@4.1.5:
