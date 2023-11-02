@@ -24,8 +24,8 @@ dependencies:
     specifier: ^1.8.1
     version: 1.8.1
   json-2-csv:
-    specifier: ^4.1.1
-    version: 4.1.1
+    specifier: ^5.0.1
+    version: 5.0.1
 
 devDependencies:
   '@biomejs/biome':
@@ -1122,8 +1122,8 @@ packages:
     hasBin: true
     dev: true
 
-  /json-2-csv@4.1.1:
-    resolution: {integrity: sha512-xqP/61jVw6hlW5a+JuffbfGneYxuKOIixdSjmLtBY/qeNgMIzTc+vLRkTkLwb+ZVLHMqmJz64brY9U34BvIHZA==}
+  /json-2-csv@5.0.1:
+    resolution: {integrity: sha512-rP9ChyMskS0angbvFdQ43SwEe72mEvqcY1/V2OeukQWxtlreUuZWhMlTdWjtd4L6kJxq+HPFTI06yqLvZiEVIA==}
     engines: {node: '>= 16'}
     dependencies:
       deeks: 3.0.2
