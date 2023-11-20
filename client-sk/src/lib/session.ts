@@ -1,5 +1,5 @@
 import { writable } from "svelte/store"
-import { postRequest } from "./api"
+import { getRequest, postRequest } from "./api"
 import { eventSource } from "./eventsource"
 import { clearQuestions } from "./questions"
 
@@ -25,6 +25,17 @@ const unsub = eventSource.subscribe((eventSource) => {
 		})
 	}
 })
+
+export const getSession = async () => {
+	try {
+		const response = await getRequest({path: "/question/session"})
+		if (response.status === 200) {
+			activeSessison.set(true)
+		}
+	} catch (error) {
+		console.log(error)
+	}
+}
 
 export const startSession = async () => {
 	try {

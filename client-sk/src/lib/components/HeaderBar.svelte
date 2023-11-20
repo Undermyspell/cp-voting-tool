@@ -1,12 +1,15 @@
 <script>
 	import { isAdmin } from '$lib/auth/auth';
 	import { export2csv } from '$lib/export';
-	import { activeSessison, startSession, stopSession, userOnline } from '$lib/session';
+	import { activeSessison, getSession, startSession, stopSession, userOnline } from '$lib/session';
 	import pollerrLogo from '$lib/logo.svg';
 	import { FontSize, Github } from '@steeze-ui/remix-icons';
 	import { Icon } from '@steeze-ui/svelte-icon';
 	import { css } from 'styled-system/css';
 	import { textButton } from 'styled-system/recipes';
+
+	getSession()
+
 </script>
 <nav class={css({ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px' })}>
 	<div class={css({ display: 'flex', alignItems: 'center' })}>

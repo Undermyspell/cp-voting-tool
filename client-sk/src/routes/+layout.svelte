@@ -15,8 +15,6 @@
     }
 	});
 
-
-  $: activeSessison
 </script>
 
 <HeaderBar></HeaderBar>
@@ -24,7 +22,7 @@
 {#await authenticate()}
 	<p>logging in</p>
 {:then _}
-	{#if !activeSessison}
+	{#if !$activeSessison}
 		<p class={css({textAlign: 'center', fontSize: '2xl'})}>keine aktive Q & A Session</p>
 	{:else}
 		<main class={container()}>
