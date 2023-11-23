@@ -59,7 +59,7 @@ jobs:
           name: Build and push
           uses: docker/build-push-action@v3
           with:
-            context: ./client
+            context: ./client-sk
             push: true
             platforms: linux/amd64
             build-args: version_info=${{ env.BUILDTAG }}
