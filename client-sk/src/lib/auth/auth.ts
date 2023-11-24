@@ -2,6 +2,7 @@ import { derived, get, writable, type Writable } from "svelte/store"
 import { loginRequest, msalConfig } from "./auth.config"
 import { PublicClientApplication, InteractionRequiredAuthError, type AuthenticationResult } from "@azure/msal-browser"
 import { initEventSource } from "../eventsource"
+import { getSession } from "$lib/session"
 
 const msalInstance = new PublicClientApplication(msalConfig)
 await msalInstance.initialize()
@@ -46,6 +47,7 @@ export const authenticate = async () => {
 		if (accounts.length > 0) {
 			msalInstance.setActiveAccount(accounts[0])
 			await refreshToken()
+			await getSession()
 		}
 	} catch (error) {
 		if (error instanceof InteractionRequiredAuthError) {

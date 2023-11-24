@@ -9,6 +9,7 @@ export const userOnline = writable(0)
 const unsub = eventSource.subscribe((eventSource) => {
 	if (eventSource) {
 		eventSource.addEventListener("start_session", (event) => {
+			console.log('start listener')
 			activeSessison.set(true)
 		})
 		eventSource.addEventListener("user_connected", (event) => {
@@ -28,7 +29,7 @@ const unsub = eventSource.subscribe((eventSource) => {
 
 export const getSession = async () => {
 	try {
-		const response = await getRequest({path: "/question/session"})
+		const response = await getRequest({ path: "/question/session" })
 		if (response.status === 200) {
 			activeSessison.set(true)
 		}
