@@ -57,10 +57,12 @@ jobs:
             password: ${{ secrets.ACR_PASSWORD }}
         -
           name: Build and push
-          uses: docker/build-push-action@v3
+          uses: docker/build-push-action@v5
           with:
             context: ./client-sk
             push: true
             platforms: linux/amd64
-            build-args: version_info=${{ env.BUILDTAG }}
+            build-args: |
+              version_info=${{ env.BUILDTAG }}
+              PUBLIC_API_BASE_URL=${{ vars.PUBLIC_API_BASE_URL }}
             tags: ${{ secrets.ACR_SERVER }}/cpvt-web:${{ env.BUILDTAG }}, ${{ secrets.ACR_SERVER }}/cpvt-web:latest
