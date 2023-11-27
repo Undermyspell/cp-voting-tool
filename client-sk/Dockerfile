@@ -1,6 +1,7 @@
 FROM node:20-alpine As build
 
 ARG version_info
+ARG PUBLIC_API_BASE_URL
 ENV VITE_VERSION_INFO=${version_info}
 ENV PUBLIC_API_BASE_URL=${PUBLIC_API_BASE_URL}
 
