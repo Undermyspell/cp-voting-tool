@@ -2,6 +2,7 @@ FROM node:20-alpine As build
 
 ARG version_info
 ENV VITE_VERSION_INFO=${version_info}
+ENV PUBLIC_API_BASE_URL=${PUBLIC_API_BASE_URL}
 
 RUN npm i -g pnpm
 
