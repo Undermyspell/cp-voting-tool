@@ -38,6 +38,8 @@ jobs:
   build_web:
     name: Build Svelte Web App
     runs-on: ubuntu-latest
+    env: 
+      PUBLIC_API_BASE_URL: ${{ vars.PUBLIC_API_BASE_URL }}
     steps:
         - name: Set short commit as buildtag env variable
           run: echo "BUILDTAG=${GITHUB_SHA::7}" >> $GITHUB_ENV
@@ -64,5 +66,4 @@ jobs:
             platforms: linux/amd64
             build-args: |
               version_info=${{ env.BUILDTAG }}
-              PUBLIC_API_BASE_URL=${{ vars.PUBLIC_API_BASE_URL }}
             tags: ${{ secrets.ACR_SERVER }}/cpvt-web:${{ env.BUILDTAG }}, ${{ secrets.ACR_SERVER }}/cpvt-web:latest
