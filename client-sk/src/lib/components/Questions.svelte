@@ -5,15 +5,18 @@
 		questions,
 		getQuestion,
 		updateQuestion,
-		deleteQuestion
+		deleteQuestion,
+		isAutosortActive,
+		updateAutosort
 	} from '$lib/questions';
 	import { Constants } from '$lib/constants';
-	import { css } from 'styled-system/css';
-	import { flex, hstack, vstack } from 'styled-system/patterns';
 	import Modal from './Modal.svelte';
 	import { Icon } from '@steeze-ui/svelte-icon';
 	import { ErrorWarning, Close, DeleteBin, Check } from '@steeze-ui/remix-icons';
-	import { textButton, textarea } from 'styled-system/recipes';
+	import { Checkbox } from '$lib/components/ui/checkbox';
+	import { Label } from '$lib/components/ui/label';
+	import { Button } from '$lib/components/ui/button';
+	import { Textarea } from '$lib/components/ui/textarea';
 
 	let showEditModal = false;
 	let showDeleteModal = false;
@@ -40,80 +43,86 @@
 		showEditModal = false;
 	}
 
-	$: promise = getQuestions();
+	async function deleteQuestionAndClose() {
+		if (activeQuestion) {
+			await deleteQuestion(activeQuestion.Id);
+		}
+		showDeleteModal = false;
+	}
+
+	$: getQuestions();
+	$: autoSortActive = $isAutosortActive;
 	$: showMaxLengthHint = activeQuestion.Text.length === Constants.QuestionMaxLength;
 </script>
 
-<div class={flex({ gap: 2, direction: 'column' })}>
+<div>
 	{#if $questions.length === 0}
-		<p class="text-center">keine Fragen vorhanden</p>
+		<p class="text-center text-2xl">Keine Fragen vorhanden</p>
 	{:else}
-		{#each $questions as question, i}
-			<Question on:delete={handleDeleteQuestion} on:edit={handleEditMessage} {question} />
-			{#if i < $questions.length - 1}
-				<hr class={css({ borderColor: 'gray.300' })} />
-			{/if}
-		{/each}
-		<Modal bind:show={showDeleteModal}>
-			<div slot="header" class={flex({ justifyContent: 'center' })}>
-				<h2 class={css({ fontSize: '2xl' })}>Frage löschen</h2>
+		<div class="flex flex-col gap-4 w-full">
+			<div class="flex items-center space-x-2">
+				<Checkbox
+					id="autosort"
+					on:click={() => updateAutosort(!autoSortActive)}
+					bind:checked={autoSortActive}
+				/>
+				<Label for="autosort">Fragen automatisch sortieren?</Label>
 			</div>
-			<div class={vstack({ gap: '4', padding: '8' })}>
+			{#each $questions as question (question.Id)}
+				<Question on:delete={handleDeleteQuestion} on:edit={handleEditMessage} {question} />
+			{/each}
+		</div>
+		<Modal bind:show={showDeleteModal}>
+			<div slot="header">
+				<h2 class="text-2xl">Frage löschen</h2>
+			</div>
+			<div class="flex my-8 items-center flex-col space-y-4">
 				<Icon src={ErrorWarning} size="64" />
 				<div>Willst du die Frage wirklich löschen?</div>
 			</div>
 			<div slot="actions">
-				<div class={flex({ gap: '4', justifyContent: 'space-between', paddingTop: '2' })}>
-					<button class={textButton()} on:click={() => (showDeleteModal = false)}>
-						<div class={hstack({ gap: 2 })}>
-							<Icon src={Close} size="20" /> Abbrechen
-						</div>
-					</button>
-					<button
-						class={textButton({ color: 'red' })}
-						on:click={() => deleteQuestion(activeQuestion.Id)}
+				<div class="flex justify-end space-x-4 mt-8">
+					<Button variant="outline" on:click={() => (showDeleteModal = false)}>
+						<Icon class="mr-2" src={Close} size="20" /> Abbrechen
+					</Button>
+					<Button
+						class="bg-red-500/20 text-red-600 border-red-500/50 hover:text-white hover:bg-red-600"
+						on:click={() => deleteQuestionAndClose()}
 					>
-						<div class={hstack({ gap: 2 })}>
-							<Icon src={DeleteBin} size="20" /> Löschen
-						</div>
-					</button>
+						<Icon class="mr-2" src={DeleteBin} size="20" /> Löschen
+					</Button>
 				</div>
 			</div>
 		</Modal>
 		<Modal bind:show={showEditModal}>
-			<div slot="header" class={flex({ justifyContent: 'center' })}>
-				<h2 class={css({ fontSize: '2xl' })}>Frage editieren</h2>
+			<div slot="header">
+				<h2 class="text-2xl">Frage editieren</h2>
 			</div>
-			<div class={vstack({ gap: '4', padding: '8' })}>
-				<textarea
-					class={textarea({ resize: 'none' })}
-					rows="4"
-					cols="80"
+			<div class="flex my-8 flex-col space-y-4">
+				<Textarea
 					maxlength={Constants.QuestionMaxLength}
+					rows={8}
+					cols={80}
 					bind:value={activeQuestion.Text}
 				/>
 				{#if showMaxLengthHint}
-					<p color="red" class={css({ fontSize: 'sm', color: 'red' })}>
+					<p color="red">
 						<span>{`Die Frage muss kürzer als ${Constants.QuestionMaxLength} Zeichen sein`}</span>
 					</p>
 				{/if}
-				<label>
-					<input type="checkbox" bind:checked={activeQuestion.Anonymous} />
-					Frage anonym stellen
-				</label>
+				<div class="flex items-center space-x-2">
+					<Checkbox id="anonymous" bind:checked={activeQuestion.Anonymous} />
+					<Label for="anonymous">Frage anonym stellen?</Label>
+				</div>
 			</div>
 			<div slot="actions">
-				<div class={flex({ gap: '4', justifyContent: 'space-between', paddingTop: '2' })}>
-					<button class={textButton()} on:click={() => (showEditModal = false)}>
-						<div class={hstack({ gap: 2 })}>
-							<Icon src={Close} size="20" /> Abbrechen
-						</div>
-					</button>
-					<button class={textButton({ color: 'green' })} on:click={() => saveEdit()}>
-						<div class={hstack({ gap: 2 })}>
-							<Icon src={Check} size="20" /> Speichern
-						</div>
-					</button>
+				<div class="flex justify-end space-x-4 mt-8">
+					<Button variant="outline" on:click={() => (showEditModal = false)}>
+						<Icon class="mr-2" src={Close} size="20" /> Abbrechen
+					</Button>
+					<Button on:click={() => saveEdit()}>
+						<Icon class="mr-2" src={Check} size="20" /> Speichern
+					</Button>
 				</div>
 			</div>
 		</Modal>

@@ -1,34 +1,23 @@
 <script lang="ts">
 	import { answeredQuestions, getQuestions } from '$lib/questions';
-	import { css } from 'styled-system/css';
-	import { flex } from 'styled-system/patterns';
+	import { Separator } from '$lib/components/ui/separator';
 
-	$: promise = getQuestions();
+	$: getQuestions();
 	$: questions = answeredQuestions;
 </script>
 
-<div class={css({ padding: '4' })}>
+<div class="p-4">
 	{#if $questions.length === 0}
-		<p class={css({ textAlign: 'center', fontSize: '2xl' })}>
-			keine beantwortete Fragen vorhanden.
-		</p>
+		<p class="text-center text-2xl">keine beantwortete Fragen vorhanden.</p>
 	{:else}
-		<div class={flex({ gap: '4', width: '100%' })}>
+		<div class="flex flex-col w-full spsace-y-4">
 			{#each $questions as question, i}
-				<div
-					class={css({
-						padding: '4',
-						display: 'flex',
-						flexDirection: 'column',
-						width: 'full',
-						gap: '2'
-					})}
-				>
+				<div class="p-4 flex flex-col w-full space-y-4">
 					<div>
 						{question.Text}
 					</div>
-					<hr class={css({ color: 'gray.300' })} />
-					<div class={flex({ width: '100%', justifyContent: 'end', gap: '4' })}>
+					<Separator class="dark:bg-gray-500 my-4" />
+					<div class="flex justify-end space-x-4">
 						<p>Votes: {question.Votes}</p>
 						<p>{question.Anonymous ? 'Anonym' : question.Creator}</p>
 					</div>

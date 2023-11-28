@@ -1,37 +1,53 @@
 <script>
+	import '../app.pcss';
 	import { authenticate } from '$lib/auth/auth';
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
-	import '../index.css';
-	import { container } from '../../styled-system/patterns';
-	import { css } from 'styled-system/css';
+	import '../app.pcss';
 	import { page } from '$app/stores';
-	import { activeSessison, getSession } from '$lib/session';
+	import { activeSessison } from '$lib/session';
+	import { ModeWatcher } from 'mode-watcher';
+	import { answeredCount, getQuestions, unAnsweredCount } from '$lib/questions';
+	import { cn } from '$lib/utils';
 
-	const linkClass = css({
-		padding: '2',
-		fontWeight: 'semibold',
-		'&.active': {
-			color: 'blue.600'
-		}
-	});
 </script>
 
 <HeaderBar></HeaderBar>
+<ModeWatcher />
 
 {#await authenticate()}
-	<p>logging in</p>
+	<main class="bg-gray-100 dark:bg-gray-800 flex min-h-screen">
+		<div class="container">
+			<p>logging in</p>
+		</div>
+	</main>
 {:then _}
-	{#if $activeSessison === false}
-		<p class={css({ textAlign: 'center', fontSize: '2xl' })}>keine aktive Q & A Session</p>
-	{:else}
-		<main class={container()}>
-			<nav class={css({ display: 'flex', gap: '4', marginTop: '2', marginBottom: '4' })}>
-				<a class={linkClass} class:active={$page.url.pathname === '/'} href="/">Unbeantwortet</a>
-				<a class={linkClass} class:active={$page.url.pathname === '/complete'} href="/complete"
-					>Beantwortet</a
-				>
-			</nav>
-			<slot />
-		</main>
-	{/if}
+	<main class="relative min-h-screen bg-gray-100 dark:bg-gray-800">
+		<div class="flex flex-col container">
+			{#if $activeSessison === false}
+				<div class="text-center my-8 text-2xl">
+					<p>keine aktive Q &amp; A Session</p>
+				</div>
+			{:else}
+				<nav class="flex space-x-8 py-4 text-md sm:text-xl">
+					<a
+						class={cn(
+							'transition-colors hover:text-foreground/80',
+							$page.url.pathname === '/' ? 'text-foreground' : 'text-foreground/60'
+						)}
+						href="/">Unbeantwortet ({$unAnsweredCount})</a
+					>
+					<a
+						class={cn(
+							'transition-colors hover:text-foreground/80',
+							$page.url.pathname === '/complete' ? 'text-foreground' : 'text-foreground/60'
+						)}
+						href="/complete">Beantwortet ({$answeredCount})</a
+					>
+				</nav>
+				<div class="flex-1">
+					<slot />
+				</div>
+			{/if}
+		</div>
+	</main>
 {/await}
