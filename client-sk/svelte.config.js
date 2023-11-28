@@ -5,7 +5,7 @@ import { vitePreprocess } from '@sveltejs/kit/vite';
 const config = {
 	// Consult https://kit.svelte.dev/docs/integrations#preprocessors
 	// for more information about preprocessors
-	preprocess: vitePreprocess(),
+	preprocess: [vitePreprocess({})],
 
 	kit: {
 		// adapter-auto only supports some environments, see https://kit.svelte.dev/docs/adapter-auto for a list.
@@ -21,7 +21,7 @@ const config = {
 			strict: true
 		}),
 		alias: {
-			'styled-system': './styled-system/*'
+			$lib: './src/lib'
 		}
 	}
 };

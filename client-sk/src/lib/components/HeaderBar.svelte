@@ -1,43 +1,32 @@
 <script>
-	import { isAdmin } from '$lib/auth/auth';
-	import { export2csv } from '$lib/export';
-	import { activeSessison, startSession, stopSession, userOnline } from '$lib/session';
+	import { userOnline } from '$lib/session';
 	import pollerrLogo from '$lib/logo.svg';
-	import { FontSize, Github } from '@steeze-ui/remix-icons';
+	import { Github } from '@steeze-ui/remix-icons';
 	import { Icon } from '@steeze-ui/svelte-icon';
-	import { css } from 'styled-system/css';
-	import { textButton } from 'styled-system/recipes';
+	import DarkModeToggle from './DarkModeToggle.svelte';
+	import MobileNav from './MobileNav.svelte';
+	import DesktopNav from './DesktopNav.svelte';
 </script>
 
-<nav
-	class={css({
-		display: 'flex',
-		justifyContent: 'space-between',
-		alignItems: 'center',
-		padding: '8px'
-	})}
+<header
+	class="supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 border-b bg-background/95 backdrop-blur"
 >
-	<div class={css({ display: 'flex', alignItems: 'center' })}>
-		<img class={css({ height: '2rem' })} src={pollerrLogo} alt="" />
-		<span
-			class={css({ marginLeft: '16px', whiteSpace: 'nowrap', fontSize: 'xl', fontWeight: 'bold' })}
-		>
-			Pollerr
-		</span>
-	</div>
+	<div class="px-4 flex h-14 items-center">
+		<div class="mr-6 flex items-center space-x-2">
+			<img class="h-8 w-8" src={pollerrLogo} alt="" />
+			<span class="hidden font-bold sm:inline-block text-base"> Pollerr </span>
+		</div>
 
-	<div class={css({ display: 'flex', alignItems: 'center', gap: '16px' })}>
-		{#if !!$isAdmin}
-			{#if $activeSessison === false}
-				<button class={textButton()} on:click={startSession}>Fragerunde starten</button>
-			{:else}
-				<button class={textButton()} on:click={stopSession}>Fragerunde beenden</button>
-				<button class={textButton()} on:click={export2csv}>Fragen exportieren</button>
-			{/if}
-		{/if}
-		<div class="dark:text-white">online: {$userOnline}</div>
-		<a href="https://github.com/Undermyspell/cp-voting-tool" target="_blank">
-			<Icon src={Github} theme="solid" size="20" class="cursor-pointer" />
-		</a>
+		<div class="flex w-full items-center space-x-4">
+			<MobileNav></MobileNav>
+			<DesktopNav></DesktopNav>
+			<div class="flex justify-end items-center flex-1 space-x-4">
+				<DarkModeToggle></DarkModeToggle>
+				<div class="dark:text-white">online: {$userOnline}</div>
+				<a href="https://github.com/Undermyspell/cp-voting-tool" target="_blank">
+					<Icon src={Github} theme="solid" size="20" class="cursor-pointer" />
+				</a>
+			</div>
+		</div>
 	</div>
-</nav>
+</header>

@@ -4,18 +4,15 @@
 	import { Icon } from '@steeze-ui/svelte-icon';
 	import { answerQuestion } from '$lib/questions';
 	import type { Question } from '$lib/models/question';
-	import { CheckDouble, DeleteBin, Edit } from '@steeze-ui/remix-icons';
-	import { css } from 'styled-system/css';
-	import { flex, hstack } from 'styled-system/patterns';
-	import { textButton } from 'styled-system/recipes';
+	import { CheckDouble, DeleteBin } from '@steeze-ui/remix-icons';
 	import VotingButton from './VotingButton.svelte';
+	import { Button } from '$lib/components/ui/button';
 
 	const dispatch = createEventDispatcher<{
-		edit: {id: string},
-		delete: {id: string}
+		edit: { id: string };
+		delete: { id: string };
 	}>();
 
-	let popupModal = false;
 	export let question: Question;
 
 	function onEdit() {
@@ -27,69 +24,47 @@
 	function onDelete() {
 		dispatch('delete', {
 			id: question.Id
-		})
+		});
 	}
 </script>
 
-<div
-	class={flex({
-		direction: 'column',
-		gap: 4,
-		padding: 4
-	})}
->
-	<div
-		class={flex({
-			gap: 4,
-			direction: { base: 'column', sm: 'row' },
-			alignItems: { base: 'center', sm: 'start' }
-		})}
-	>
+<div class="flex flex-col sm:flex-row w-full">
+	<div class="flex-0 sm:mr-2">
 		<VotingButton {question} />
-
-		<div
-			class={flex({
-				direction: { base: 'column', sm: 'row' },
-				width: '100%',
-				justifyContent: 'space-between',
-				alignContent: 'center',
-				gap: { base: 4, sm: '0' }
-			})}
-		>
-			<div class={css({ width: '100%', whiteSpace: 'pre-wrap' })}>{question.Text}</div>
-			<div
-				class={flex({
-					direction: { base: 'row', sm: 'column' },
-					justifyContent: { base: 'space-between', sm: 'start' },
-					gap: '2'
-				})}
-			>
-				{#if question.Owned}
-					<button class={textButton()} on:click={() => onEdit()}>
-						<div class={hstack({ gap: '2' })}>
-							<Icon src={Edit} size="20" />
-							<div>Editieren</div>
-						</div>
-					</button>
-				{/if}
-				{#if $isAdmin || $isSessionAdmin}
-					<button
-						class={textButton({ color: 'green' })}
-						on:click={() => answerQuestion(question.Id)}
-					>
-						<div class={hstack({ gap: 2 })}>
-							<Icon class="mr-2" src={CheckDouble} size="20" /> Beantworten
-						</div>
-					</button>
-				{/if}
-				{#if question.Owned}
-					<button class={textButton({ color: 'red' })} on:click={() => onDelete()}
-						><div class={hstack({ gap: 2 })}>
-							<Icon src={DeleteBin} size="20" /> Löschen
-						</div></button
-					>
-				{/if}
-			</div>
+	</div>
+	<div
+		class="flex flex-col sm:flex-row justify-between space-x-4 bg-white dark:bg-gray-900 p-4 shadow-md rounded-bottom-sm sm:rounded-sm w-full"
+	>
+		<div>
+			<div class="whitespace-pre-wrap">{question.Text}</div>
+			<p class="text-sm italic mt-4">{question.Anonymous ? 'Anonym' : question.Creator}</p>
+		</div>
+		<div class="items-center flex space-x-8 sm:space-x-4 mt-4 sm:mt-0">
+			{#if question.Owned}
+				<Button variant="outline" on:click={() => onEdit()}>
+					<div>Editieren</div>
+				</Button>
+			{/if}
+			{#if $isAdmin || $isSessionAdmin}
+				<Button
+					variant="outline"
+					class="bg-green-500/20 text-green-600 border-green-500/50 hover:text-white hover:bg-green-600"
+					size="icon"
+					on:click={() => answerQuestion(question.Id)}
+				>
+					<Icon src={CheckDouble} size="20" />
+				</Button>
+			{/if}
+			{#if question.Owned}
+				<Button
+					variant="outline"
+					class="bg-red-500/20 text-red-600 border-red-500/50 hover:text-white hover:bg-red-600"
+					size="icon"
+					on:click={() => onDelete()}
+				>
+					<Icon src={DeleteBin} size="20" />
+				</Button>
+			{/if}
 		</div>
 	</div>
 </div>

@@ -3,11 +3,7 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
 	plugins: [sveltekit()],
-	server: {
-		fs: {
-			allow: ['styled-system'],
-		},
-	},
+	server: {},
 	build: {
 		target: 'esnext'
 	},
