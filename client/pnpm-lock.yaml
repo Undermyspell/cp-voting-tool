@@ -44,8 +44,8 @@ devDependencies:
     specifier: ^10.4.16
     version: 10.4.16(postcss@8.4.31)
   flowbite-svelte:
-    specifier: ^0.44.19
-    version: 0.44.19(svelte@4.2.3)
+    specifier: ^0.44.20
+    version: 0.44.20(svelte@4.2.3)
   postcss:
     specifier: ^8.4.31
     version: 8.4.31
@@ -949,15 +949,15 @@ packages:
       to-regex-range: 5.0.1
     dev: true
 
-  /flowbite-svelte@0.44.19(svelte@4.2.3):
-    resolution: {integrity: sha512-ihP6NYxr34uTb/H91uqYLG830XffuSiPyezLufgjfS/ip3vWxTLRYrqQlRG8+ls7TqTmOsjJ9H/Yx4qN/oq+mQ==}
+  /flowbite-svelte@0.44.20(svelte@4.2.3):
+    resolution: {integrity: sha512-juvzolgEvGEga8PIe+vpzGf9/xfpvd4p9ZgtSPpWQLZB8iyY/ebbKb5HNu60uqoehdokFuy/0htBBLNmP2yd/g==}
     engines: {node: '>=18.0.0', npm: '>=7.0.0'}
     peerDependencies:
       svelte: ^4.0.0
     dependencies:
       '@floating-ui/dom': 1.5.3
       apexcharts: 3.44.0
-      flowbite: 2.1.1
+      flowbite: 2.2.0
       svelte: 4.2.3
       tailwind-merge: 2.0.0
     dev: true
@@ -967,6 +967,14 @@ packages:
     dependencies:
       '@popperjs/core': 2.11.8
       mini-svg-data-uri: 1.4.4
+    dev: false
+
+  /flowbite@2.2.0:
+    resolution: {integrity: sha512-Eq0qWz4a5nlxaGuUcspzpu+8Ny0A7lKEJEKcuPpkdSoF8tWjbKeuVVgKk8/q10ZE9bhXh1GHBXdCsRxu0LZTNQ==}
+    dependencies:
+      '@popperjs/core': 2.11.8
+      mini-svg-data-uri: 1.4.4
+    dev: true
 
   /follow-redirects@1.15.3(debug@4.3.4):
     resolution: {integrity: sha512-1VzOtuEM8pC9SFU1E+8KfTjZyMztRsgEfwQl44z8A25uy13jSzTj6dyK2Df52iV0vgHCfBwLhDWevLn95w5v6Q==}
