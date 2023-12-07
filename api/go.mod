@@ -11,13 +11,13 @@ require (
 	github.com/nitishm/go-rejson/v4 v4.1.0
 	github.com/oklog/ulid/v2 v2.1.0
 	github.com/sirupsen/logrus v1.9.3
-	github.com/spf13/viper v1.17.0
+	github.com/spf13/viper v1.18.0
 	github.com/stretchr/testify v1.8.4
 	github.com/swaggo/files v1.0.1
 	github.com/swaggo/gin-swagger v1.6.0
 	github.com/swaggo/swag v1.16.2
 	golang.org/x/crypto v0.16.0
-	golang.org/x/exp v0.0.0-20231127185646-65229373498e
+	golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb
 )
 
 require (
@@ -33,7 +33,7 @@ require (
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-openapi/jsonpointer v0.20.0 // indirect
 	github.com/go-openapi/jsonreference v0.20.2 // indirect
-	github.com/go-openapi/spec v0.20.10 // indirect
+	github.com/go-openapi/spec v0.20.11 // indirect
 	github.com/go-openapi/swag v0.22.4 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
