@@ -32,7 +32,7 @@
     "@popperjs/core": "^2.11.8",
     "@steeze-ui/remix-icons": "^1.1.1",
     "@steeze-ui/svelte-icon": "^1.5.0",
-    "classnames": "^2.3.2",
+    "classnames": "^2.5.0",
     "flowbite": "^2.2.1",
     "json-2-csv": "^4.1.1"
   }
