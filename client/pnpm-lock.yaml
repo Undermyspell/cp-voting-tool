@@ -18,8 +18,8 @@ dependencies:
     specifier: ^1.5.0
     version: 1.5.0(svelte@4.2.3)
   classnames:
-    specifier: ^2.5.0
-    version: 2.5.0
+    specifier: ^2.5.1
+    version: 2.5.1
   flowbite:
     specifier: ^2.2.1
     version: 2.2.1
@@ -782,8 +782,8 @@ packages:
       fsevents: 2.3.3
     dev: true
 
-  /classnames@2.5.0:
-    resolution: {integrity: sha512-FQuRlyKinxrb5gwJlfVASbSrDlikDJ07426TrfPsdGLvtochowmkbnSFdQGJ2aoXrSetq5KqGV9emvWpy+91xA==}
+  /classnames@2.5.1:
+    resolution: {integrity: sha512-saHYOzhIQs6wy2sVxTM6bUDsQO4F50V9RQ22qBpEdCW+I+/Wmke2HOl6lS6dTpdxVhb88/I6+Hs+438c3lfUow==}
     dev: false
 
   /code-red@1.0.4:
