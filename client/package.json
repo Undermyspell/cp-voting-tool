@@ -14,7 +14,7 @@
     "@sveltejs/vite-plugin-svelte": "^2.4.6",
     "@tailwindcss/forms": "^0.5.7",
     "@tsconfig/svelte": "^5.0.2",
-    "autoprefixer": "^10.4.16",
+    "autoprefixer": "^10.4.17",
     "flowbite-svelte": "^0.44.22",
     "postcss": "^8.4.33",
     "postcss-load-config": "^5.0.2",
