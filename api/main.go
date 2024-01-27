@@ -16,6 +16,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
@@ -58,6 +59,7 @@ func main() {
 	if env.Env.VotingStorageInMemory {
 		votingStorage = votingstorage.NewInMemory()
 	} else {
+		logrus.Info("WE USE REDIS")
 		votingStorage = votingstorage.NewRedis()
 	}
 
