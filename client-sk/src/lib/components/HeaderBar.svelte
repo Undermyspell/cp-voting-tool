@@ -6,6 +6,10 @@
 	import DarkModeToggle from './DarkModeToggle.svelte';
 	import MobileNav from './MobileNav.svelte';
 	import DesktopNav from './DesktopNav.svelte';
+	import { mediaQuery } from 'svelte-legos';
+	
+	const isDesktop = mediaQuery('(min-width: 768px)');
+
 </script>
 
 <header
@@ -18,8 +22,11 @@
 		</div>
 
 		<div class="flex w-full items-center space-x-4">
-			<MobileNav></MobileNav>
-			<DesktopNav></DesktopNav>
+			{#if $isDesktop}
+				<DesktopNav></DesktopNav>
+			{:else}
+				<MobileNav></MobileNav>
+			{/if}
 			<div class="flex justify-end items-center flex-1 space-x-4">
 				<DarkModeToggle></DarkModeToggle>
 				<div class="dark:text-white">online: {$userOnline}</div>
