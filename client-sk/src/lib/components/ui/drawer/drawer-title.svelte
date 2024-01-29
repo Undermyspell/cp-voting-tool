@@ -1,16 +1,18 @@
 <script lang="ts">
-	import { Dialog as DialogPrimitive } from "bits-ui";
+	import { Drawer as DrawerPrimitive } from "vaul-svelte";
 	import { cn } from "$lib/utils";
 
-	type $$Props = DialogPrimitive.TitleProps;
+	type $$Props = DrawerPrimitive.TitleProps;
 
+	export let el: $$Props["el"] = undefined;
 	let className: $$Props["class"] = undefined;
 	export { className as class };
 </script>
 
-<DialogPrimitive.Title
+<DrawerPrimitive.Title
+	bind:el
 	class={cn("text-lg font-semibold leading-none tracking-tight", className)}
 	{...$$restProps}
 >
 	<slot />
-</DialogPrimitive.Title>
+</DrawerPrimitive.Title>
