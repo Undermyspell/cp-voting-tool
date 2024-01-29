@@ -3,11 +3,11 @@ version: '3'
 services:
   client:
     build:
-      context: ./client
+      context: ./client-sk
     ports:
-      - 5173:8080
+      - 5173:5173
     environment:
-      - VITE_API_BASE_URL=http://api:3333
+      - PUBLIC_API_BASE_URL=http://api:3333
       - VITE_VERSION_INFO=docker-compose
   api:
     build:

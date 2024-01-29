@@ -8,9 +8,9 @@ import (
 	"sse/internal/models"
 	"time"
 
-	goredis "github.com/go-redis/redis/v8"
 	"github.com/nitishm/go-rejson/v4"
 	"github.com/oklog/ulid/v2"
+	goredis "github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 )
 
