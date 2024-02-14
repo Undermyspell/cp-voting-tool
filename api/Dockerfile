@@ -1,4 +1,4 @@
-FROM golang:1.21-alpine as build
+FROM golang:1.22-alpine as build
 
 WORKDIR /app
 
@@ -6,7 +6,7 @@ COPY . .
 RUN go build -o cp-voting-tool
 RUN go vet ./...
 
-FROM alpine:3.18 as runtime
+FROM alpine:3.19 as runtime
 
 WORKDIR /app
 
