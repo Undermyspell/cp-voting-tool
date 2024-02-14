@@ -1,4 +1,4 @@
-FROM node:20-alpine As build
+FROM node:20-bullseye As build
 
 ARG version_info
 ARG PUBLIC_API_BASE_URL
