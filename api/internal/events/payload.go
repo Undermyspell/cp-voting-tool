@@ -1,4 +1,4 @@
-package sse
+package events
 
 type UserConnected struct {
 	UserCount int
@@ -39,3 +39,5 @@ type QuestionCreated struct {
 	Anonymous bool
 	Owned     bool
 }
+
+const PayloadEmpty = "{}"

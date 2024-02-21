@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"sse/internal/models/roles"
+	"voting/internal/models/roles"
 
 	"golang.org/x/crypto/sha3"
 )

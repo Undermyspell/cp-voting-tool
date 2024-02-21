@@ -1,13 +1,13 @@
 package broker
 
-import "sse/internal/sse"
+import "voting/internal/events"
 
 func New() Broker {
 
 	broker := &ChannelBroker{
-		NotifierAll:        make(chan sse.Event, 1),
-		NotifierUser:       make(chan sse.UserBoundSseEvent, 1),
-		NotifierAllButUser: make(chan sse.UserBoundSseEvent, 1),
+		NotifierAll:        make(chan events.Event, 1),
+		NotifierUser:       make(chan events.UserBoundSseEvent, 1),
+		NotifierAllButUser: make(chan events.UserBoundSseEvent, 1),
 		NewClients:         make(chan UserBoundSseChannel),
 		ClosingClients:     make(chan UserBoundSseChannel),
 		Clients:            make(map[UserBoundSseChannel]bool),

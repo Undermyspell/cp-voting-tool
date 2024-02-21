@@ -2,8 +2,8 @@ package middleware
 
 import (
 	"net/http"
-	"sse/internal/models"
-	"sse/internal/models/roles"
+	"voting/internal/models"
+	"voting/internal/models/roles"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"

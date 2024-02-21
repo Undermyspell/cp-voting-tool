@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sse/internal/helper"
-	"sse/internal/models"
 	"time"
+	"voting/internal/helper"
+	"voting/internal/models"
 
 	"github.com/nitishm/go-rejson/v4"
 	"github.com/oklog/ulid/v2"

@@ -1,7 +1,7 @@
 package jwks
 
 import (
-	"sse/internal/env"
+	"voting/internal/env"
 
 	"github.com/MicahParks/keyfunc/v3"
 	"github.com/golang-jwt/jwt/v5"

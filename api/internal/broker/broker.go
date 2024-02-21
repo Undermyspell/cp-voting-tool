@@ -1,18 +1,18 @@
 package broker
 
 import (
-	"sse/internal/models"
-	"sse/internal/sse"
+	"voting/internal/events"
+	"voting/internal/models"
 
 	"github.com/gin-gonic/gin"
 )
 
 type Broker interface {
-	Stream(c *gin.Context)
+	SseStream(c *gin.Context)
 	Listen()
-	NotifyAll(sse.Event)
-	NotifyUser(event sse.Event, user models.UserContext)
-	NotifyAllButUser(event sse.Event, user models.UserContext)
+	NotifyAll(events.Event)
+	NotifyUser(event events.Event, user models.UserContext)
+	NotifyAllButUser(event events.Event, user models.UserContext)
 	DistinctClientsCount() int
 	SendHeartBeat()
 }

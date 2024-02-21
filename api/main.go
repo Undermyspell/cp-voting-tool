@@ -1,18 +1,18 @@
 package main
 
 import (
-	"sse/internal/broker"
-	"sse/internal/env"
-	"sse/internal/jwks"
-	"sse/internal/middleware"
-	"sse/internal/mocks"
-	"sse/internal/models/roles"
-	"sse/internal/votingstorage"
-	questionService "sse/services/question"
-	userService "sse/services/user"
 	"time"
+	"voting/internal/broker"
+	"voting/internal/env"
+	"voting/internal/jwks"
+	"voting/internal/middleware"
+	"voting/internal/mocks"
+	"voting/internal/models/roles"
+	"voting/internal/votingstorage"
+	questionService "voting/services/question"
+	userService "voting/services/user"
 
-	_ "sse/docs"
+	_ "voting/docs"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -79,7 +79,7 @@ func main() {
 
 	v1 := r.Group("/api/v1")
 	{
-		v1.GET("/events", middleware.RequireAuth(jwksProvider), broker.Stream)
+		v1.GET("/events", middleware.RequireAuth(jwksProvider), broker.SseStream)
 		q := v1.Group("/question", middleware.RequireAuth(jwksProvider))
 		q.PUT("/answer/:id", middleware.RequireRole(roles.SessionAdmin, roles.Admin), questionService.Answer)
 		q.POST("/new", questionService.Add)

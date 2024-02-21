@@ -3,10 +3,10 @@ package middleware
 import (
 	"errors"
 	"net/http"
-	"sse/internal/jwks"
-	"sse/internal/models"
-	"sse/internal/models/roles"
 	"strings"
+	"voting/internal/jwks"
+	"voting/internal/models"
+	"voting/internal/models/roles"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"

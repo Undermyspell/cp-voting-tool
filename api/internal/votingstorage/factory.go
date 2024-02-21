@@ -3,8 +3,8 @@ package votingstorage
 import (
 	"context"
 	"flag"
-	"sse/internal/env"
-	"sse/internal/helper"
+	"voting/internal/env"
+	"voting/internal/helper"
 
 	"github.com/nitishm/go-rejson/v4"
 	"github.com/redis/go-redis/v9"
