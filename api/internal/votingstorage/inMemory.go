@@ -1,8 +1,8 @@
 package votingstorage
 
 import (
-	"sse/internal/helper"
-	"sse/internal/models"
+	"voting/internal/helper"
+	"voting/internal/models"
 
 	"github.com/oklog/ulid/v2"
 )

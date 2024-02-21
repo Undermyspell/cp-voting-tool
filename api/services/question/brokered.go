@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"sse/dtos"
-	"sse/internal/broker"
-	"sse/internal/models"
-	"sse/internal/sse"
-	"sse/internal/validation"
-	"sse/internal/votingstorage"
+	"voting/dtos"
+	"voting/internal/broker"
+	"voting/internal/events"
+	"voting/internal/models"
+	"voting/internal/validation"
+	"voting/internal/votingstorage"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -53,7 +53,7 @@ func (service *BrokeredQuestionsService) Add(c *gin.Context) {
 		return
 	}
 
-	newQuestionForUserSseMessage := sse.QuestionCreated{
+	newQuestionForUserSseMessage := events.QuestionCreated{
 		Id:        question.Id,
 		Text:      question.Text,
 		Creator:   question.CreatorName,
@@ -70,7 +70,7 @@ func (service *BrokeredQuestionsService) Add(c *gin.Context) {
 		creatorForAllButUser = question.CreatorName
 	}
 
-	newQuestionForAllButUserSseMessage := sse.QuestionCreated{
+	newQuestionForAllButUserSseMessage := events.QuestionCreated{
 		Id:        question.Id,
 		Text:      question.Text,
 		Creator:   creatorForAllButUser,
@@ -83,12 +83,12 @@ func (service *BrokeredQuestionsService) Add(c *gin.Context) {
 	newQuestionForUserByteString, _ := json.Marshal(newQuestionForUserSseMessage)
 	newQuestionForAllButUserByteString, _ := json.Marshal(newQuestionForAllButUserSseMessage)
 
-	eventForUser := sse.Event{
-		EventType: sse.NEW_QUESTION,
+	eventForUser := events.Event{
+		EventType: events.NEW_QUESTION,
 		Payload:   string(newQuestionForUserByteString),
 	}
-	eventForAllButUser := sse.Event{
-		EventType: sse.NEW_QUESTION,
+	eventForAllButUser := events.Event{
+		EventType: events.NEW_QUESTION,
 		Payload:   string(newQuestionForAllButUserByteString),
 	}
 
@@ -129,7 +129,7 @@ func (service *BrokeredQuestionsService) Update(c *gin.Context) {
 		return
 	}
 
-	questionToUpdateSseMessage := sse.QuestionUpdated{
+	questionToUpdateSseMessage := events.QuestionUpdated{
 		Id:        questionToUpdate.Id,
 		Text:      questionToUpdate.Text,
 		Creator:   questionToUpdate.CreatorName,
@@ -138,8 +138,8 @@ func (service *BrokeredQuestionsService) Update(c *gin.Context) {
 
 	newQuestionByteString, _ := json.Marshal(questionToUpdateSseMessage)
 
-	event := sse.Event{
-		EventType: sse.UPDATE_QUESTION,
+	event := events.Event{
+		EventType: events.UPDATE_QUESTION,
 		Payload:   string(newQuestionByteString),
 	}
 
@@ -171,13 +171,13 @@ func (service *BrokeredQuestionsService) Delete(c *gin.Context) {
 		return
 	}
 
-	questionDeletedSseMessage := sse.QuestionDeleted{
+	questionDeletedSseMessage := events.QuestionDeleted{
 		Id: questionId,
 	}
 	questionDeletedByteString, _ := json.Marshal(questionDeletedSseMessage)
 
-	event := sse.Event{
-		EventType: sse.DELETE_QUESTION,
+	event := events.Event{
+		EventType: events.DELETE_QUESTION,
 		Payload:   string(questionDeletedByteString),
 	}
 
@@ -214,7 +214,7 @@ func (service *BrokeredQuestionsService) Upvote(c *gin.Context) {
 		Votes int
 	}{questionId, votes}
 
-	questionUpVoteForUserSseMessage := sse.QuestionUpvoted{
+	questionUpVoteForUserSseMessage := events.QuestionUpvoted{
 		Id:    questionId,
 		Votes: votes,
 		Voted: true,
@@ -233,13 +233,13 @@ func (service *BrokeredQuestionsService) Upvote(c *gin.Context) {
 		return
 	}
 
-	event := sse.Event{
-		EventType: sse.UPVOTE_QUESTION,
+	event := events.Event{
+		EventType: events.UPVOTE_QUESTION,
 		Payload:   string(questionPayload),
 	}
 
-	userevent := sse.Event{
-		EventType: sse.UPVOTE_QUESTION,
+	userevent := events.Event{
+		EventType: events.UPVOTE_QUESTION,
 		Payload:   string(questionForUserPaylod),
 	}
 
@@ -277,7 +277,7 @@ func (service *BrokeredQuestionsService) UndoVote(c *gin.Context) {
 		Votes int
 	}{questionId, votes}
 
-	questionUndoUpVoteForUserSseMessage := sse.QuestionUpvoted{
+	questionUndoUpVoteForUserSseMessage := events.QuestionUpvoted{
 		Id:    questionId,
 		Votes: votes,
 		Voted: false,
@@ -296,13 +296,13 @@ func (service *BrokeredQuestionsService) UndoVote(c *gin.Context) {
 		return
 	}
 
-	event := sse.Event{
-		EventType: sse.UNDO_UPVOTE_QUESTION,
+	event := events.Event{
+		EventType: events.UNDO_UPVOTE_QUESTION,
 		Payload:   string(questionPayload),
 	}
 
-	userevent := sse.Event{
-		EventType: sse.UNDO_UPVOTE_QUESTION,
+	userevent := events.Event{
+		EventType: events.UNDO_UPVOTE_QUESTION,
 		Payload:   string(questionForUserPaylod),
 	}
 
@@ -333,7 +333,7 @@ func (service *BrokeredQuestionsService) Answer(c *gin.Context) {
 		return
 	}
 
-	questionMessage := sse.QuestionAnswered{
+	questionMessage := events.QuestionAnswered{
 		Id: questionId,
 	}
 	questionPayload, errj := json.Marshal(questionMessage)
@@ -343,8 +343,8 @@ func (service *BrokeredQuestionsService) Answer(c *gin.Context) {
 		return
 	}
 
-	event := sse.Event{
-		EventType: sse.ANSWER_QUESTION,
+	event := events.Event{
+		EventType: events.ANSWER_QUESTION,
 		Payload:   string(questionPayload),
 	}
 
@@ -363,9 +363,9 @@ func (service *BrokeredQuestionsService) Answer(c *gin.Context) {
 func (service *BrokeredQuestionsService) Stop(c *gin.Context) {
 	service.QuestionSession.Stop()
 
-	event := sse.Event{
-		EventType: sse.STOP_SESSION,
-		Payload:   sse.PayloadEmpty,
+	event := events.Event{
+		EventType: events.STOP_SESSION,
+		Payload:   events.PayloadEmpty,
 	}
 
 	service.Broker.NotifyAll(event)
@@ -383,9 +383,9 @@ func (service *BrokeredQuestionsService) Stop(c *gin.Context) {
 func (service *BrokeredQuestionsService) Start(c *gin.Context) {
 	service.QuestionSession.Start()
 
-	event := sse.Event{
-		EventType: sse.START_SESSION,
-		Payload:   sse.PayloadEmpty,
+	event := events.Event{
+		EventType: events.START_SESSION,
+		Payload:   events.PayloadEmpty,
 	}
 
 	service.Broker.NotifyAll(event)

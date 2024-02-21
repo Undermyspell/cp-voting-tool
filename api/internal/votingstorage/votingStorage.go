@@ -1,7 +1,7 @@
 package votingstorage
 
 import (
-	"sse/internal/models"
+	"voting/internal/models"
 )
 
 type VotingStorage interface {

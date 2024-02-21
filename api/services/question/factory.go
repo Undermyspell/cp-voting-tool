@@ -1,8 +1,8 @@
 package services
 
 import (
-	"sse/internal/broker"
-	"sse/internal/votingstorage"
+	"voting/internal/broker"
+	"voting/internal/votingstorage"
 )
 
 func NewBrokered(broker broker.Broker, storage votingstorage.VotingStorage) QuestionService {

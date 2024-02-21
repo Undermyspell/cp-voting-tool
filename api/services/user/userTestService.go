@@ -2,8 +2,8 @@ package services
 
 import (
 	"net/http"
-	"sse/dtos"
-	"sse/internal/mocks"
+	"voting/dtos"
+	"voting/internal/mocks"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"

@@ -1,4 +1,4 @@
-module sse
+module voting
 
 go 1.22
 

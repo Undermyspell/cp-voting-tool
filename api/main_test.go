@@ -8,11 +8,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"sse/dtos"
-	"sse/internal/mocks"
 	"sync"
 	"testing"
 	"time"
+	"voting/dtos"
+	"voting/internal/mocks"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
