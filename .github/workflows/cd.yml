@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
         - name: Create short sha
-          uses: benjlevesque/short-sha@v2.2
+          uses: benjlevesque/short-sha@v3.0
           id: short-sha
           with:
             length: 8
@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
         - name: Create short sha
-          uses: benjlevesque/short-sha@v2.2
+          uses: benjlevesque/short-sha@v3.0
           id: short-sha
           with:
             length: 8
