@@ -19,7 +19,7 @@ export const initEventSource = () => {
 		if (event.status === 401) {
 			refreshToken();
 		} else {
-			initEventSource();
+			// initEventSource();
 		}
 	});
 

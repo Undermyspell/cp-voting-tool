@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 	"voting/internal/broker"
@@ -35,72 +34,8 @@ var start = func(r *gin.Engine) {
 }
 var r *gin.Engine
 
-type contextKey int
-
-var ginContextKey contextKey
-
-// GinContextToContextMiddleware - at the resolver level we only have access
-// to context.Context inside centrifuge, but we need the gin context. So we
-// create a gin middleware to add its context to the context.Context used by
-// centrifuge websocket server.
-func GinContextToContextMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		ctx := context.WithValue(c.Request.Context(), ginContextKey, c)
-		c.Request = c.Request.WithContext(ctx)
-		c.Next()
-	}
-}
-
-// GinContextFromContext - we recover the gin context from the context.Context
-// struct where we added it just above
-func GinContextFromContext(ctx context.Context) (*gin.Context, error) {
-	ginContext := ctx.Value(ginContextKey)
-	if ginContext == nil {
-		err := fmt.Errorf("could not retrieve gin.Context")
-		return nil, err
-	}
-	gc, ok := ginContext.(*gin.Context)
-	if !ok {
-		err := fmt.Errorf("gin.Context has wrong type")
-		return nil, err
-	}
-	return gc, nil
-}
-
 func handleLog(e centrifuge.LogEntry) {
 	logrus.Infof("%s: %v", e.Message, e.Fields)
-}
-
-type connectData struct {
-	Email string `json:"email"`
-}
-
-// Finally we can use gin context in the auth middleware of centrifuge.
-func authMiddleware(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		// We get gin ctx from context.Context struct.
-		_, err := GinContextFromContext(ctx)
-		if err != nil {
-			logrus.Infof("Failed to retrieve gin context")
-			logrus.Info(err.Error())
-			return
-		}
-
-		// And now we can access gin session.
-		username := "test"
-		if username != "" {
-			fmt.Printf("Successful websocket auth for user %s\n", username)
-		} else {
-			fmt.Printf("Failed websocket auth for user %s\n", username)
-			return
-		}
-		newCtx := centrifuge.SetCredentials(ctx, &centrifuge.Credentials{
-			UserID: username,
-		})
-		r = r.WithContext(newCtx)
-		h.ServeHTTP(w, r)
-	})
 }
 
 // @title           CP Voting tool api
@@ -122,23 +57,19 @@ func main() {
 	})
 
 	node.OnConnecting(func(ctx context.Context, event centrifuge.ConnectEvent) (centrifuge.ConnectReply, error) {
+		_, err := middleware.GetUserContextFromToken(event.Token)
 
-		logrus.Infof("client connecting with token: %s", event.Token)
-		// return centrifuge.ConnectReply{}, centrifuge.ErrorUnauthorized
+		if err != nil {
+			return centrifuge.ConnectReply{}, centrifuge.ErrorUnauthorized
+		}
 
 		// Let's include user email into connect reply, so we can display username in chat.
 		// This is an optional step, actually.
-		cred, ok := centrifuge.GetCredentials(ctx)
+		_, ok := centrifuge.GetCredentials(ctx)
 		if !ok {
-			logrus.Error("THIS IS NOT GOOD")
 			return centrifuge.ConnectReply{}, centrifuge.DisconnectServerError
 		}
-		data, _ := json.Marshal(connectData{
-			Email: cred.UserID,
-		})
-		return centrifuge.ConnectReply{
-			Data: data,
-		}, nil
+		return centrifuge.ConnectReply{}, nil
 	})
 
 	node.OnConnect(func(client *centrifuge.Client) {
@@ -230,11 +161,11 @@ func main() {
 	config.AllowOrigins = []string{"*"}
 	r.Use(cors.New(config))
 	r.Use(middleware.Options)
-	r.Use(GinContextToContextMiddleware())
+	r.Use(middleware.GinContextToContextMiddleware())
 
 	v1 := r.Group("/api/v1")
 	{
-		v1.GET("/connection/websocket", gin.WrapH(authMiddleware(centrifuge.NewWebsocketHandler(node, centrifuge.WebsocketConfig{
+		v1.GET("/connection/websocket", gin.WrapH(middleware.CentrifugeAnonymousAuth(centrifuge.NewWebsocketHandler(node, centrifuge.WebsocketConfig{
 			CheckOrigin: func(r *http.Request) bool {
 				originHeader := r.Header.Get("Origin")
 				if originHeader == "" {
@@ -243,8 +174,8 @@ func main() {
 				return originHeader == "http://localhost:5173"
 			},
 		}))))
-		v1.GET("/events", middleware.RequireAuth(jwks.GetProvider()), broker.SseStream)
-		q := v1.Group("/question", middleware.RequireAuth(jwks.GetProvider()))
+		v1.GET("/events", middleware.GinRequireAuth(), broker.SseStream)
+		q := v1.Group("/question", middleware.GinRequireAuth())
 		q.PUT("/answer/:id", middleware.RequireRole(roles.SessionAdmin, roles.Admin), questionService.Answer)
 		q.POST("/new", questionService.Add)
 		q.PUT("/upvote/:id", questionService.Upvote)
@@ -252,7 +183,7 @@ func main() {
 		q.PUT("/update", questionService.Update)
 		q.DELETE("/delete/:id", questionService.Delete)
 
-		s := q.Group("/session", middleware.RequireAuth(jwks.GetProvider()))
+		s := q.Group("/session", middleware.GinRequireAuth())
 		s.POST("/start", middleware.RequireRole(roles.Admin), questionService.Start)
 		s.POST("/stop", middleware.RequireRole(roles.Admin), questionService.Stop)
 		s.GET("", questionService.GetSession)

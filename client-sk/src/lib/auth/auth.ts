@@ -27,7 +27,7 @@ export const refreshToken = async (): Promise<string> => {
 		authResult.set(refreshResult);
 
 		if (initEvSource) {
-			initEventSource();
+			// initEventSource();
 		}
 
 		return refreshResult.idToken
