@@ -1,5 +1,13 @@
 package jwks
 
-func New() KeyfuncProvider {
-	return Init()
+import (
+	"voting/internal/env"
+)
+
+func Init() {
+	if !env.Env.UseMockJwks {
+		create()
+	} else {
+		Mock()
+	}
 }

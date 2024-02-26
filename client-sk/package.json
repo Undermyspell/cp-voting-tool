@@ -42,6 +42,7 @@
 		"@steeze-ui/remix-icons": "^1.2.0",
 		"@steeze-ui/svelte-icon": "^1.5.0",
 		"bits-ui": "^0.18.1",
+		"centrifuge": "^5.0.1",
 		"clsx": "^2.1.0",
 		"json-2-csv": "^5.0.1",
 		"lucide-svelte": "^0.330.0",

@@ -7,16 +7,17 @@ import {
 } from '@azure/msal-browser';
 import { initEventSource } from '../eventsource';
 import { getSession } from '$lib/session';
+import { initCentrifuge } from '$lib/centrifuge';
 
 const msalInstance = new PublicClientApplication(msalConfig);
 await msalInstance.initialize();
 
-const authResult: Writable<AuthenticationResult> = writable(null);
+const authResult: Writable<AuthenticationResult | null> = writable(null);
 
-export const refreshToken = async () => {
+export const refreshToken = async (): Promise<string> => {
 	try {
 		const tokenExpired =
-			!!get(authResult) && +get(authResult).idTokenClaims['exp'] * 1000 < Date.now();
+			!!get(authResult) && (+get(authResult).idTokenClaims['exp'] - 60) * 1000 < Date.now();
 		const refreshResult: AuthenticationResult = await msalInstance.acquireTokenSilent({
 			scopes: ['User.Read'],
 			forceRefresh: tokenExpired
@@ -28,11 +29,14 @@ export const refreshToken = async () => {
 		if (initEvSource) {
 			initEventSource();
 		}
+
+		return refreshResult.idToken
 	} catch (error) {
 		console.error('[Acquire Token Error]: ', error);
 		if (error instanceof InteractionRequiredAuthError) {
 			msalInstance.acquireTokenRedirect({ scopes: ['User.Read'] });
 		}
+		return ''
 	}
 };
 
@@ -54,6 +58,7 @@ export const authenticate = async () => {
 			msalInstance.setActiveAccount(accounts[0]);
 			await refreshToken();
 			await getSession();
+			initCentrifuge()
 		}
 	} catch (error) {
 		if (error instanceof InteractionRequiredAuthError) {

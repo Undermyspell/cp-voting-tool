@@ -1,8 +1,7 @@
-package mocks
+package jwks
 
 import (
 	"errors"
-	"voting/internal/jwks"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/mock"
@@ -12,7 +11,7 @@ type JwksMock struct {
 	mock.Mock
 }
 
-func NewJwks() jwks.KeyfuncProvider {
+func Mock() {
 	jwksMock := new(JwksMock)
 	jwksMock.On("GetKeyFunc").Return(func(token *jwt.Token) (interface{}, error) {
 		_, ok := token.Method.(*jwt.SigningMethodHMAC)
@@ -21,7 +20,7 @@ func NewJwks() jwks.KeyfuncProvider {
 		}
 		return []byte("my_test_secret"), nil
 	})
-	return jwksMock
+	jwksProvider = jwksMock
 }
 
 func (m *JwksMock) GetKeyFunc() func(token *jwt.Token) (interface{}, error) {
