@@ -1,15 +1,12 @@
 package main
 
 import (
-	"context"
-	"encoding/json"
 	"net/http"
 	"time"
 	"voting/internal/broker"
 	"voting/internal/env"
 	"voting/internal/jwks"
 	"voting/internal/middleware"
-	"voting/internal/models"
 	"voting/internal/models/roles"
 	"voting/internal/votingstorage"
 	questionService "voting/services/question"
@@ -34,10 +31,6 @@ var start = func(r *gin.Engine) {
 }
 var r *gin.Engine
 
-func handleLog(e centrifuge.LogEntry) {
-	logrus.Infof("%s: %v", e.Message, e.Fields)
-}
-
 // @title           CP Voting tool api
 // @version         1.0
 // @description     THE CP voting tool API in Go using Gin framework.
@@ -51,91 +44,9 @@ func handleLog(e centrifuge.LogEntry) {
 // @host      localhost:3333
 // @BasePath  /api/v1
 func main() {
-	node, _ := centrifuge.New(centrifuge.Config{
-		LogLevel:   centrifuge.LogLevelDebug,
-		LogHandler: handleLog,
-	})
-
-	node.OnConnecting(func(ctx context.Context, event centrifuge.ConnectEvent) (centrifuge.ConnectReply, error) {
-		_, err := models.GetUserContextFromToken(event.Token)
-
-		if err != nil {
-			return centrifuge.ConnectReply{}, centrifuge.ErrorUnauthorized
-		}
-
-		// Let's include user email into connect reply, so we can display username in chat.
-		// This is an optional step, actually.
-		_, ok := centrifuge.GetCredentials(ctx)
-		if !ok {
-			return centrifuge.ConnectReply{}, centrifuge.DisconnectServerError
-		}
-		return centrifuge.ConnectReply{}, nil
-	})
-
-	node.OnConnect(func(client *centrifuge.Client) {
-		transport := client.Transport()
-		logrus.Infof("🟩 user %s connected via %s.", client.UserID(), transport.Name())
-
-		client.OnRefresh(func(e centrifuge.RefreshEvent, cb centrifuge.RefreshCallback) {
-			logrus.Infof("user %s connection is going to expire, refreshing", client.UserID())
-			cb(centrifuge.RefreshReply{
-				ExpireAt: time.Now().Unix() + 10,
-			}, nil)
-		})
-
-		client.OnSubscribe(func(e centrifuge.SubscribeEvent, cb centrifuge.SubscribeCallback) {
-			logrus.Infof("🟨 user %s subscribes on %s", client.UserID(), e.Channel)
-			cb(centrifuge.SubscribeReply{
-				Options: centrifuge.SubscribeOptions{
-					EmitPresence: true,
-				},
-			}, nil)
-		})
-
-		client.OnUnsubscribe(func(e centrifuge.UnsubscribeEvent) {
-			logrus.Infof("🟦 user %s unsubscribed from %s", client.UserID(), e.Channel)
-		})
-
-		client.OnDisconnect(func(e centrifuge.DisconnectEvent) {
-			logrus.Infof("🟥 user %s disconnected, disconnect: %s", client.UserID(), e.Disconnect)
-		})
-	})
-
-	// We also start a separate goroutine for centrifuge itself, since we
-	// still need to run gin web server.
-	go func() {
-		if err := node.Run(); err != nil {
-			logrus.Fatal(err)
-		}
-		ticker := time.NewTicker(5 * time.Second)
-		defer ticker.Stop()
-		for {
-			<-ticker.C
-			logrus.Info("Logging to stdout")
-
-			q := models.Question{
-				Id:          "123",
-				Text:        "Centrifugo!",
-				Votes:       23,
-				Answered:    false,
-				Voted:       false,
-				Anonymous:   true,
-				CreatorName: "John Doe",
-				CreatorHash: "ysd1123a",
-			}
-
-			data, err := json.Marshal(q)
-			if err != nil {
-				logrus.Error("Error marshaling:", err)
-				return
-			}
-
-			node.Publish("voting", data)
-		}
-	}()
-
 	env.Init()
 	jwks.Init()
+	centrifugeBroker := broker.NewCentrifuge()
 
 	r = gin.Default()
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
@@ -148,7 +59,7 @@ func main() {
 		votingStorage = votingstorage.NewRedis()
 	}
 
-	broker := broker.New()
+	broker := broker.NewInternal()
 	questionService := initQuestionService(broker, votingStorage)
 	userService := userService.NewTestUser()
 
@@ -165,7 +76,7 @@ func main() {
 
 	v1 := r.Group("/api/v1")
 	{
-		v1.GET("/connection/websocket", gin.WrapH(middleware.CentrifugeAnonymousAuth(centrifuge.NewWebsocketHandler(node, centrifuge.WebsocketConfig{
+		v1.GET("/connection/websocket", gin.WrapH(middleware.CentrifugeAnonymousAuth(centrifuge.NewWebsocketHandler(centrifugeBroker, centrifuge.WebsocketConfig{
 			CheckOrigin: func(r *http.Request) bool {
 				originHeader := r.Header.Get("Origin")
 				if originHeader == "" {
@@ -174,7 +85,7 @@ func main() {
 				return originHeader == "http://localhost:5173"
 			},
 		}))))
-		v1.GET("/events", middleware.GinRequireAuth(), broker.SseStream)
+		// v1.GET("/events", middleware.GinRequireAuth(), broker.SseStream)
 		q := v1.Group("/question", middleware.GinRequireAuth())
 		q.PUT("/answer/:id", middleware.RequireRole(roles.SessionAdmin, roles.Admin), questionService.Answer)
 		q.POST("/new", questionService.Add)

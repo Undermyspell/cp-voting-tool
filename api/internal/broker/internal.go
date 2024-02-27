@@ -11,38 +11,38 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type UserBoundSseChannel struct {
+type UserBoundChannel struct {
 	Channel chan events.Event
 	User    models.UserContext
 }
 
 type ChannelBroker struct {
 	NotifierAll        chan events.Event
-	NotifierUser       chan events.UserBoundSseEvent
-	NotifierAllButUser chan events.UserBoundSseEvent
-	NewClients         chan UserBoundSseChannel
-	ClosingClients     chan UserBoundSseChannel
-	Clients            map[UserBoundSseChannel]bool
+	NotifierUser       chan events.UserBoundEvent
+	NotifierAllButUser chan events.UserBoundEvent
+	NewClients         chan UserBoundChannel
+	ClosingClients     chan UserBoundChannel
+	Clients            map[UserBoundChannel]bool
 }
 
 func (broker *ChannelBroker) SseStream(c *gin.Context) {
 	user, _ := c.Get(models.User)
 	userContext := user.(*models.UserContext)
-	userBoundSseChannel := UserBoundSseChannel{
+	userBoundChannel := UserBoundChannel{
 		Channel: make(chan events.Event),
 		User:    *userContext,
 	}
 
 	defer func() {
-		broker.ClosingClients <- userBoundSseChannel
-		close(userBoundSseChannel.Channel)
+		broker.ClosingClients <- userBoundChannel
+		close(userBoundChannel.Channel)
 	}()
 
-	broker.NewClients <- userBoundSseChannel
+	broker.NewClients <- userBoundChannel
 
 	c.Stream(func(w io.Writer) bool {
 		select {
-		case event := <-userBoundSseChannel.Channel:
+		case event := <-userBoundChannel.Channel:
 			c.SSEvent(string(event.EventType), event.Payload)
 		case <-c.Request.Context().Done():
 			return false
@@ -56,14 +56,14 @@ func (broker *ChannelBroker) Listen() {
 		select {
 		case s := <-broker.NewClients:
 			broker.Clients[s] = true
-			event := broker.createUserConnectionSseEvent(events.USER_CONNECTED)
+			event := broker.createUserConnectionEvent(events.USER_CONNECTED)
 			for clientMessageChan := range broker.Clients {
 				clientMessageChan.Channel <- event
 			}
 			logrus.Infof("🟢 Client added. %d registered clients", len(broker.Clients))
 		case s := <-broker.ClosingClients:
 			delete(broker.Clients, s)
-			event := broker.createUserConnectionSseEvent(events.USER_DISCONNECTED)
+			event := broker.createUserConnectionEvent(events.USER_DISCONNECTED)
 			for clientMessageChan := range broker.Clients {
 				clientMessageChan.Channel <- event
 			}
@@ -93,14 +93,14 @@ func (broker *ChannelBroker) NotifyAll(event events.Event) {
 }
 
 func (broker *ChannelBroker) NotifyUser(event events.Event, user models.UserContext) {
-	broker.NotifierUser <- events.UserBoundSseEvent{
+	broker.NotifierUser <- events.UserBoundEvent{
 		Event: event,
 		User:  user,
 	}
 }
 
 func (broker *ChannelBroker) NotifyAllButUser(event events.Event, user models.UserContext) {
-	broker.NotifierAllButUser <- events.UserBoundSseEvent{
+	broker.NotifierAllButUser <- events.UserBoundEvent{
 		Event: event,
 		User:  user,
 	}
@@ -130,7 +130,7 @@ func (broker *ChannelBroker) SendHeartBeat() {
 	}
 }
 
-func (broker *ChannelBroker) createUserConnectionSseEvent(eventType events.EventType) events.Event {
+func (broker *ChannelBroker) createUserConnectionEvent(eventType events.EventType) events.Event {
 	event := events.UserConnected{
 		UserCount: broker.DistinctClientsCount(),
 	}
