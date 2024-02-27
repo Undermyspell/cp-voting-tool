@@ -57,7 +57,7 @@ func main() {
 	})
 
 	node.OnConnecting(func(ctx context.Context, event centrifuge.ConnectEvent) (centrifuge.ConnectReply, error) {
-		_, err := middleware.GetUserContextFromToken(event.Token)
+		_, err := models.GetUserContextFromToken(event.Token)
 
 		if err != nil {
 			return centrifuge.ConnectReply{}, centrifuge.ErrorUnauthorized
