@@ -1,9 +1,11 @@
-package broker
+package centrifugesvr
 
 import (
 	"context"
 	"encoding/json"
 	"time"
+	"voting/internal/broker"
+	"voting/internal/events"
 	"voting/internal/models"
 
 	"github.com/centrifugal/centrifuge"
@@ -16,7 +18,7 @@ func handleLog(e centrifuge.LogEntry) {
 
 var node *centrifuge.Node
 
-func initHandlers() {
+func initHandlers(internalBroker broker.Broker) {
 	node.OnConnecting(func(ctx context.Context, event centrifuge.ConnectEvent) (centrifuge.ConnectReply, error) {
 		userContext, err := models.GetUserContextFromToken(event.Token)
 
@@ -51,10 +53,25 @@ func initHandlers() {
 
 		logrus.Infof("🟩 user %s with usercontext %s connected via %s.", client.UserID(), userContext, transport.Name())
 
-		// userBoundChannel := UserBoundChannel{
-		// 	Channel: make(chan events.Event),
-		// 	User:    *userContext,
-		// }
+		userBoundChannel := broker.UserBoundChannel{
+			Channel: make(chan events.Event),
+			User:    userContext,
+		}
+
+		internalBroker.AddClient(userBoundChannel)
+
+		go func() {
+			for {
+				event := <-userBoundChannel.Channel
+				evArr, err := json.Marshal(event)
+
+				if err != nil {
+					logrus.Warn(err)
+				} else {
+					client.Send(evArr)
+				}
+			}
+		}()
 
 		client.OnRefresh(func(e centrifuge.RefreshEvent, cb centrifuge.RefreshCallback) {
 			logrus.Infof("user %s connection is going to expire, refreshing", client.UserID())
@@ -77,6 +94,7 @@ func initHandlers() {
 		})
 
 		client.OnDisconnect(func(e centrifuge.DisconnectEvent) {
+			internalBroker.RemoveClient(userBoundChannel)
 			logrus.Infof("🟥 user %s disconnected, disconnect: %s", client.UserID(), e.Disconnect)
 		})
 	})

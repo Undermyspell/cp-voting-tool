@@ -15,4 +15,6 @@ type Broker interface {
 	NotifyAllButUser(event events.Event, user models.UserContext)
 	DistinctClientsCount() int
 	SendHeartBeat()
+	AddClient(client UserBoundChannel)
+	RemoveClient(client UserBoundChannel)
 }

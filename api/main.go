@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 	"voting/internal/broker"
+	"voting/internal/centrifugesvr"
 	"voting/internal/env"
 	"voting/internal/jwks"
 	"voting/internal/middleware"
@@ -46,7 +47,9 @@ var r *gin.Engine
 func main() {
 	env.Init()
 	jwks.Init()
-	centrifugeBroker := broker.NewCentrifuge()
+
+	internalBroker := broker.New()
+	centrifugeBroker := centrifugesvr.New(internalBroker)
 
 	r = gin.Default()
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
@@ -59,8 +62,7 @@ func main() {
 		votingStorage = votingstorage.NewRedis()
 	}
 
-	broker := broker.NewInternal()
-	questionService := initQuestionService(broker, votingStorage)
+	questionService := initQuestionService(internalBroker, votingStorage)
 	userService := userService.NewTestUser()
 
 	config := cors.Config{

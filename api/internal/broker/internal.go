@@ -16,7 +16,7 @@ type UserBoundChannel struct {
 	User    models.UserContext
 }
 
-type ChannelBroker struct {
+type InternalBroker struct {
 	NotifierAll        chan events.Event
 	NotifierUser       chan events.UserBoundEvent
 	NotifierAllButUser chan events.UserBoundEvent
@@ -25,7 +25,7 @@ type ChannelBroker struct {
 	Clients            map[UserBoundChannel]bool
 }
 
-func (broker *ChannelBroker) SseStream(c *gin.Context) {
+func (broker *InternalBroker) SseStream(c *gin.Context) {
 	user, _ := c.Get(models.User)
 	userContext := user.(*models.UserContext)
 	userBoundChannel := UserBoundChannel{
@@ -51,7 +51,7 @@ func (broker *ChannelBroker) SseStream(c *gin.Context) {
 	})
 }
 
-func (broker *ChannelBroker) Listen() {
+func (broker *InternalBroker) Listen() {
 	for {
 		select {
 		case s := <-broker.NewClients:
@@ -88,25 +88,25 @@ func (broker *ChannelBroker) Listen() {
 	}
 }
 
-func (broker *ChannelBroker) NotifyAll(event events.Event) {
+func (broker *InternalBroker) NotifyAll(event events.Event) {
 	broker.NotifierAll <- event
 }
 
-func (broker *ChannelBroker) NotifyUser(event events.Event, user models.UserContext) {
+func (broker *InternalBroker) NotifyUser(event events.Event, user models.UserContext) {
 	broker.NotifierUser <- events.UserBoundEvent{
 		Event: event,
 		User:  user,
 	}
 }
 
-func (broker *ChannelBroker) NotifyAllButUser(event events.Event, user models.UserContext) {
+func (broker *InternalBroker) NotifyAllButUser(event events.Event, user models.UserContext) {
 	broker.NotifierAllButUser <- events.UserBoundEvent{
 		Event: event,
 		User:  user,
 	}
 }
 
-func (broker *ChannelBroker) DistinctClientsCount() int {
+func (broker *InternalBroker) DistinctClientsCount() int {
 	distinctClients := make(map[models.UserContext]bool)
 	for clientMessageChan := range broker.Clients {
 		if _, ok := distinctClients[clientMessageChan.User]; !ok {
@@ -117,7 +117,7 @@ func (broker *ChannelBroker) DistinctClientsCount() int {
 	return len(distinctClients)
 }
 
-func (broker *ChannelBroker) SendHeartBeat() {
+func (broker *InternalBroker) SendHeartBeat() {
 	event := events.Event{
 		EventType: events.HEART_BEAT,
 		Payload:   "",
@@ -130,7 +130,15 @@ func (broker *ChannelBroker) SendHeartBeat() {
 	}
 }
 
-func (broker *ChannelBroker) createUserConnectionEvent(eventType events.EventType) events.Event {
+func (broker *InternalBroker) AddClient(client UserBoundChannel) {
+	broker.NewClients <- client
+}
+
+func (broker *InternalBroker) RemoveClient(client UserBoundChannel) {
+	broker.ClosingClients <- client
+}
+
+func (broker *InternalBroker) createUserConnectionEvent(eventType events.EventType) events.Event {
 	event := events.UserConnected{
 		UserCount: broker.DistinctClientsCount(),
 	}
