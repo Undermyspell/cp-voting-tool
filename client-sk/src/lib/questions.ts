@@ -1,8 +1,8 @@
 import { derived, get, writable, type Writable } from 'svelte/store';
 import type { Question } from './models/question';
 import { deleteRequest, getRequest, postRequest, putRequest } from './api';
-import { eventSource } from './eventsource';
-import { activeSessison } from './session';
+// import { eventSource } from './eventsource';
+import { activeSessison, userOnline } from './session';
 import { centrifuge } from './centrifuge';
 import type { MessageContext } from 'centrifuge';
 import type { VotingEvent } from './models/voting-event';
@@ -29,8 +29,36 @@ centrifuge.subscribe((centrifuge) => {
 			console.log("Received event: ", msg)
 			const event: VotingEvent = msg.data as VotingEvent
 
+			const data = JSON.parse(event.Payload)
+
 			switch(event.EventType){
 				case "start_session":
+					console.log('start listener');
+					activeSessison.set(true);
+					break
+				case "stop_session":
+					activeSessison.set(false);
+					clearQuestions();
+					break
+				case "user_connected":
+				case "user_disconnected":
+					userOnline.set(data.UserCount);
+					break
+				case "new_question":
+					questionAdded(data);
+					break
+				case "upvote_question":
+				case "undo_upvote_question":
+					updateVote(data);
+					break
+				case "update_question":
+					questionEdited(data);
+					break
+				case "delete_question":
+					questionDeleted(data);
+					break
+				case "answer_question":
+					questionAnswered(data);
 					break
 			}
 			
