@@ -1,14 +1,18 @@
 name: CI
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+    tags: ['*']
   pull_request:
-    branches:
-      - main
+    branches: [main]
     types: [assigned, opened, synchronize, reopened] 
   workflow_dispatch:
-  
+    inputs:
+      build_tag:
+          description: 'Build tag'
+          required: false
+          type: string
+          default: null
 jobs:   
   build_api:
     name: Build Go Api
@@ -32,7 +36,7 @@ jobs:
             context: ./api
             push: ${{ github.event_name != 'pull_request' }}
             platforms: linux/amd64
-            tags: ${{ secrets.ACR_SERVER }}/cpvt-api:${{ steps.short-sha.outputs.sha }}
+            tags: ${{ secrets.ACR_SERVER }}/cpvt-api:${{ github.event_name == 'workflow_dispatch' && inputs.build_tag || github.ref_type == 'tag' && github.ref_name || steps.short-sha.outputs.sha }}
   build_web:
     name: Build Svelte Web App
     runs-on: ubuntu-latest
@@ -56,9 +60,9 @@ jobs:
             push: ${{ github.event_name != 'pull_request' }}
             platforms: linux/amd64
             build-args: |
-              version_info=${{ env.BUILDTAG }}
+              version_info=${{ github.event_name == 'workflow_dispatch' && inputs.build_tag || github.ref_type == 'tag' && github.ref_name || steps.short-sha.outputs.sha }}
               PUBLIC_API_BASE_URL=${{ vars.PUBLIC_API_BASE_URL }}
-            tags: ${{ secrets.ACR_SERVER }}/cpvt-web:${{ steps.short-sha.outputs.sha }}
+            tags: ${{ secrets.ACR_SERVER }}/cpvt-web:${{ github.event_name == 'workflow_dispatch' && inputs.build_tag || github.ref_type == 'tag' && github.ref_name || steps.short-sha.outputs.sha }}
   test_inmemory:
     name: Run Tests - Go Api - In Menory
     runs-on: ubuntu-latest
