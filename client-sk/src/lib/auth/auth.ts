@@ -5,7 +5,7 @@ import {
 	InteractionRequiredAuthError,
 	type AuthenticationResult
 } from '@azure/msal-browser';
-import { initEventSource } from '../eventsource';
+// import { initEventSource } from '../eventsource';
 import { getSession } from '$lib/session';
 import { initCentrifuge } from '$lib/centrifuge';
 

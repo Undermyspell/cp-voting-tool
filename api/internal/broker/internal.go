@@ -2,12 +2,10 @@ package broker
 
 import (
 	"encoding/json"
-	"io"
 	"time"
 	"voting/internal/events"
 	"voting/internal/models"
 
-	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
 
@@ -23,32 +21,6 @@ type InternalBroker struct {
 	NewClients         chan UserBoundChannel
 	ClosingClients     chan UserBoundChannel
 	Clients            map[UserBoundChannel]bool
-}
-
-func (broker *InternalBroker) SseStream(c *gin.Context) {
-	user, _ := c.Get(models.User)
-	userContext := user.(*models.UserContext)
-	userBoundChannel := UserBoundChannel{
-		Channel: make(chan events.Event),
-		User:    *userContext,
-	}
-
-	defer func() {
-		broker.ClosingClients <- userBoundChannel
-		close(userBoundChannel.Channel)
-	}()
-
-	broker.NewClients <- userBoundChannel
-
-	c.Stream(func(w io.Writer) bool {
-		select {
-		case event := <-userBoundChannel.Channel:
-			c.SSEvent(string(event.EventType), event.Payload)
-		case <-c.Request.Context().Done():
-			return false
-		}
-		return true
-	})
 }
 
 func (broker *InternalBroker) Listen() {

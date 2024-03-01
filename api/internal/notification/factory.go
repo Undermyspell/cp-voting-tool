@@ -1,4 +1,4 @@
-package centrifugesvr
+package notification
 
 import (
 	"voting/internal/broker"
@@ -7,7 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func New(broker broker.Broker) *centrifuge.Node {
+func NewCentrifuge(broker broker.Broker) *centrifuge.Node {
 	node, _ = centrifuge.New(centrifuge.Config{
 		LogLevel:   centrifuge.LogLevelDebug,
 		LogHandler: handleLog,

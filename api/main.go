@@ -4,11 +4,11 @@ import (
 	"net/http"
 	"time"
 	"voting/internal/broker"
-	"voting/internal/centrifugesvr"
 	"voting/internal/env"
 	"voting/internal/jwks"
 	"voting/internal/middleware"
 	"voting/internal/models/roles"
+	"voting/internal/notification"
 	"voting/internal/votingstorage"
 	questionService "voting/services/question"
 	userService "voting/services/user"
@@ -49,7 +49,7 @@ func main() {
 	jwks.Init()
 
 	internalBroker := broker.New()
-	centrifugeBroker := centrifugesvr.New(internalBroker)
+	centrifugeBroker := notification.NewCentrifuge(internalBroker)
 
 	r = gin.Default()
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
@@ -87,7 +87,7 @@ func main() {
 				return originHeader == "http://localhost:5173"
 			},
 		}))))
-		// v1.GET("/events", middleware.GinRequireAuth(), broker.SseStream)
+		v1.GET("/events", middleware.GinRequireAuth(), notification.SseStream(internalBroker))
 		q := v1.Group("/question", middleware.GinRequireAuth())
 		q.PUT("/answer/:id", middleware.RequireRole(roles.SessionAdmin, roles.Admin), questionService.Answer)
 		q.POST("/new", questionService.Add)

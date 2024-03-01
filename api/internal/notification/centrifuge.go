@@ -1,4 +1,4 @@
-package centrifugesvr
+package notification
 
 import (
 	"context"
@@ -51,7 +51,7 @@ func initHandlers(internalBroker broker.Broker) {
 		var userContext models.UserContext
 		json.Unmarshal(client.Info(), &userContext)
 
-		logrus.Infof("🟩 user %s with usercontext %s connected via %s.", client.UserID(), userContext, transport.Name())
+		logrus.Infof("🟩 user %s|%s connected via %s.", client.UserID(), userContext.Role, transport.Name())
 
 		userBoundChannel := broker.UserBoundChannel{
 			Channel: make(chan events.Event),
@@ -95,8 +95,7 @@ func initHandlers(internalBroker broker.Broker) {
 
 		client.OnDisconnect(func(e centrifuge.DisconnectEvent) {
 			internalBroker.RemoveClient(userBoundChannel)
-			logrus.Infof("🟥 user %s disconnected, disconnect: %s", client.UserID(), e.Disconnect)
+			logrus.Infof("🟥 user %s|%s disconnected, disconnect: %s", client.UserID(), userContext.Role, e.Disconnect)
 		})
 	})
-
 }

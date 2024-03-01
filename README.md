@@ -11,6 +11,7 @@ This is the repository of the conplement voting tool used in employee meetings
 - [Redis-Cloud](https://app.redislabs.com/#/)
 - [Go-ReJSON](https://github.com/nitishm/go-rejson)
 - [Testify](https://github.com/stretchr/testify)
+- [Centrifuge](https://github.com/centrifugal/centrifuge)
 
 ## Get Started
 
