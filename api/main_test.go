@@ -8,16 +8,18 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"slices"
 	"sync"
 	"testing"
 	"time"
 	"voting/dtos"
 	"voting/internal/mocks"
 
+	"github.com/centrifugal/centrifuge-go"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"golang.org/x/exp/slices"
 )
 
 type QuestionApiTestSuite struct {
@@ -28,14 +30,22 @@ type QuestionApiTestSuite struct {
 	tokenUser_Bar          string
 	tokenUser_Admin        string
 	tokenUser_SessionAdmin string
+	centrifugeClientFoo    *centrifuge.Client
+	centrifugeClientBar    *centrifuge.Client
 }
 
 func (suite *QuestionApiTestSuite) SetupSuite() {
 	os.Setenv("USE_MOCK_JWKS", "true")
 	os.Setenv("GENERATE_REDIS_STORAGE_ROOT_KEY", "true")
 	os.Setenv("JWKS_URL", "https://test/discovery/v2.0/keys")
+	os.Setenv("VOTING_STORAGE_IN_MEMORY", "true")
 
-	start = func(r *gin.Engine) {}
+	start = func(r *gin.Engine) {
+		go func() {
+			r.Run(":3333")
+
+		}()
+	}
 
 	main()
 
@@ -45,6 +55,12 @@ func (suite *QuestionApiTestSuite) SetupSuite() {
 	suite.tokenUser_Bar = mocks.GetUserToken("Bar", "Bar_Tester")
 	suite.tokenUser_Admin = mocks.GetAdminUserToken("Admin", "Admin_Tester")
 	suite.tokenUser_SessionAdmin = mocks.GetSessionAdminUserToken("SessionAdmin", "Session_Admin_Tester")
+
+	initCentrifuge(suite)
+
+	suite.centrifugeClientFoo.OnMessage(func(me centrifuge.MessageEvent) {
+		logrus.Infof("HOLA %s", me)
+	})
 }
 
 func (suite *QuestionApiTestSuite) SetupTest() {
@@ -53,6 +69,7 @@ func (suite *QuestionApiTestSuite) SetupTest() {
 
 func (suite *QuestionApiTestSuite) TearDownSuite() {
 	stopSession(suite)
+	suite.centrifugeClientFoo.Close()
 }
 
 func (suite *QuestionApiTestSuite) TestApi_UNAUTHORIZED_401() {
@@ -689,4 +706,32 @@ func getSession(suite *QuestionApiTestSuite, w *httptest.ResponseRecorder, token
 	json.Unmarshal(body, &questionList)
 
 	return questionList
+}
+
+func initCentrifuge(suite *QuestionApiTestSuite) {
+	maxRetries := 3
+	for i := 0; i < maxRetries; i++ {
+		wsURL := "ws://localhost:3333/api/v1/connection/websocket"
+		cFoo := centrifuge.NewJsonClient(wsURL, centrifuge.Config{
+			Token: suite.tokenUser_Foo,
+		})
+		cBar := centrifuge.NewJsonClient(wsURL, centrifuge.Config{
+			Token: suite.tokenUser_Bar,
+		})
+
+		errFoo := cFoo.Connect()
+		errBar := cBar.Connect()
+		if errFoo == nil && errBar == nil {
+			suite.centrifugeClientFoo = cFoo
+			suite.centrifugeClientBar = cBar
+			break
+		}
+		logrus.Warn(errFoo)
+		logrus.Warn(errBar)
+
+		if i == maxRetries-1 {
+			logrus.Fatal("Max retries reached. Exiting.")
+		}
+		time.Sleep(time.Second * 2)
+	}
 }
