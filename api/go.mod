@@ -6,7 +6,7 @@ require (
 	github.com/MicahParks/keyfunc/v3 v3.2.5
 	github.com/gin-contrib/cors v1.5.0
 	github.com/gin-gonic/gin v1.9.1
-	github.com/golang-jwt/jwt/v5 v5.2.0
+	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/nitishm/go-rejson/v4 v4.2.0
 	github.com/oklog/ulid/v2 v2.1.0
 	github.com/redis/go-redis/v9 v9.4.0
