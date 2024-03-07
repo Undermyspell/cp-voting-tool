@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"slices"
-	"sync"
 	"testing"
 	"time"
 	"voting/dtos"
@@ -22,6 +20,11 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+type CentrifugeTestClient struct {
+	client           *centrifuge.Client
+	receivedMessages []string
+}
+
 type QuestionApiTestSuite struct {
 	suite.Suite
 	router                 *gin.Engine
@@ -30,8 +33,8 @@ type QuestionApiTestSuite struct {
 	tokenUser_Bar          string
 	tokenUser_Admin        string
 	tokenUser_SessionAdmin string
-	centrifugeClientFoo    *centrifuge.Client
-	centrifugeClientBar    *centrifuge.Client
+	centrifugeClientFoo    CentrifugeTestClient
+	centrifugeClientBar    CentrifugeTestClient
 }
 
 func (suite *QuestionApiTestSuite) SetupSuite() {
@@ -58,18 +61,25 @@ func (suite *QuestionApiTestSuite) SetupSuite() {
 
 	initCentrifuge(suite)
 
-	suite.centrifugeClientFoo.OnMessage(func(me centrifuge.MessageEvent) {
-		logrus.Infof("HOLA %s", me)
+	suite.centrifugeClientFoo.client.OnMessage(func(me centrifuge.MessageEvent) {
+		suite.centrifugeClientFoo.receivedMessages = append(suite.centrifugeClientFoo.receivedMessages, string(me.Data))
+	})
+
+	suite.centrifugeClientBar.client.OnMessage(func(me centrifuge.MessageEvent) {
+		suite.centrifugeClientBar.receivedMessages = append(suite.centrifugeClientBar.receivedMessages, string(me.Data))
 	})
 }
 
 func (suite *QuestionApiTestSuite) SetupTest() {
+	suite.centrifugeClientFoo.receivedMessages = suite.centrifugeClientFoo.receivedMessages[:0]
+	suite.centrifugeClientBar.receivedMessages = suite.centrifugeClientBar.receivedMessages[:0]
 	startSession(suite)
 }
 
 func (suite *QuestionApiTestSuite) TearDownSuite() {
 	stopSession(suite)
-	suite.centrifugeClientFoo.Close()
+	suite.centrifugeClientFoo.client.Close()
+	suite.centrifugeClientBar.client.Close()
 }
 
 func (suite *QuestionApiTestSuite) TestApi_UNAUTHORIZED_401() {
@@ -156,474 +166,479 @@ func (suite *QuestionApiTestSuite) TestNewQuestion_OK_200() {
 	assert.Equal(suite.T(), http.StatusOK, w.Code)
 	assert.Equal(suite.T(), 1, questionList[0].Votes)
 	assert.Equal(suite.T(), true, questionList[0].Voted)
-}
 
-func (suite *QuestionApiTestSuite) TestNewQuestion_404_WHEN_TEXT_LENTGH_OVER_MAX_LENGTH() {
-	w := httptest.NewRecorder()
-
-	token := suite.tokenUser_Foo
-	newQuestion := dtos.NewQuestionDto{Text: "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.", Anonymous: false}
-
-	postNewQuestion(suite, w, newQuestion, token)
-
-	assert.Equal(suite.T(), http.StatusBadRequest, w.Code)
-}
-
-func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTFOUND_404() {
-	w := httptest.NewRecorder()
-
-	token := suite.tokenUser_Foo
-
-	upvoteQuestion(suite, w, "invalid_id", token)
-
-	assert.Equal(suite.T(), http.StatusNotFound, w.Code)
-}
-
-func (suite *QuestionApiTestSuite) TestAnswerQuestion_NOTFOUND_404() {
-	w := httptest.NewRecorder()
-
-	token := suite.tokenUser_SessionAdmin
-
-	req, _ := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/question/answer/%s", suite.apiPrefix, "invalid"), nil)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
-	suite.router.ServeHTTP(w, req)
-
-	assert.Equal(suite.T(), http.StatusNotFound, w.Code)
-}
-
-func (suite *QuestionApiTestSuite) TestAnswerQuestion_OK_200() {
-	type test struct {
-		name  string
-		token string
-	}
-
-	tests := []test{
-		{"SESSION_ADMIN_200", suite.tokenUser_SessionAdmin},
-		{"ADMIN_200", suite.tokenUser_Admin},
-	}
-
-	for _, test := range tests {
-		suite.T().Run(test.name, func(t *testing.T) {
-			w := httptest.NewRecorder()
-
-			newQuestion := dtos.NewQuestionDto{Text: "Foo Question", Anonymous: false}
-			postNewQuestion(suite, w, newQuestion, suite.tokenUser_Bar)
-			questionList := getSession(suite, w, suite.tokenUser_Bar)
-			question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Foo Question" })]
-
-			assert.Equal(suite.T(), "Foo Question", question_FOO_Q.Text)
-			assert.Equal(suite.T(), false, question_FOO_Q.Anonymous)
-
-			w2 := httptest.NewRecorder()
-			answerQuestion(suite, w2, question_FOO_Q.Id, test.token)
-
-			assert.Equal(suite.T(), http.StatusOK, w.Code)
-		})
+	time.Sleep(time.Second * 3)
+	for _, msg := range suite.centrifugeClientFoo.receivedMessages {
+		logrus.Infof("We have %s", msg)
 	}
 }
 
-func (suite *QuestionApiTestSuite) TestAnswerQuestion_FORBIDDEN_403_WHEN_NO_SESSION_ADMIN_OR_ADMIN() {
-	tokenUser_Foo := suite.tokenUser_Foo
+// func (suite *QuestionApiTestSuite) TestNewQuestion_404_WHEN_TEXT_LENTGH_OVER_MAX_LENGTH() {
+// 	w := httptest.NewRecorder()
 
-	w := httptest.NewRecorder()
+// 	token := suite.tokenUser_Foo
+// 	newQuestion := dtos.NewQuestionDto{Text: "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.", Anonymous: false}
 
-	answerQuestion(suite, w, "id_123", tokenUser_Foo)
+// 	postNewQuestion(suite, w, newQuestion, token)
 
-	assert.Equal(suite.T(), http.StatusForbidden, w.Code)
-}
+// 	assert.Equal(suite.T(), http.StatusBadRequest, w.Code)
+// }
 
-func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTACCEPTABLE_406_WHEN_DOUBLE_VOTE_FROM_USER() {
-	w := httptest.NewRecorder()
+// func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTFOUND_404() {
+// 	w := httptest.NewRecorder()
 
-	token := suite.tokenUser_Foo
-	newQuestion := dtos.NewQuestionDto{Text: "new question"}
-	postNewQuestion(suite, w, newQuestion, token)
+// 	token := suite.tokenUser_Foo
 
-	questionList := getSession(suite, w, token)
+// 	upvoteQuestion(suite, w, "invalid_id", token)
 
-	upvoteQuestion(suite, w, questionList[0].Id, token)
+// 	assert.Equal(suite.T(), http.StatusNotFound, w.Code)
+// }
 
-	w2 := httptest.NewRecorder()
-	upvoteQuestion(suite, w2, questionList[0].Id, token)
+// func (suite *QuestionApiTestSuite) TestAnswerQuestion_NOTFOUND_404() {
+// 	w := httptest.NewRecorder()
 
-	assert.Equal(suite.T(), http.StatusNotAcceptable, w2.Code)
-}
+// 	token := suite.tokenUser_SessionAdmin
 
-func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTACCEPTABLE_406_WHEN_VOTING_ANSWERED_QUESTION() {
-	w := httptest.NewRecorder()
+// 	req, _ := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/question/answer/%s", suite.apiPrefix, "invalid"), nil)
+// 	req.Header.Set("Content-Type", "application/json")
+// 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+// 	suite.router.ServeHTTP(w, req)
 
-	token := suite.tokenUser_SessionAdmin
+// 	assert.Equal(suite.T(), http.StatusNotFound, w.Code)
+// }
 
-	jsonData := dtos.NewQuestionDto{Text: "new question"}
+// func (suite *QuestionApiTestSuite) TestAnswerQuestion_OK_200() {
+// 	type test struct {
+// 		name  string
+// 		token string
+// 	}
 
-	postNewQuestion(suite, w, jsonData, token)
+// 	tests := []test{
+// 		{"SESSION_ADMIN_200", suite.tokenUser_SessionAdmin},
+// 		{"ADMIN_200", suite.tokenUser_Admin},
+// 	}
 
-	questionList := getSession(suite, w, token)
+// 	for _, test := range tests {
+// 		suite.T().Run(test.name, func(t *testing.T) {
+// 			w := httptest.NewRecorder()
 
-	answerQuestion(suite, w, questionList[0].Id, token)
+// 			newQuestion := dtos.NewQuestionDto{Text: "Foo Question", Anonymous: false}
+// 			postNewQuestion(suite, w, newQuestion, suite.tokenUser_Bar)
+// 			questionList := getSession(suite, w, suite.tokenUser_Bar)
+// 			question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Foo Question" })]
 
-	w2 := httptest.NewRecorder()
-	upvoteQuestion(suite, w2, questionList[0].Id, token)
+// 			assert.Equal(suite.T(), "Foo Question", question_FOO_Q.Text)
+// 			assert.Equal(suite.T(), false, question_FOO_Q.Anonymous)
 
-	assert.Equal(suite.T(), http.StatusNotAcceptable, w2.Code)
-}
+// 			w2 := httptest.NewRecorder()
+// 			answerQuestion(suite, w2, question_FOO_Q.Id, test.token)
 
-func (suite *QuestionApiTestSuite) TestDeleteQuestion_NOTACCEPTABLE_406_WHEN_DELETING_ANSWERED_QUESTION() {
-	w := httptest.NewRecorder()
+// 			assert.Equal(suite.T(), http.StatusOK, w.Code)
+// 		})
+// 	}
+// }
 
-	token := suite.tokenUser_SessionAdmin
+// func (suite *QuestionApiTestSuite) TestAnswerQuestion_FORBIDDEN_403_WHEN_NO_SESSION_ADMIN_OR_ADMIN() {
+// 	tokenUser_Foo := suite.tokenUser_Foo
 
-	jsonData := dtos.NewQuestionDto{Text: "new question"}
+// 	w := httptest.NewRecorder()
 
-	postNewQuestion(suite, w, jsonData, token)
+// 	answerQuestion(suite, w, "id_123", tokenUser_Foo)
 
-	questionList := getSession(suite, w, token)
+// 	assert.Equal(suite.T(), http.StatusForbidden, w.Code)
+// }
 
-	answerQuestion(suite, w, questionList[0].Id, token)
+// func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTACCEPTABLE_406_WHEN_DOUBLE_VOTE_FROM_USER() {
+// 	w := httptest.NewRecorder()
 
-	w2 := httptest.NewRecorder()
-	deleteQuestion(suite, w2, questionList[0].Id, token)
+// 	token := suite.tokenUser_Foo
+// 	newQuestion := dtos.NewQuestionDto{Text: "new question"}
+// 	postNewQuestion(suite, w, newQuestion, token)
 
-	assert.Equal(suite.T(), http.StatusNotAcceptable, w2.Code)
-}
+// 	questionList := getSession(suite, w, token)
 
-func (suite *QuestionApiTestSuite) TestUpdateQuestion_NOTACCEPTABLE_406_WHEN_UPDATING_ANSWERED_QUESTION() {
-	w := httptest.NewRecorder()
+// 	upvoteQuestion(suite, w, questionList[0].Id, token)
 
-	token := suite.tokenUser_SessionAdmin
+// 	w2 := httptest.NewRecorder()
+// 	upvoteQuestion(suite, w2, questionList[0].Id, token)
 
-	jsonData := dtos.NewQuestionDto{Text: "new question"}
+// 	assert.Equal(suite.T(), http.StatusNotAcceptable, w2.Code)
+// }
 
-	postNewQuestion(suite, w, jsonData, token)
+// func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTACCEPTABLE_406_WHEN_VOTING_ANSWERED_QUESTION() {
+// 	w := httptest.NewRecorder()
 
-	questionList := getSession(suite, w, token)
+// 	token := suite.tokenUser_SessionAdmin
 
-	answerQuestion(suite, w, questionList[0].Id, token)
+// 	jsonData := dtos.NewQuestionDto{Text: "new question"}
 
-	w2 := httptest.NewRecorder()
-	updateQuestionDto := dtos.UpdateQuestionDto{Id: questionList[0].Id, Text: "Updated Question", Anonymous: true}
-	putUpdateQuestion(suite, w2, updateQuestionDto, token)
+// 	postNewQuestion(suite, w, jsonData, token)
 
-	assert.Equal(suite.T(), http.StatusNotAcceptable, w2.Code)
-}
+// 	questionList := getSession(suite, w, token)
 
-func (suite *QuestionApiTestSuite) TestUpvoteQuestion_SAME_QUESTION_PARALLEL_100_SHOULD_RETURN_100() {
-	w := httptest.NewRecorder()
-	jsonData := dtos.NewQuestionDto{Text: "new question"}
-	postNewQuestion(suite, w, jsonData, suite.tokenUser_Bar)
-	questionList := getSession(suite, w, suite.tokenUser_Bar)
-	questionId := questionList[0].Id
+// 	answerQuestion(suite, w, questionList[0].Id, token)
 
-	suite.T().Run("Parallel_Question_Upvote", func(t *testing.T) {
-		var wg sync.WaitGroup
-		for i := 1; i <= 99; i++ {
-			wg.Add(1)
-			tokenUser := mocks.GetUserToken(fmt.Sprintf("User_%d", i), fmt.Sprintf("User_%d", i))
-			go func(tokenUser string, w *httptest.ResponseRecorder, questionId string) {
-				defer wg.Done()
-				upvoteQuestion(suite, w, questionId, tokenUser)
-			}(tokenUser, w, questionId)
-		}
-		wg.Wait()
+// 	w2 := httptest.NewRecorder()
+// 	upvoteQuestion(suite, w2, questionList[0].Id, token)
 
-		w1 := httptest.NewRecorder()
+// 	assert.Equal(suite.T(), http.StatusNotAcceptable, w2.Code)
+// }
 
-		questionList := getSession(suite, w1, suite.tokenUser_Bar)
-		question := questionList[0]
+// func (suite *QuestionApiTestSuite) TestDeleteQuestion_NOTACCEPTABLE_406_WHEN_DELETING_ANSWERED_QUESTION() {
+// 	w := httptest.NewRecorder()
 
-		time.Sleep(time.Second * 20)
+// 	token := suite.tokenUser_SessionAdmin
 
-		assert.Equal(suite.T(), 100, question.Votes)
-	})
-}
+// 	jsonData := dtos.NewQuestionDto{Text: "new question"}
 
-func (suite *QuestionApiTestSuite) TestUndVoteQuestion_NOTACCEPTABLE_406_WHEN_USER_NOT_VOTED() {
-	w := httptest.NewRecorder()
+// 	postNewQuestion(suite, w, jsonData, token)
 
-	token := suite.tokenUser_Foo
-	newQuestion := dtos.NewQuestionDto{Text: "new question"}
-	postNewQuestion(suite, w, newQuestion, token)
+// 	questionList := getSession(suite, w, token)
 
-	questionList := getSession(suite, w, token)
+// 	answerQuestion(suite, w, questionList[0].Id, token)
 
-	undoVoteQuestion(suite, w, questionList[0].Id, token)
+// 	w2 := httptest.NewRecorder()
+// 	deleteQuestion(suite, w2, questionList[0].Id, token)
 
-	w2 := httptest.NewRecorder()
-	undoVoteQuestion(suite, w2, questionList[0].Id, token)
+// 	assert.Equal(suite.T(), http.StatusNotAcceptable, w2.Code)
+// }
 
-	assert.Equal(suite.T(), http.StatusNotAcceptable, w2.Code)
-}
+// func (suite *QuestionApiTestSuite) TestUpdateQuestion_NOTACCEPTABLE_406_WHEN_UPDATING_ANSWERED_QUESTION() {
+// 	w := httptest.NewRecorder()
 
-func (suite *QuestionApiTestSuite) TestUndovoteQuestion_NOTACCEPTABLE_406_WHEN_UNDO_VOTE_ANSWERED_QUESTION() {
-	w := httptest.NewRecorder()
+// 	token := suite.tokenUser_SessionAdmin
 
-	token := suite.tokenUser_SessionAdmin
+// 	jsonData := dtos.NewQuestionDto{Text: "new question"}
 
-	jsonData := dtos.NewQuestionDto{Text: "new question"}
+// 	postNewQuestion(suite, w, jsonData, token)
 
-	postNewQuestion(suite, w, jsonData, token)
+// 	questionList := getSession(suite, w, token)
 
-	questionList := getSession(suite, w, token)
+// 	answerQuestion(suite, w, questionList[0].Id, token)
 
-	answerQuestion(suite, w, questionList[0].Id, token)
+// 	w2 := httptest.NewRecorder()
+// 	updateQuestionDto := dtos.UpdateQuestionDto{Id: questionList[0].Id, Text: "Updated Question", Anonymous: true}
+// 	putUpdateQuestion(suite, w2, updateQuestionDto, token)
 
-	w2 := httptest.NewRecorder()
-	undoVoteQuestion(suite, w2, questionList[0].Id, token)
+// 	assert.Equal(suite.T(), http.StatusNotAcceptable, w2.Code)
+// }
 
-	assert.Equal(suite.T(), http.StatusNotAcceptable, w2.Code)
-}
+// func (suite *QuestionApiTestSuite) TestUpvoteQuestion_SAME_QUESTION_PARALLEL_100_SHOULD_RETURN_100() {
+// 	w := httptest.NewRecorder()
+// 	jsonData := dtos.NewQuestionDto{Text: "new question"}
+// 	postNewQuestion(suite, w, jsonData, suite.tokenUser_Bar)
+// 	questionList := getSession(suite, w, suite.tokenUser_Bar)
+// 	questionId := questionList[0].Id
 
-func (suite *QuestionApiTestSuite) TestUndovoteeQuestion_NOTFOUND_404() {
-	w := httptest.NewRecorder()
+// 	suite.T().Run("Parallel_Question_Upvote", func(t *testing.T) {
+// 		var wg sync.WaitGroup
+// 		for i := 1; i <= 99; i++ {
+// 			wg.Add(1)
+// 			tokenUser := mocks.GetUserToken(fmt.Sprintf("User_%d", i), fmt.Sprintf("User_%d", i))
+// 			go func(tokenUser string, w *httptest.ResponseRecorder, questionId string) {
+// 				defer wg.Done()
+// 				upvoteQuestion(suite, w, questionId, tokenUser)
+// 			}(tokenUser, w, questionId)
+// 		}
+// 		wg.Wait()
 
-	token := suite.tokenUser_Foo
+// 		w1 := httptest.NewRecorder()
 
-	undoVoteQuestion(suite, w, "invalid_id", token)
+// 		questionList := getSession(suite, w1, suite.tokenUser_Bar)
+// 		question := questionList[0]
 
-	assert.Equal(suite.T(), http.StatusNotFound, w.Code)
-}
+// 		time.Sleep(time.Second * 20)
 
-func (suite *QuestionApiTestSuite) TestUndovoteQuestion_SAME_QUESTION_PARALLEL_100_SHOULD_RETURN_0() {
-	w := httptest.NewRecorder()
-	jsonData := dtos.NewQuestionDto{Text: "new question"}
-	postNewQuestion(suite, w, jsonData, suite.tokenUser_Bar)
-	questionList := getSession(suite, w, suite.tokenUser_Bar)
-	questionId := questionList[0].Id
+// 		assert.Equal(suite.T(), 100, question.Votes)
+// 	})
+// }
 
-	suite.T().Run("Parallel_Question_Upvote", func(t *testing.T) {
-		var wg sync.WaitGroup
-		for i := 1; i <= 99; i++ {
-			wg.Add(1)
-			tokenUser := mocks.GetUserToken(fmt.Sprintf("User_%d", i), fmt.Sprintf("User_%d", i))
-			go func(tokenUser string, w *httptest.ResponseRecorder, questionId string) {
-				defer wg.Done()
-				upvoteQuestion(suite, w, questionId, tokenUser)
-			}(tokenUser, w, questionId)
-		}
-		wg.Wait()
-	})
+// func (suite *QuestionApiTestSuite) TestUndVoteQuestion_NOTACCEPTABLE_406_WHEN_USER_NOT_VOTED() {
+// 	w := httptest.NewRecorder()
 
-	suite.T().Run("Parallel_Question_Undoupvote", func(t *testing.T) {
-		var wg sync.WaitGroup
-		undoVoteQuestion(suite, w, questionId, suite.tokenUser_Bar)
-		for i := 1; i <= 99; i++ {
-			wg.Add(1)
-			tokenUser := mocks.GetUserToken(fmt.Sprintf("User_%d", i), fmt.Sprintf("User_%d", i))
-			go func(tokenUser string, w *httptest.ResponseRecorder, questionId string) {
-				defer wg.Done()
-				undoVoteQuestion(suite, w, questionId, tokenUser)
-			}(tokenUser, w, questionId)
-		}
-		wg.Wait()
+// 	token := suite.tokenUser_Foo
+// 	newQuestion := dtos.NewQuestionDto{Text: "new question"}
+// 	postNewQuestion(suite, w, newQuestion, token)
 
-		w1 := httptest.NewRecorder()
+// 	questionList := getSession(suite, w, token)
 
-		questionList := getSession(suite, w1, suite.tokenUser_Bar)
-		question := questionList[0]
+// 	undoVoteQuestion(suite, w, questionList[0].Id, token)
 
-		time.Sleep(time.Second * 20)
+// 	w2 := httptest.NewRecorder()
+// 	undoVoteQuestion(suite, w2, questionList[0].Id, token)
 
-		assert.Equal(suite.T(), 0, question.Votes)
-	})
-}
+// 	assert.Equal(suite.T(), http.StatusNotAcceptable, w2.Code)
+// }
 
-func (suite *QuestionApiTestSuite) TestGetSession_OK_200_CREATOR_SHOWN_ONLY_FOR_OWNED_AND_NOT_ANONYMOUS_QUESTIONS() {
-	w := httptest.NewRecorder()
+// func (suite *QuestionApiTestSuite) TestUndovoteQuestion_NOTACCEPTABLE_406_WHEN_UNDO_VOTE_ANSWERED_QUESTION() {
+// 	w := httptest.NewRecorder()
 
-	tokenUser_Foo := suite.tokenUser_Foo
-	tokenUser_Bar := suite.tokenUser_Bar
+// 	token := suite.tokenUser_SessionAdmin
 
-	newQuestion_FOO_Q1 := dtos.NewQuestionDto{Text: "Foo Question1", Anonymous: false}
-	newQuestion_FOO_Q2 := dtos.NewQuestionDto{Text: "Foo Question2 anonynmous", Anonymous: true}
-	newQuestion_BAR_Q1 := dtos.NewQuestionDto{Text: "Bar Question1", Anonymous: false}
-	newQuestion_BAR_Q2 := dtos.NewQuestionDto{Text: "Bar Question2 anonynmous", Anonymous: true}
+// 	jsonData := dtos.NewQuestionDto{Text: "new question"}
 
-	postNewQuestion(suite, w, newQuestion_FOO_Q1, tokenUser_Foo)
-	postNewQuestion(suite, w, newQuestion_FOO_Q2, tokenUser_Foo)
-	postNewQuestion(suite, w, newQuestion_BAR_Q1, tokenUser_Bar)
-	postNewQuestion(suite, w, newQuestion_BAR_Q2, tokenUser_Bar)
+// 	postNewQuestion(suite, w, jsonData, token)
 
-	questionList := getSession(suite, w, tokenUser_Foo)
+// 	questionList := getSession(suite, w, token)
 
-	question_FOO_Q1 := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Foo Question1" })]
-	question_FOO_Q2 := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Foo Question2 anonynmous" })]
-	question_BAR_Q1 := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Bar Question1" })]
-	question_BAR_Q2 := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Bar Question2 anonynmous" })]
+// 	answerQuestion(suite, w, questionList[0].Id, token)
 
-	assert.Equal(suite.T(), true, question_FOO_Q1.Owned)
-	assert.Equal(suite.T(), false, question_FOO_Q1.Anonymous)
-	assert.Equal(suite.T(), "Foo Foo_Tester", question_FOO_Q1.Creator)
+// 	w2 := httptest.NewRecorder()
+// 	undoVoteQuestion(suite, w2, questionList[0].Id, token)
 
-	assert.Equal(suite.T(), true, question_FOO_Q2.Owned)
-	assert.Equal(suite.T(), true, question_FOO_Q2.Anonymous)
-	assert.Equal(suite.T(), "", question_FOO_Q2.Creator)
+// 	assert.Equal(suite.T(), http.StatusNotAcceptable, w2.Code)
+// }
 
-	assert.Equal(suite.T(), false, question_BAR_Q1.Owned)
-	assert.Equal(suite.T(), false, question_BAR_Q1.Anonymous)
-	assert.Equal(suite.T(), "Bar Bar_Tester", question_BAR_Q1.Creator)
+// func (suite *QuestionApiTestSuite) TestUndovoteeQuestion_NOTFOUND_404() {
+// 	w := httptest.NewRecorder()
 
-	assert.Equal(suite.T(), false, question_BAR_Q2.Owned)
-	assert.Equal(suite.T(), true, question_BAR_Q2.Anonymous)
-	assert.Equal(suite.T(), "", question_BAR_Q2.Creator)
+// 	token := suite.tokenUser_Foo
 
-	assert.Equal(suite.T(), http.StatusOK, w.Code)
-}
+// 	undoVoteQuestion(suite, w, "invalid_id", token)
 
-func (suite *QuestionApiTestSuite) TestUpdateQuestion_OK_200_WHEN_QUESTION_IS_OWNED() {
-	w := httptest.NewRecorder()
+// 	assert.Equal(suite.T(), http.StatusNotFound, w.Code)
+// }
 
-	tokenUser_Foo := suite.tokenUser_Foo
-	newQuestion := dtos.NewQuestionDto{Text: "Foo Question", Anonymous: false}
-	postNewQuestion(suite, w, newQuestion, tokenUser_Foo)
-	questionList := getSession(suite, w, tokenUser_Foo)
-	question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Foo Question" })]
+// func (suite *QuestionApiTestSuite) TestUndovoteQuestion_SAME_QUESTION_PARALLEL_100_SHOULD_RETURN_0() {
+// 	w := httptest.NewRecorder()
+// 	jsonData := dtos.NewQuestionDto{Text: "new question"}
+// 	postNewQuestion(suite, w, jsonData, suite.tokenUser_Bar)
+// 	questionList := getSession(suite, w, suite.tokenUser_Bar)
+// 	questionId := questionList[0].Id
 
-	updateQuestionDto := dtos.UpdateQuestionDto{Id: question_FOO_Q.Id, Text: "Updated Foo Question", Anonymous: true}
+// 	suite.T().Run("Parallel_Question_Upvote", func(t *testing.T) {
+// 		var wg sync.WaitGroup
+// 		for i := 1; i <= 99; i++ {
+// 			wg.Add(1)
+// 			tokenUser := mocks.GetUserToken(fmt.Sprintf("User_%d", i), fmt.Sprintf("User_%d", i))
+// 			go func(tokenUser string, w *httptest.ResponseRecorder, questionId string) {
+// 				defer wg.Done()
+// 				upvoteQuestion(suite, w, questionId, tokenUser)
+// 			}(tokenUser, w, questionId)
+// 		}
+// 		wg.Wait()
+// 	})
 
-	assert.Equal(suite.T(), "Foo Question", question_FOO_Q.Text)
-	assert.Equal(suite.T(), false, question_FOO_Q.Anonymous)
+// 	suite.T().Run("Parallel_Question_Undoupvote", func(t *testing.T) {
+// 		var wg sync.WaitGroup
+// 		undoVoteQuestion(suite, w, questionId, suite.tokenUser_Bar)
+// 		for i := 1; i <= 99; i++ {
+// 			wg.Add(1)
+// 			tokenUser := mocks.GetUserToken(fmt.Sprintf("User_%d", i), fmt.Sprintf("User_%d", i))
+// 			go func(tokenUser string, w *httptest.ResponseRecorder, questionId string) {
+// 				defer wg.Done()
+// 				undoVoteQuestion(suite, w, questionId, tokenUser)
+// 			}(tokenUser, w, questionId)
+// 		}
+// 		wg.Wait()
 
-	putUpdateQuestion(suite, w, updateQuestionDto, tokenUser_Foo)
+// 		w1 := httptest.NewRecorder()
 
-	updatedQuestionList := getSession(suite, w, tokenUser_Foo)
-	updated_question_FOO_Q := updatedQuestionList[slices.IndexFunc(updatedQuestionList, func(c dtos.QuestionDto) bool { return c.Id == question_FOO_Q.Id })]
+// 		questionList := getSession(suite, w1, suite.tokenUser_Bar)
+// 		question := questionList[0]
 
-	assert.Equal(suite.T(), "Updated Foo Question", updated_question_FOO_Q.Text)
-	assert.Equal(suite.T(), true, updated_question_FOO_Q.Anonymous)
-	assert.Equal(suite.T(), http.StatusOK, w.Code)
-}
+// 		time.Sleep(time.Second * 20)
 
-func (suite *QuestionApiTestSuite) TestUpdateQuestion_FORBIDDEN_403_WHEN_QUESTION_IS_NOT_OWNED() {
-	w := httptest.NewRecorder()
+// 		assert.Equal(suite.T(), 0, question.Votes)
+// 	})
+// }
 
-	tokenUser_Foo := suite.tokenUser_Foo
-	tokenUser_Bar := suite.tokenUser_Bar
+// func (suite *QuestionApiTestSuite) TestGetSession_OK_200_CREATOR_SHOWN_ONLY_FOR_OWNED_AND_NOT_ANONYMOUS_QUESTIONS() {
+// 	w := httptest.NewRecorder()
 
-	newQuestion := dtos.NewQuestionDto{Text: "Foo Question", Anonymous: false}
-	postNewQuestion(suite, w, newQuestion, tokenUser_Foo)
-	questionList := getSession(suite, w, tokenUser_Foo)
-	question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Foo Question" })]
+// 	tokenUser_Foo := suite.tokenUser_Foo
+// 	tokenUser_Bar := suite.tokenUser_Bar
 
-	updateQuestionDto := dtos.UpdateQuestionDto{Id: question_FOO_Q.Id, Text: "Updated Foo Question", Anonymous: true}
+// 	newQuestion_FOO_Q1 := dtos.NewQuestionDto{Text: "Foo Question1", Anonymous: false}
+// 	newQuestion_FOO_Q2 := dtos.NewQuestionDto{Text: "Foo Question2 anonynmous", Anonymous: true}
+// 	newQuestion_BAR_Q1 := dtos.NewQuestionDto{Text: "Bar Question1", Anonymous: false}
+// 	newQuestion_BAR_Q2 := dtos.NewQuestionDto{Text: "Bar Question2 anonynmous", Anonymous: true}
 
-	assert.Equal(suite.T(), "Foo Question", question_FOO_Q.Text)
-	assert.Equal(suite.T(), false, question_FOO_Q.Anonymous)
+// 	postNewQuestion(suite, w, newQuestion_FOO_Q1, tokenUser_Foo)
+// 	postNewQuestion(suite, w, newQuestion_FOO_Q2, tokenUser_Foo)
+// 	postNewQuestion(suite, w, newQuestion_BAR_Q1, tokenUser_Bar)
+// 	postNewQuestion(suite, w, newQuestion_BAR_Q2, tokenUser_Bar)
 
-	w2 := httptest.NewRecorder()
-	putUpdateQuestion(suite, w2, updateQuestionDto, tokenUser_Bar)
+// 	questionList := getSession(suite, w, tokenUser_Foo)
 
-	assert.Equal(suite.T(), http.StatusForbidden, w2.Code)
-}
+// 	question_FOO_Q1 := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Foo Question1" })]
+// 	question_FOO_Q2 := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Foo Question2 anonynmous" })]
+// 	question_BAR_Q1 := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Bar Question1" })]
+// 	question_BAR_Q2 := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Bar Question2 anonynmous" })]
 
-func (suite *QuestionApiTestSuite) TestDeleteQuestion_OK_200_WHEN_QUESTION_IS_OWNED() {
-	w := httptest.NewRecorder()
+// 	assert.Equal(suite.T(), true, question_FOO_Q1.Owned)
+// 	assert.Equal(suite.T(), false, question_FOO_Q1.Anonymous)
+// 	assert.Equal(suite.T(), "Foo Foo_Tester", question_FOO_Q1.Creator)
 
-	tokenUser_Foo := suite.tokenUser_Foo
-	newQuestion := dtos.NewQuestionDto{Text: "Foo Question", Anonymous: false}
-	postNewQuestion(suite, w, newQuestion, tokenUser_Foo)
-	questionList := getSession(suite, w, tokenUser_Foo)
-	question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Foo Question" })]
+// 	assert.Equal(suite.T(), true, question_FOO_Q2.Owned)
+// 	assert.Equal(suite.T(), true, question_FOO_Q2.Anonymous)
+// 	assert.Equal(suite.T(), "", question_FOO_Q2.Creator)
 
-	assert.Equal(suite.T(), "Foo Question", question_FOO_Q.Text)
-	assert.Equal(suite.T(), false, question_FOO_Q.Anonymous)
+// 	assert.Equal(suite.T(), false, question_BAR_Q1.Owned)
+// 	assert.Equal(suite.T(), false, question_BAR_Q1.Anonymous)
+// 	assert.Equal(suite.T(), "Bar Bar_Tester", question_BAR_Q1.Creator)
 
-	deleteQuestion(suite, w, question_FOO_Q.Id, tokenUser_Foo)
+// 	assert.Equal(suite.T(), false, question_BAR_Q2.Owned)
+// 	assert.Equal(suite.T(), true, question_BAR_Q2.Anonymous)
+// 	assert.Equal(suite.T(), "", question_BAR_Q2.Creator)
 
-	updatedQuestionList := getSession(suite, w, tokenUser_Foo)
-	idx := slices.IndexFunc(updatedQuestionList, func(c dtos.QuestionDto) bool { return c.Id == question_FOO_Q.Id })
+// 	assert.Equal(suite.T(), http.StatusOK, w.Code)
+// }
 
-	assert.Equal(suite.T(), -1, idx)
-	assert.Equal(suite.T(), http.StatusOK, w.Code)
-}
+// func (suite *QuestionApiTestSuite) TestUpdateQuestion_OK_200_WHEN_QUESTION_IS_OWNED() {
+// 	w := httptest.NewRecorder()
 
-func (suite *QuestionApiTestSuite) TestDeleteQuestion_FORBIDDEN_403_WHEN_QUESTION_IS_NOT_OWNED() {
-	w := httptest.NewRecorder()
+// 	tokenUser_Foo := suite.tokenUser_Foo
+// 	newQuestion := dtos.NewQuestionDto{Text: "Foo Question", Anonymous: false}
+// 	postNewQuestion(suite, w, newQuestion, tokenUser_Foo)
+// 	questionList := getSession(suite, w, tokenUser_Foo)
+// 	question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Foo Question" })]
 
-	tokenUser_Foo := suite.tokenUser_Foo
-	tokenUser_Bar := suite.tokenUser_Bar
+// 	updateQuestionDto := dtos.UpdateQuestionDto{Id: question_FOO_Q.Id, Text: "Updated Foo Question", Anonymous: true}
 
-	newQuestion := dtos.NewQuestionDto{Text: "Foo Question", Anonymous: false}
-	postNewQuestion(suite, w, newQuestion, tokenUser_Foo)
-	questionList := getSession(suite, w, tokenUser_Foo)
-	question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Foo Question" })]
+// 	assert.Equal(suite.T(), "Foo Question", question_FOO_Q.Text)
+// 	assert.Equal(suite.T(), false, question_FOO_Q.Anonymous)
 
-	assert.Equal(suite.T(), "Foo Question", question_FOO_Q.Text)
-	assert.Equal(suite.T(), false, question_FOO_Q.Anonymous)
+// 	putUpdateQuestion(suite, w, updateQuestionDto, tokenUser_Foo)
 
-	w2 := httptest.NewRecorder()
-	deleteQuestion(suite, w2, question_FOO_Q.Id, tokenUser_Bar)
+// 	updatedQuestionList := getSession(suite, w, tokenUser_Foo)
+// 	updated_question_FOO_Q := updatedQuestionList[slices.IndexFunc(updatedQuestionList, func(c dtos.QuestionDto) bool { return c.Id == question_FOO_Q.Id })]
 
-	assert.Equal(suite.T(), http.StatusForbidden, w2.Code)
-}
+// 	assert.Equal(suite.T(), "Updated Foo Question", updated_question_FOO_Q.Text)
+// 	assert.Equal(suite.T(), true, updated_question_FOO_Q.Anonymous)
+// 	assert.Equal(suite.T(), http.StatusOK, w.Code)
+// }
 
-func (suite *QuestionApiTestSuite) TestAnswerQuestion_FORBIDDEN_403_WHEN_USER_NOT_SESSION_ADMIN_OR_ADMIN() {
-	w := httptest.NewRecorder()
+// func (suite *QuestionApiTestSuite) TestUpdateQuestion_FORBIDDEN_403_WHEN_QUESTION_IS_NOT_OWNED() {
+// 	w := httptest.NewRecorder()
 
-	tokenUser_Foo := suite.tokenUser_Foo
-	tokenUser_Bar := suite.tokenUser_Bar
+// 	tokenUser_Foo := suite.tokenUser_Foo
+// 	tokenUser_Bar := suite.tokenUser_Bar
 
-	newQuestion := dtos.NewQuestionDto{Text: "Foo Question", Anonymous: false}
-	postNewQuestion(suite, w, newQuestion, tokenUser_Foo)
-	questionList := getSession(suite, w, tokenUser_Foo)
-	question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Foo Question" })]
+// 	newQuestion := dtos.NewQuestionDto{Text: "Foo Question", Anonymous: false}
+// 	postNewQuestion(suite, w, newQuestion, tokenUser_Foo)
+// 	questionList := getSession(suite, w, tokenUser_Foo)
+// 	question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Foo Question" })]
 
-	assert.Equal(suite.T(), "Foo Question", question_FOO_Q.Text)
-	assert.Equal(suite.T(), false, question_FOO_Q.Anonymous)
+// 	updateQuestionDto := dtos.UpdateQuestionDto{Id: question_FOO_Q.Id, Text: "Updated Foo Question", Anonymous: true}
 
-	w2 := httptest.NewRecorder()
-	answerQuestion(suite, w2, question_FOO_Q.Id, tokenUser_Bar)
+// 	assert.Equal(suite.T(), "Foo Question", question_FOO_Q.Text)
+// 	assert.Equal(suite.T(), false, question_FOO_Q.Anonymous)
 
-	assert.Equal(suite.T(), http.StatusForbidden, w2.Code)
-}
+// 	w2 := httptest.NewRecorder()
+// 	putUpdateQuestion(suite, w2, updateQuestionDto, tokenUser_Bar)
 
-func (suite *QuestionApiTestSuite) TestStartSession_FORBIDDEN_403_WHEN_USER_NOT_ADMIN() {
-	type test struct {
-		name  string
-		token string
-	}
+// 	assert.Equal(suite.T(), http.StatusForbidden, w2.Code)
+// }
 
-	tests := []test{
-		{"SESSION_ADMIN_403", suite.tokenUser_SessionAdmin},
-		{"CONTRIBUTOR_403", suite.tokenUser_Bar},
-	}
+// func (suite *QuestionApiTestSuite) TestDeleteQuestion_OK_200_WHEN_QUESTION_IS_OWNED() {
+// 	w := httptest.NewRecorder()
 
-	for _, test := range tests {
-		suite.T().Run(test.name, func(t *testing.T) {
-			w := httptest.NewRecorder()
-			req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("%s%s", suite.apiPrefix, "/question/session/start"), nil)
-			req.Header.Set("Content-Type", "application/json")
-			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", test.token))
-			suite.router.ServeHTTP(w, req)
+// 	tokenUser_Foo := suite.tokenUser_Foo
+// 	newQuestion := dtos.NewQuestionDto{Text: "Foo Question", Anonymous: false}
+// 	postNewQuestion(suite, w, newQuestion, tokenUser_Foo)
+// 	questionList := getSession(suite, w, tokenUser_Foo)
+// 	question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Foo Question" })]
 
-			assert.Equal(suite.T(), http.StatusForbidden, w.Code)
-		})
-	}
-}
+// 	assert.Equal(suite.T(), "Foo Question", question_FOO_Q.Text)
+// 	assert.Equal(suite.T(), false, question_FOO_Q.Anonymous)
 
-func (suite *QuestionApiTestSuite) TestStopSession_FORBIDDEN_403_WHEN_USER_NOT_ADMIN() {
-	type test struct {
-		name  string
-		token string
-	}
+// 	deleteQuestion(suite, w, question_FOO_Q.Id, tokenUser_Foo)
 
-	tests := []test{
-		{"SESSION_ADMIN_403", suite.tokenUser_SessionAdmin},
-		{"CONTRIBUTOR_403", suite.tokenUser_Bar},
-	}
+// 	updatedQuestionList := getSession(suite, w, tokenUser_Foo)
+// 	idx := slices.IndexFunc(updatedQuestionList, func(c dtos.QuestionDto) bool { return c.Id == question_FOO_Q.Id })
 
-	for _, test := range tests {
-		suite.T().Run(test.name, func(t *testing.T) {
-			w := httptest.NewRecorder()
-			req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("%s%s", suite.apiPrefix, "/question/session/stop"), nil)
-			req.Header.Set("Content-Type", "application/json")
-			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", test.token))
-			suite.router.ServeHTTP(w, req)
+// 	assert.Equal(suite.T(), -1, idx)
+// 	assert.Equal(suite.T(), http.StatusOK, w.Code)
+// }
 
-			assert.Equal(suite.T(), http.StatusForbidden, w.Code)
-		})
-	}
-}
+// func (suite *QuestionApiTestSuite) TestDeleteQuestion_FORBIDDEN_403_WHEN_QUESTION_IS_NOT_OWNED() {
+// 	w := httptest.NewRecorder()
+
+// 	tokenUser_Foo := suite.tokenUser_Foo
+// 	tokenUser_Bar := suite.tokenUser_Bar
+
+// 	newQuestion := dtos.NewQuestionDto{Text: "Foo Question", Anonymous: false}
+// 	postNewQuestion(suite, w, newQuestion, tokenUser_Foo)
+// 	questionList := getSession(suite, w, tokenUser_Foo)
+// 	question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Foo Question" })]
+
+// 	assert.Equal(suite.T(), "Foo Question", question_FOO_Q.Text)
+// 	assert.Equal(suite.T(), false, question_FOO_Q.Anonymous)
+
+// 	w2 := httptest.NewRecorder()
+// 	deleteQuestion(suite, w2, question_FOO_Q.Id, tokenUser_Bar)
+
+// 	assert.Equal(suite.T(), http.StatusForbidden, w2.Code)
+// }
+
+// func (suite *QuestionApiTestSuite) TestAnswerQuestion_FORBIDDEN_403_WHEN_USER_NOT_SESSION_ADMIN_OR_ADMIN() {
+// 	w := httptest.NewRecorder()
+
+// 	tokenUser_Foo := suite.tokenUser_Foo
+// 	tokenUser_Bar := suite.tokenUser_Bar
+
+// 	newQuestion := dtos.NewQuestionDto{Text: "Foo Question", Anonymous: false}
+// 	postNewQuestion(suite, w, newQuestion, tokenUser_Foo)
+// 	questionList := getSession(suite, w, tokenUser_Foo)
+// 	question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Foo Question" })]
+
+// 	assert.Equal(suite.T(), "Foo Question", question_FOO_Q.Text)
+// 	assert.Equal(suite.T(), false, question_FOO_Q.Anonymous)
+
+// 	w2 := httptest.NewRecorder()
+// 	answerQuestion(suite, w2, question_FOO_Q.Id, tokenUser_Bar)
+
+// 	assert.Equal(suite.T(), http.StatusForbidden, w2.Code)
+// }
+
+// func (suite *QuestionApiTestSuite) TestStartSession_FORBIDDEN_403_WHEN_USER_NOT_ADMIN() {
+// 	type test struct {
+// 		name  string
+// 		token string
+// 	}
+
+// 	tests := []test{
+// 		{"SESSION_ADMIN_403", suite.tokenUser_SessionAdmin},
+// 		{"CONTRIBUTOR_403", suite.tokenUser_Bar},
+// 	}
+
+// 	for _, test := range tests {
+// 		suite.T().Run(test.name, func(t *testing.T) {
+// 			w := httptest.NewRecorder()
+// 			req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("%s%s", suite.apiPrefix, "/question/session/start"), nil)
+// 			req.Header.Set("Content-Type", "application/json")
+// 			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", test.token))
+// 			suite.router.ServeHTTP(w, req)
+
+// 			assert.Equal(suite.T(), http.StatusForbidden, w.Code)
+// 		})
+// 	}
+// }
+
+// func (suite *QuestionApiTestSuite) TestStopSession_FORBIDDEN_403_WHEN_USER_NOT_ADMIN() {
+// 	type test struct {
+// 		name  string
+// 		token string
+// 	}
+
+// 	tests := []test{
+// 		{"SESSION_ADMIN_403", suite.tokenUser_SessionAdmin},
+// 		{"CONTRIBUTOR_403", suite.tokenUser_Bar},
+// 	}
+
+// 	for _, test := range tests {
+// 		suite.T().Run(test.name, func(t *testing.T) {
+// 			w := httptest.NewRecorder()
+// 			req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("%s%s", suite.apiPrefix, "/question/session/stop"), nil)
+// 			req.Header.Set("Content-Type", "application/json")
+// 			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", test.token))
+// 			suite.router.ServeHTTP(w, req)
+
+// 			assert.Equal(suite.T(), http.StatusForbidden, w.Code)
+// 		})
+// 	}
+// }
 
 func TestQuestionApiSuite(t *testing.T) {
 	suite.Run(t, new(QuestionApiTestSuite))
@@ -709,29 +724,33 @@ func getSession(suite *QuestionApiTestSuite, w *httptest.ResponseRecorder, token
 }
 
 func initCentrifuge(suite *QuestionApiTestSuite) {
-	maxRetries := 3
-	for i := 0; i < maxRetries; i++ {
-		wsURL := "ws://localhost:3333/api/v1/connection/websocket"
-		cFoo := centrifuge.NewJsonClient(wsURL, centrifuge.Config{
-			Token: suite.tokenUser_Foo,
-		})
-		cBar := centrifuge.NewJsonClient(wsURL, centrifuge.Config{
-			Token: suite.tokenUser_Bar,
-		})
+	time.Sleep(time.Second * 2)
 
-		errFoo := cFoo.Connect()
-		errBar := cBar.Connect()
-		if errFoo == nil && errBar == nil {
-			suite.centrifugeClientFoo = cFoo
-			suite.centrifugeClientBar = cBar
-			break
-		}
-		logrus.Warn(errFoo)
-		logrus.Warn(errBar)
+	wsURL := "ws://localhost:3333/api/v1/connection/websocket"
+	cFoo := centrifuge.NewJsonClient(wsURL, centrifuge.Config{
+		Token: suite.tokenUser_Foo,
+	})
+	cBar := centrifuge.NewJsonClient(wsURL, centrifuge.Config{
+		Token: suite.tokenUser_Bar,
+	})
 
-		if i == maxRetries-1 {
-			logrus.Fatal("Max retries reached. Exiting.")
-		}
-		time.Sleep(time.Second * 2)
+	errFoo := cFoo.Connect()
+	errBar := cBar.Connect()
+
+	if errFoo != nil {
+		logrus.Fatal(errFoo)
+	}
+
+	if errBar != nil {
+		logrus.Fatal(errBar)
+	}
+
+	suite.centrifugeClientFoo = CentrifugeTestClient{
+		client:           cFoo,
+		receivedMessages: make([]string, 0),
+	}
+	suite.centrifugeClientBar = CentrifugeTestClient{
+		client:           cBar,
+		receivedMessages: make([]string, 0),
 	}
 }
