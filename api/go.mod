@@ -3,7 +3,7 @@ module voting
 go 1.22
 
 require (
-	github.com/MicahParks/keyfunc/v3 v3.2.5
+	github.com/MicahParks/keyfunc/v3 v3.2.7
 	github.com/gin-contrib/cors v1.5.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/golang-jwt/jwt/v5 v5.2.0
@@ -22,7 +22,7 @@ require (
 
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
-	github.com/MicahParks/jwkset v0.5.12 // indirect
+	github.com/MicahParks/jwkset v0.5.13 // indirect
 	github.com/bytedance/sonic v1.10.2 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20230717121745-296ad89f973d // indirect
