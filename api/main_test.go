@@ -176,12 +176,18 @@ func (suite *QuestionApiTestSuite) TestNewQuestion_OK_200() {
 	assert.Equal(suite.T(), true, questionList[0].Voted)
 
 	time.Sleep(time.Second * 3)
+
+	assert.EventuallyWithT(suite.T(), func(c *assert.CollectT) {
+		questionCreatedEvent, err := suite.centrifugeClientFoo.FindEvent(events.NEW_QUESTION)
+		assert.Nil(c, err)
+		assert.Equal(c, questionCreatedEvent.Payload)
+	}, time.Second*3, time.Second*1, "New question event has not been received")
+
 	for _, event := range suite.centrifugeClientFoo.receivedMessages {
 		var questionCreated events.QuestionCreated
 
 		json.Unmarshal([]byte(event.Payload), &questionCreated)
 
-		// logrus.Infof("We have %s", questionCreated)
 		logrus.Infof("Question: Id:, %s, %d, %s", event.EventType, questionCreated.Votes, questionCreated.Text)
 	}
 }
@@ -734,6 +740,16 @@ func getSession(suite *QuestionApiTestSuite, w *httptest.ResponseRecorder, token
 	json.Unmarshal(body, &questionList)
 
 	return questionList
+}
+
+func (centrifugeTestClient *CentrifugeTestClient) FindEvent(eventType events.EventType) (events.Event, error) {
+	for i := range centrifugeTestClient.receivedMessages {
+		if centrifugeTestClient.receivedMessages[i].EventType == eventType {
+			return centrifugeTestClient.receivedMessages[i], nil
+		}
+	}
+
+	return events.Event{EventType: events.HEART_BEAT, Payload: events.PayloadEmpty}, nil
 }
 
 func initCentrifuge(suite *QuestionApiTestSuite) {
