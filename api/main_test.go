@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 	"voting/dtos"
+	"voting/internal/events"
 	"voting/internal/mocks"
 
 	"github.com/centrifugal/centrifuge-go"
@@ -22,7 +23,7 @@ import (
 
 type CentrifugeTestClient struct {
 	client           *centrifuge.Client
-	receivedMessages []string
+	receivedMessages []events.Event
 }
 
 type QuestionApiTestSuite struct {
@@ -62,11 +63,18 @@ func (suite *QuestionApiTestSuite) SetupSuite() {
 	initCentrifuge(suite)
 
 	suite.centrifugeClientFoo.client.OnMessage(func(me centrifuge.MessageEvent) {
-		suite.centrifugeClientFoo.receivedMessages = append(suite.centrifugeClientFoo.receivedMessages, string(me.Data))
+
+		var event events.Event
+
+		json.Unmarshal([]byte(me.Data), &event)
+		suite.centrifugeClientFoo.receivedMessages = append(suite.centrifugeClientFoo.receivedMessages, event)
 	})
 
 	suite.centrifugeClientBar.client.OnMessage(func(me centrifuge.MessageEvent) {
-		suite.centrifugeClientBar.receivedMessages = append(suite.centrifugeClientBar.receivedMessages, string(me.Data))
+		var event events.Event
+		json.Unmarshal([]byte(me.Data), &event)
+
+		suite.centrifugeClientBar.receivedMessages = append(suite.centrifugeClientBar.receivedMessages, event)
 	})
 }
 
@@ -168,8 +176,13 @@ func (suite *QuestionApiTestSuite) TestNewQuestion_OK_200() {
 	assert.Equal(suite.T(), true, questionList[0].Voted)
 
 	time.Sleep(time.Second * 3)
-	for _, msg := range suite.centrifugeClientFoo.receivedMessages {
-		logrus.Infof("We have %s", msg)
+	for _, event := range suite.centrifugeClientFoo.receivedMessages {
+		var questionCreated events.QuestionCreated
+
+		json.Unmarshal([]byte(event.Payload), &questionCreated)
+
+		// logrus.Infof("We have %s", questionCreated)
+		logrus.Infof("Question: Id:, %s, %d, %s", event.EventType, questionCreated.Votes, questionCreated.Text)
 	}
 }
 
@@ -747,10 +760,10 @@ func initCentrifuge(suite *QuestionApiTestSuite) {
 
 	suite.centrifugeClientFoo = CentrifugeTestClient{
 		client:           cFoo,
-		receivedMessages: make([]string, 0),
+		receivedMessages: make([]events.Event, 0),
 	}
 	suite.centrifugeClientBar = CentrifugeTestClient{
 		client:           cBar,
-		receivedMessages: make([]string, 0),
+		receivedMessages: make([]events.Event, 0),
 	}
 }
