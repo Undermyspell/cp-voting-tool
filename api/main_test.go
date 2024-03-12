@@ -46,6 +46,8 @@ func (suite *QuestionApiTestSuite) SetupSuite() {
 	os.Setenv("GENERATE_REDIS_STORAGE_ROOT_KEY", "true")
 	os.Setenv("JWKS_URL", "https://test/discovery/v2.0/keys")
 	os.Setenv("VOTING_STORAGE_IN_MEMORY", "true")
+	os.Setenv("VOTING_STORAGE_IN_MEMORY", "true")
+	os.Setenv("ALLOWED_ORIGIN", "http://localhost:5173")
 
 	start = func(r *gin.Engine) {
 		go func() {

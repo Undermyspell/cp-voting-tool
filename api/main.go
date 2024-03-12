@@ -84,7 +84,7 @@ func main() {
 				if originHeader == "" {
 					return true
 				}
-				return originHeader == "http://localhost:5173"
+				return originHeader == env.Env.AllowedOrigin
 			},
 		}))))
 		v1.GET("/events", middleware.GinRequireAuth(), notification.SseStream(internalBroker))
