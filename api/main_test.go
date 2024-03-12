@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -175,21 +176,17 @@ func (suite *QuestionApiTestSuite) TestNewQuestion_OK_200() {
 	assert.Equal(suite.T(), 1, questionList[0].Votes)
 	assert.Equal(suite.T(), true, questionList[0].Voted)
 
-	time.Sleep(time.Second * 3)
-
 	assert.EventuallyWithT(suite.T(), func(c *assert.CollectT) {
-		questionCreatedEvent, err := suite.centrifugeClientFoo.FindEvent(events.NEW_QUESTION)
+		questionCreatedEvent, err := findEvent[events.QuestionCreated](suite.centrifugeClientFoo, events.NEW_QUESTION)
 		assert.Nil(c, err)
-		assert.Equal(c, questionCreatedEvent.Payload)
+		assert.Equal(c, "Foo Question", questionCreatedEvent.Text)
+		assert.Equal(c, false, questionCreatedEvent.Answered)
+		assert.Equal(c, false, questionCreatedEvent.Anonymous)
+		assert.Equal(c, "Foo Foo_Tester", questionCreatedEvent.Creator)
+		assert.Equal(c, true, questionCreatedEvent.Owned)
+		assert.Equal(c, true, questionCreatedEvent.Voted)
+		assert.Equal(c, 1, questionCreatedEvent.Votes)
 	}, time.Second*3, time.Second*1, "New question event has not been received")
-
-	for _, event := range suite.centrifugeClientFoo.receivedMessages {
-		var questionCreated events.QuestionCreated
-
-		json.Unmarshal([]byte(event.Payload), &questionCreated)
-
-		logrus.Infof("Question: Id:, %s, %d, %s", event.EventType, questionCreated.Votes, questionCreated.Text)
-	}
 }
 
 // func (suite *QuestionApiTestSuite) TestNewQuestion_404_WHEN_TEXT_LENTGH_OVER_MAX_LENGTH() {
@@ -742,16 +739,17 @@ func getSession(suite *QuestionApiTestSuite, w *httptest.ResponseRecorder, token
 	return questionList
 }
 
-func (centrifugeTestClient *CentrifugeTestClient) FindEvent(eventType events.EventType) (events.Event, error) {
+func findEvent[T any](centrifugeTestClient CentrifugeTestClient, eventType events.EventType) (*T, error) {
 	for i := range centrifugeTestClient.receivedMessages {
 		if centrifugeTestClient.receivedMessages[i].EventType == eventType {
-			return centrifugeTestClient.receivedMessages[i], nil
+			var eventPayload T
+			json.Unmarshal([]byte(centrifugeTestClient.receivedMessages[i].Payload), &eventPayload)
+			return &eventPayload, nil
 		}
 	}
 
-	return events.Event{EventType: events.HEART_BEAT, Payload: events.PayloadEmpty}, nil
+	return nil, errors.New("Event not found")
 }
-
 func initCentrifuge(suite *QuestionApiTestSuite) {
 	time.Sleep(time.Second * 2)
 

@@ -51,7 +51,7 @@ func initHandlers(internalBroker broker.Broker) {
 		var userContext models.UserContext
 		json.Unmarshal(client.Info(), &userContext)
 
-		logrus.Infof("🟩 user %s|%s connected via %s.", client.UserID(), userContext.Role, transport.Name())
+		logrus.Infof("🟩 connected via %s.", transport.Name())
 
 		userBoundChannel := broker.UserBoundChannel{
 			Channel: make(chan events.Event),
@@ -81,7 +81,7 @@ func initHandlers(internalBroker broker.Broker) {
 		})
 
 		client.OnSubscribe(func(e centrifuge.SubscribeEvent, cb centrifuge.SubscribeCallback) {
-			logrus.Infof("🟨 user %s subscribes on %s", client.UserID(), e.Channel)
+			logrus.Infof("🟨 subscribes on %s", e.Channel)
 			cb(centrifuge.SubscribeReply{
 				Options: centrifuge.SubscribeOptions{
 					EmitPresence: true,
@@ -90,12 +90,12 @@ func initHandlers(internalBroker broker.Broker) {
 		})
 
 		client.OnUnsubscribe(func(e centrifuge.UnsubscribeEvent) {
-			logrus.Infof("🟦 user %s unsubscribed from %s", client.UserID(), e.Channel)
+			logrus.Infof("🟦 unsubscribed from %s", e.Channel)
 		})
 
 		client.OnDisconnect(func(e centrifuge.DisconnectEvent) {
 			internalBroker.RemoveClient(userBoundChannel)
-			logrus.Infof("🟥 user %s|%s disconnected, disconnect: %s", client.UserID(), userContext.Role, e.Disconnect)
+			logrus.Infof("🟥 disconnected, disconnect: %s", e.Disconnect)
 		})
 	})
 }
