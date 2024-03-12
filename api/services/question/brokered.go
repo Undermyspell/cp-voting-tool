@@ -209,19 +209,19 @@ func (service *BrokeredQuestionsService) Upvote(c *gin.Context) {
 		return
 	}
 
-	questionUpvoteSseMessage := struct {
+	questionUpvoteMessage := struct {
 		Id    string
 		Votes int
 	}{questionId, votes}
 
-	questionUpVoteForUserSseMessage := events.QuestionUpvoted{
+	questionUpVoteForUserMessage := events.QuestionUpvoted{
 		Id:    questionId,
 		Votes: votes,
 		Voted: true,
 	}
 
-	questionForUserPaylod, errf := json.Marshal(questionUpVoteForUserSseMessage)
-	questionPayload, errj := json.Marshal(questionUpvoteSseMessage)
+	questionForUserPaylod, errf := json.Marshal(questionUpVoteForUserMessage)
+	questionPayload, errj := json.Marshal(questionUpvoteMessage)
 
 	if errj != nil {
 		c.JSON(http.StatusBadRequest, "cant marshal question")
@@ -272,19 +272,19 @@ func (service *BrokeredQuestionsService) UndoVote(c *gin.Context) {
 		return
 	}
 
-	questionUndoUpvoteSseMessage := struct {
+	questionUndoUpvoteMessage := struct {
 		Id    string
 		Votes int
 	}{questionId, votes}
 
-	questionUndoUpVoteForUserSseMessage := events.QuestionUpvoted{
+	questionUndoUpVoteForUserMessage := events.QuestionUpvoted{
 		Id:    questionId,
 		Votes: votes,
 		Voted: false,
 	}
 
-	questionForUserPaylod, errf := json.Marshal(questionUndoUpVoteForUserSseMessage)
-	questionPayload, errj := json.Marshal(questionUndoUpvoteSseMessage)
+	questionForUserPaylod, errf := json.Marshal(questionUndoUpVoteForUserMessage)
+	questionPayload, errj := json.Marshal(questionUndoUpvoteMessage)
 
 	if errj != nil {
 		c.JSON(http.StatusBadRequest, "cant marshal question")
