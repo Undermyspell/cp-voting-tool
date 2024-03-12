@@ -6,10 +6,14 @@ github.com/MicahParks/jwkset v0.5.12 h1:wEwKZXB77yHFIHBtYoawNKIUwqC1X24S8tIhWutJ
 github.com/MicahParks/jwkset v0.5.12/go.mod h1:q8ptTGn/Z9c4MwbcfeCDssADeVQb3Pk7PnVxrvi+2QY=
 github.com/MicahParks/jwkset v0.5.14 h1:VeSaeoeERrYhbzaXyjDctbl5KqT+pHdaLZz8Or5GMNA=
 github.com/MicahParks/jwkset v0.5.14/go.mod h1:q8ptTGn/Z9c4MwbcfeCDssADeVQb3Pk7PnVxrvi+2QY=
+github.com/MicahParks/jwkset v0.5.15 h1:ACJY045Zuvo2TVWikeFLnKTIsEDQQHUHrNYiMW+gj24=
+github.com/MicahParks/jwkset v0.5.15/go.mod h1:q8ptTGn/Z9c4MwbcfeCDssADeVQb3Pk7PnVxrvi+2QY=
 github.com/MicahParks/keyfunc/v3 v3.2.5 h1:eg4s2zd2nfadnAzAsv9xvJCdCfLNy4s/aSiAxRn+aAk=
 github.com/MicahParks/keyfunc/v3 v3.2.5/go.mod h1:8hmM7h/hNerfF8uC8cFVnT+afxBgh6nKRTR/0vAm5So=
 github.com/MicahParks/keyfunc/v3 v3.2.8 h1:3AFMW/fRykBs4VKbuEPAODvJXqnPjrqm/emOUJiX1+s=
 github.com/MicahParks/keyfunc/v3 v3.2.8/go.mod h1:xO0NcrjdxfRJ+lDKNaXzhgFG/0XlnSi58JiMMAsQeZM=
+github.com/MicahParks/keyfunc/v3 v3.2.9 h1:juKYzZvb5q4mWnox3439WNq6cusvSdt2fJ5nj+osgCk=
+github.com/MicahParks/keyfunc/v3 v3.2.9/go.mod h1:Yx3jN/pn7ZMCxwFsyIrsmSqRfp0HGHAcyezBlhYi1Ew=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
 github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=
 github.com/bsm/ginkgo/v2 v2.5.0/go.mod h1:AiKlXPm7ItEHNc/2+OkrNG4E0ITzojb9/xWzvQ9XZ9w=
@@ -24,6 +28,8 @@ github.com/bytedance/sonic v1.10.2 h1:GQebETVBxYB7JGWJtLBi07OVzWwt+8dWA00gEVW2ZF
 github.com/bytedance/sonic v1.10.2/go.mod h1:iZcSUejdk5aukTND/Eu/ivjQuEL0Cu9/rf50Hi0u/g4=
 github.com/bytedance/sonic v1.11.2 h1:ywfwo0a/3j9HR8wsYGWsIWl2mvRsI950HyoxiBERw5A=
 github.com/bytedance/sonic v1.11.2/go.mod h1:iZcSUejdk5aukTND/Eu/ivjQuEL0Cu9/rf50Hi0u/g4=
+github.com/bytedance/sonic v1.11.3 h1:jRN+yEjakWh8aK5FzrciUHG8OFXK+4/KrAX/ysEtHAA=
+github.com/bytedance/sonic v1.11.3/go.mod h1:iZcSUejdk5aukTND/Eu/ivjQuEL0Cu9/rf50Hi0u/g4=
 github.com/centrifugal/centrifuge v0.30.6 h1:dofN2c8bbgSz9AIC3Odh4bqS0gQKMDjcqabN50Idx/c=
 github.com/centrifugal/centrifuge v0.30.6/go.mod h1:MnS7xcblZYWieK6hCGJuKKAcE6kAte34KPPBK1rybUk=
 github.com/centrifugal/centrifuge v0.31.0 h1:gSEVNTmCN1fJ3HqcoFzQFYvLAVXD6RaSUaX+MLszKDM=

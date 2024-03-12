@@ -3,7 +3,7 @@ module voting
 go 1.22
 
 require (
-	github.com/MicahParks/keyfunc/v3 v3.2.8
+	github.com/MicahParks/keyfunc/v3 v3.2.9
 	github.com/centrifugal/centrifuge v0.31.0
 	github.com/gin-contrib/cors v1.7.0
 	github.com/gin-gonic/gin v1.9.1
@@ -24,9 +24,9 @@ require (
 require (
 	github.com/FZambia/eagle v0.1.0 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
-	github.com/MicahParks/jwkset v0.5.14 // indirect
+	github.com/MicahParks/jwkset v0.5.15 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/bytedance/sonic v1.11.2 // indirect
+	github.com/bytedance/sonic v1.11.3 // indirect
 	github.com/centrifugal/centrifuge-go v0.10.2 // indirect
 	github.com/centrifugal/protocol v0.12.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
