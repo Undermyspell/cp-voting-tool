@@ -1,7 +1,6 @@
 import { derived, get, writable, type Writable } from 'svelte/store';
 import type { Question } from './models/question';
 import { deleteRequest, getRequest, postRequest, putRequest } from './api';
-// import { eventSource } from './eventsource';
 import { activeSessison, userOnline } from './session';
 import { centrifuge } from './centrifuge';
 import type { MessageContext } from 'centrifuge';
@@ -65,35 +64,6 @@ centrifuge.subscribe((centrifuge) => {
 		})
 	}
 })
-
-// eventSource.subscribe((eventSource) => {
-// 	if (eventSource) {
-// 		eventSource.addEventListener('new_question', (event) => {
-// 			const data = JSON.parse(event.data);
-// 			questionAdded(data);
-// 		});
-// 		eventSource.addEventListener('upvote_question', (event) => {
-// 			const data = JSON.parse(event.data);
-// 			updateVote(data);
-// 		});
-// 		eventSource.addEventListener('undo_upvote_question', (event) => {
-// 			const data = JSON.parse(event.data);
-// 			updateVote(data);
-// 		});
-// 		eventSource.addEventListener('update_question', (event) => {
-// 			const data = JSON.parse(event.data);
-// 			questionEdited(data);
-// 		});
-// 		eventSource.addEventListener('delete_question', (event) => {
-// 			const data = JSON.parse(event.data);
-// 			questionDeleted(data);
-// 		});
-// 		eventSource.addEventListener('answer_question', (event) => {
-// 			const data = JSON.parse(event.data);
-// 			questionAnswered(data);
-// 		});
-// 	}
-// });
 
 export const getQuestions = async () => {
 	try {
