@@ -207,7 +207,7 @@ func (session *Redis) UpdateQuestion(id, text, creatorName string, anonymous boo
 	})
 
 	if err1 != nil {
-		logrus.Error(err.Error())
+		logrus.Error(err1.Error())
 		return models.Question{}
 	}
 

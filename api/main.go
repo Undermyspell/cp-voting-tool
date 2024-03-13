@@ -1,19 +1,21 @@
 package main
 
 import (
+	"net/http"
 	"time"
 	"voting/internal/broker"
 	"voting/internal/env"
 	"voting/internal/jwks"
 	"voting/internal/middleware"
-	"voting/internal/mocks"
 	"voting/internal/models/roles"
+	"voting/internal/notification"
 	"voting/internal/votingstorage"
 	questionService "voting/services/question"
 	userService "voting/services/user"
 
 	_ "voting/docs"
 
+	"github.com/centrifugal/centrifuge"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -44,16 +46,13 @@ var r *gin.Engine
 // @BasePath  /api/v1
 func main() {
 	env.Init()
+	jwks.Init()
+
+	internalBroker := broker.New()
+	centrifugeBroker := notification.NewCentrifuge(internalBroker)
 
 	r = gin.Default()
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-
-	var jwksProvider jwks.KeyfuncProvider
-	if !env.Env.UseMockJwks {
-		jwksProvider = jwks.New()
-	} else {
-		jwksProvider = mocks.NewJwks()
-	}
 
 	var votingStorage votingstorage.VotingStorage
 	if env.Env.VotingStorageInMemory {
@@ -63,8 +62,7 @@ func main() {
 		votingStorage = votingstorage.NewRedis()
 	}
 
-	broker := broker.New()
-	questionService := initQuestionService(broker, votingStorage)
+	questionService := initQuestionService(internalBroker, votingStorage)
 	userService := userService.NewTestUser()
 
 	config := cors.Config{
@@ -76,11 +74,21 @@ func main() {
 	config.AllowOrigins = []string{"*"}
 	r.Use(cors.New(config))
 	r.Use(middleware.Options)
+	r.Use(middleware.GinContextToContextMiddleware())
 
 	v1 := r.Group("/api/v1")
 	{
-		v1.GET("/events", middleware.RequireAuth(jwksProvider), broker.SseStream)
-		q := v1.Group("/question", middleware.RequireAuth(jwksProvider))
+		v1.GET("/connection/websocket", gin.WrapH(middleware.CentrifugeAnonymousAuth(centrifuge.NewWebsocketHandler(centrifugeBroker, centrifuge.WebsocketConfig{
+			CheckOrigin: func(r *http.Request) bool {
+				originHeader := r.Header.Get("Origin")
+				if originHeader == "" {
+					return true
+				}
+				return originHeader == env.Env.AllowedOrigin
+			},
+		}))))
+		v1.GET("/events", middleware.GinRequireAuth(), notification.SseStream(internalBroker))
+		q := v1.Group("/question", middleware.GinRequireAuth())
 		q.PUT("/answer/:id", middleware.RequireRole(roles.SessionAdmin, roles.Admin), questionService.Answer)
 		q.POST("/new", questionService.Add)
 		q.PUT("/upvote/:id", questionService.Upvote)
@@ -88,7 +96,7 @@ func main() {
 		q.PUT("/update", questionService.Update)
 		q.DELETE("/delete/:id", questionService.Delete)
 
-		s := q.Group("/session", middleware.RequireAuth(jwksProvider))
+		s := q.Group("/session", middleware.GinRequireAuth())
 		s.POST("/start", middleware.RequireRole(roles.Admin), questionService.Start)
 		s.POST("/stop", middleware.RequireRole(roles.Admin), questionService.Stop)
 		s.GET("", questionService.GetSession)

@@ -2,68 +2,40 @@ package broker
 
 import (
 	"encoding/json"
-	"io"
 	"time"
 	"voting/internal/events"
 	"voting/internal/models"
 
-	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
 
-type UserBoundSseChannel struct {
+type UserBoundChannel struct {
 	Channel chan events.Event
 	User    models.UserContext
 }
 
-type ChannelBroker struct {
+type InternalBroker struct {
 	NotifierAll        chan events.Event
-	NotifierUser       chan events.UserBoundSseEvent
-	NotifierAllButUser chan events.UserBoundSseEvent
-	NewClients         chan UserBoundSseChannel
-	ClosingClients     chan UserBoundSseChannel
-	Clients            map[UserBoundSseChannel]bool
+	NotifierUser       chan events.UserBoundEvent
+	NotifierAllButUser chan events.UserBoundEvent
+	NewClients         chan UserBoundChannel
+	ClosingClients     chan UserBoundChannel
+	Clients            map[UserBoundChannel]bool
 }
 
-func (broker *ChannelBroker) SseStream(c *gin.Context) {
-	user, _ := c.Get(models.User)
-	userContext := user.(*models.UserContext)
-	userBoundSseChannel := UserBoundSseChannel{
-		Channel: make(chan events.Event),
-		User:    *userContext,
-	}
-
-	defer func() {
-		broker.ClosingClients <- userBoundSseChannel
-		close(userBoundSseChannel.Channel)
-	}()
-
-	broker.NewClients <- userBoundSseChannel
-
-	c.Stream(func(w io.Writer) bool {
-		select {
-		case event := <-userBoundSseChannel.Channel:
-			c.SSEvent(string(event.EventType), event.Payload)
-		case <-c.Request.Context().Done():
-			return false
-		}
-		return true
-	})
-}
-
-func (broker *ChannelBroker) Listen() {
+func (broker *InternalBroker) Listen() {
 	for {
 		select {
 		case s := <-broker.NewClients:
 			broker.Clients[s] = true
-			event := broker.createUserConnectionSseEvent(events.USER_CONNECTED)
+			event := broker.createUserConnectionEvent(events.USER_CONNECTED)
 			for clientMessageChan := range broker.Clients {
 				clientMessageChan.Channel <- event
 			}
 			logrus.Infof("🟢 Client added. %d registered clients", len(broker.Clients))
 		case s := <-broker.ClosingClients:
 			delete(broker.Clients, s)
-			event := broker.createUserConnectionSseEvent(events.USER_DISCONNECTED)
+			event := broker.createUserConnectionEvent(events.USER_DISCONNECTED)
 			for clientMessageChan := range broker.Clients {
 				clientMessageChan.Channel <- event
 			}
@@ -88,25 +60,25 @@ func (broker *ChannelBroker) Listen() {
 	}
 }
 
-func (broker *ChannelBroker) NotifyAll(event events.Event) {
+func (broker *InternalBroker) NotifyAll(event events.Event) {
 	broker.NotifierAll <- event
 }
 
-func (broker *ChannelBroker) NotifyUser(event events.Event, user models.UserContext) {
-	broker.NotifierUser <- events.UserBoundSseEvent{
+func (broker *InternalBroker) NotifyUser(event events.Event, user models.UserContext) {
+	broker.NotifierUser <- events.UserBoundEvent{
 		Event: event,
 		User:  user,
 	}
 }
 
-func (broker *ChannelBroker) NotifyAllButUser(event events.Event, user models.UserContext) {
-	broker.NotifierAllButUser <- events.UserBoundSseEvent{
+func (broker *InternalBroker) NotifyAllButUser(event events.Event, user models.UserContext) {
+	broker.NotifierAllButUser <- events.UserBoundEvent{
 		Event: event,
 		User:  user,
 	}
 }
 
-func (broker *ChannelBroker) DistinctClientsCount() int {
+func (broker *InternalBroker) DistinctClientsCount() int {
 	distinctClients := make(map[models.UserContext]bool)
 	for clientMessageChan := range broker.Clients {
 		if _, ok := distinctClients[clientMessageChan.User]; !ok {
@@ -117,7 +89,7 @@ func (broker *ChannelBroker) DistinctClientsCount() int {
 	return len(distinctClients)
 }
 
-func (broker *ChannelBroker) SendHeartBeat() {
+func (broker *InternalBroker) SendHeartBeat() {
 	event := events.Event{
 		EventType: events.HEART_BEAT,
 		Payload:   "",
@@ -130,7 +102,15 @@ func (broker *ChannelBroker) SendHeartBeat() {
 	}
 }
 
-func (broker *ChannelBroker) createUserConnectionSseEvent(eventType events.EventType) events.Event {
+func (broker *InternalBroker) AddClient(client UserBoundChannel) {
+	broker.NewClients <- client
+}
+
+func (broker *InternalBroker) RemoveClient(client UserBoundChannel) {
+	broker.ClosingClients <- client
+}
+
+func (broker *InternalBroker) createUserConnectionEvent(eventType events.EventType) events.Event {
 	event := events.UserConnected{
 		UserCount: broker.DistinctClientsCount(),
 	}

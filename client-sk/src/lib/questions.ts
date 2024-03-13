@@ -1,8 +1,10 @@
 import { derived, get, writable, type Writable } from 'svelte/store';
 import type { Question } from './models/question';
 import { deleteRequest, getRequest, postRequest, putRequest } from './api';
-import { eventSource } from './eventsource';
-import { activeSessison } from './session';
+import { activeSessison, userOnline } from './session';
+import { centrifuge } from './centrifuge';
+import type { MessageContext } from 'centrifuge';
+import type { VotingEvent } from './models/voting-event';
 
 const allQuestions: Writable<Question[]> = writable([]);
 export const questions = derived(allQuestions, ($allQuestions: Question[]) =>
@@ -19,34 +21,49 @@ export const answeredCount = derived(
 	($answeredQuestions) => $answeredQuestions.length
 );
 
-eventSource.subscribe((eventSource) => {
-	if (eventSource) {
-		eventSource.addEventListener('new_question', (event) => {
-			const data = JSON.parse(event.data);
-			questionAdded(data);
-		});
-		eventSource.addEventListener('upvote_question', (event) => {
-			const data = JSON.parse(event.data);
-			updateVote(data);
-		});
-		eventSource.addEventListener('undo_upvote_question', (event) => {
-			const data = JSON.parse(event.data);
-			updateVote(data);
-		});
-		eventSource.addEventListener('update_question', (event) => {
-			const data = JSON.parse(event.data);
-			questionEdited(data);
-		});
-		eventSource.addEventListener('delete_question', (event) => {
-			const data = JSON.parse(event.data);
-			questionDeleted(data);
-		});
-		eventSource.addEventListener('answer_question', (event) => {
-			const data = JSON.parse(event.data);
-			questionAnswered(data);
-		});
+
+centrifuge.subscribe((centrifuge) => {
+	if(centrifuge) {
+		centrifuge.on("message", (msg: MessageContext) => {
+			console.log("Received event: ", msg)
+			const event: VotingEvent = msg.data as VotingEvent
+
+			const data = JSON.parse(event.Payload)
+
+			switch(event.EventType){
+				case "start_session":
+					console.log('start listener');
+					activeSessison.set(true);
+					break
+				case "stop_session":
+					activeSessison.set(false);
+					clearQuestions();
+					break
+				case "user_connected":
+				case "user_disconnected":
+					userOnline.set(data.UserCount);
+					break
+				case "new_question":
+					questionAdded(data);
+					break
+				case "upvote_question":
+				case "undo_upvote_question":
+					updateVote(data);
+					break
+				case "update_question":
+					questionEdited(data);
+					break
+				case "delete_question":
+					questionDeleted(data);
+					break
+				case "answer_question":
+					questionAnswered(data);
+					break
+			}
+			
+		})
 	}
-});
+})
 
 export const getQuestions = async () => {
 	try {

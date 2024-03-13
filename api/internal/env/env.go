@@ -11,6 +11,7 @@ const (
 	REDIS_ENPOINT                   string = "REDIS_ENDPOINT_SECRET"
 	REDIS_PASSWORD                  string = "REDIS_PASSWORD_SECRET"
 	GENERATE_REDIS_STORAGE_ROOT_KEY string = "GENERATE_REDIS_STORAGE_ROOT_KEY"
+	ALLOWED_ORIGIN                  string = "ALLOWED_ORIGIN"
 )
 
 type EnvConfig struct {
@@ -20,6 +21,7 @@ type EnvConfig struct {
 	RedisEndpoint               string
 	RedisPassword               string
 	GenerateRedisStorageRootKey bool
+	AllowedOrigin               string
 }
 
 var Env EnvConfig
@@ -36,5 +38,6 @@ func Init() {
 		RedisEndpoint:               viper.GetString(REDIS_ENPOINT),
 		RedisPassword:               viper.GetString(REDIS_PASSWORD),
 		GenerateRedisStorageRootKey: viper.GetBool(GENERATE_REDIS_STORAGE_ROOT_KEY),
+		AllowedOrigin:               viper.GetString(ALLOWED_ORIGIN),
 	}
 }

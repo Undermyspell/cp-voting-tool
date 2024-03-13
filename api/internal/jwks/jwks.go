@@ -8,6 +8,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+var jwksProvider KeyfuncProvider
+
 type JwksKeyfuncProvider struct {
 	jwksKeyFunc func(token *jwt.Token) (interface{}, error)
 }
@@ -16,7 +18,11 @@ func (provider *JwksKeyfuncProvider) GetKeyFunc() func(token *jwt.Token) (interf
 	return provider.jwksKeyFunc
 }
 
-func Init() *JwksKeyfuncProvider {
+func GetProvider() KeyfuncProvider {
+	return jwksProvider
+}
+
+func create() {
 	jwksURL := env.Env.JwksUrl
 
 	jwks, err := keyfunc.NewDefault([]string{jwksURL})
@@ -24,9 +30,7 @@ func Init() *JwksKeyfuncProvider {
 		logrus.Fatalf("Failed to create JWKS from resource at the given URL.\nError: %s", err.Error())
 	}
 
-	jwksProvider := &JwksKeyfuncProvider{
+	jwksProvider = &JwksKeyfuncProvider{
 		jwksKeyFunc: jwks.Keyfunc,
 	}
-
-	return jwksProvider
 }

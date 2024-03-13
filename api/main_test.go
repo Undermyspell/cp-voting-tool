@@ -3,22 +3,31 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"slices"
 	"sync"
 	"testing"
 	"time"
 	"voting/dtos"
+	"voting/internal/events"
 	"voting/internal/mocks"
 
+	"github.com/centrifugal/centrifuge-go"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"golang.org/x/exp/slices"
 )
+
+type CentrifugeTestClient struct {
+	client           *centrifuge.Client
+	receivedMessages []events.Event
+}
 
 type QuestionApiTestSuite struct {
 	suite.Suite
@@ -28,14 +37,24 @@ type QuestionApiTestSuite struct {
 	tokenUser_Bar          string
 	tokenUser_Admin        string
 	tokenUser_SessionAdmin string
+	centrifugeClientFoo    CentrifugeTestClient
+	centrifugeClientBar    CentrifugeTestClient
 }
 
 func (suite *QuestionApiTestSuite) SetupSuite() {
 	os.Setenv("USE_MOCK_JWKS", "true")
 	os.Setenv("GENERATE_REDIS_STORAGE_ROOT_KEY", "true")
 	os.Setenv("JWKS_URL", "https://test/discovery/v2.0/keys")
+	os.Setenv("VOTING_STORAGE_IN_MEMORY", "true")
+	os.Setenv("VOTING_STORAGE_IN_MEMORY", "true")
+	os.Setenv("ALLOWED_ORIGIN", "http://localhost:5173")
 
-	start = func(r *gin.Engine) {}
+	start = func(r *gin.Engine) {
+		go func() {
+			r.Run(":3333")
+
+		}()
+	}
 
 	main()
 
@@ -45,14 +64,37 @@ func (suite *QuestionApiTestSuite) SetupSuite() {
 	suite.tokenUser_Bar = mocks.GetUserToken("Bar", "Bar_Tester")
 	suite.tokenUser_Admin = mocks.GetAdminUserToken("Admin", "Admin_Tester")
 	suite.tokenUser_SessionAdmin = mocks.GetSessionAdminUserToken("SessionAdmin", "Session_Admin_Tester")
+
+	initCentrifuge(suite)
+
+	suite.centrifugeClientFoo.client.OnMessage(func(me centrifuge.MessageEvent) {
+
+		var event events.Event
+
+		json.Unmarshal([]byte(me.Data), &event)
+		suite.centrifugeClientFoo.receivedMessages = append(suite.centrifugeClientFoo.receivedMessages, event)
+	})
+
+	suite.centrifugeClientBar.client.OnMessage(func(me centrifuge.MessageEvent) {
+		var event events.Event
+		json.Unmarshal([]byte(me.Data), &event)
+
+		suite.centrifugeClientBar.receivedMessages = append(suite.centrifugeClientBar.receivedMessages, event)
+	})
+}
+
+func (suite *QuestionApiTestSuite) TearDownTest() {
+	stopSession(suite)
 }
 
 func (suite *QuestionApiTestSuite) SetupTest() {
+	clearCentrifugeClientsMessages(suite)
 	startSession(suite)
 }
 
 func (suite *QuestionApiTestSuite) TearDownSuite() {
-	stopSession(suite)
+	suite.centrifugeClientFoo.client.Close()
+	suite.centrifugeClientBar.client.Close()
 }
 
 func (suite *QuestionApiTestSuite) TestApi_UNAUTHORIZED_401() {
@@ -141,6 +183,37 @@ func (suite *QuestionApiTestSuite) TestNewQuestion_OK_200() {
 	assert.Equal(suite.T(), true, questionList[0].Voted)
 }
 
+func (suite *QuestionApiTestSuite) TestNewQuestion_EVENTS_RECEIVED_NEW_QUESTION() {
+	w := httptest.NewRecorder()
+
+	token := suite.tokenUser_Foo
+	newQuestion := dtos.NewQuestionDto{Text: "This is a new question", Anonymous: false}
+
+	postNewQuestion(suite, w, newQuestion, token)
+
+	assert.EventuallyWithT(suite.T(), func(c *assert.CollectT) {
+		questionCreatedEventFoo, err := findEvent[events.QuestionCreated](suite.centrifugeClientFoo, events.NEW_QUESTION)
+		assert.Nil(c, err)
+		assert.Equal(c, "This is a new question", questionCreatedEventFoo.Text)
+		assert.Equal(c, false, questionCreatedEventFoo.Answered)
+		assert.Equal(c, false, questionCreatedEventFoo.Anonymous)
+		assert.Equal(c, "Foo Foo_Tester", questionCreatedEventFoo.Creator)
+		assert.Equal(c, true, questionCreatedEventFoo.Owned)
+		assert.Equal(c, true, questionCreatedEventFoo.Voted)
+		assert.Equal(c, 1, questionCreatedEventFoo.Votes)
+
+		questionCreatedEventBar, err1 := findEvent[events.QuestionCreated](suite.centrifugeClientBar, events.NEW_QUESTION)
+		assert.Nil(c, err1)
+		assert.Equal(c, "This is a new question", questionCreatedEventBar.Text)
+		assert.Equal(c, false, questionCreatedEventBar.Answered)
+		assert.Equal(c, false, questionCreatedEventBar.Anonymous)
+		assert.Equal(c, "Foo Foo_Tester", questionCreatedEventBar.Creator)
+		assert.Equal(c, false, questionCreatedEventBar.Owned)
+		assert.Equal(c, false, questionCreatedEventBar.Voted)
+		assert.Equal(c, 1, questionCreatedEventBar.Votes)
+	}, time.Second*3, time.Second*1, "New question event has not been received")
+}
+
 func (suite *QuestionApiTestSuite) TestNewQuestion_404_WHEN_TEXT_LENTGH_OVER_MAX_LENGTH() {
 	w := httptest.NewRecorder()
 
@@ -204,6 +277,27 @@ func (suite *QuestionApiTestSuite) TestAnswerQuestion_OK_200() {
 			assert.Equal(suite.T(), http.StatusOK, w.Code)
 		})
 	}
+}
+
+func (suite *QuestionApiTestSuite) TestAnswerQuestion_EVENTS_RECEIVED_ANSWER_QUESTION() {
+	w := httptest.NewRecorder()
+
+	newQuestion := dtos.NewQuestionDto{Text: "Question to be answered", Anonymous: false}
+	postNewQuestion(suite, w, newQuestion, suite.tokenUser_Foo)
+	questionList := getSession(suite, w, suite.tokenUser_Foo)
+	question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Question to be answered" })]
+
+	answerQuestion(suite, w, question_FOO_Q.Id, suite.tokenUser_Admin)
+
+	assert.EventuallyWithT(suite.T(), func(c *assert.CollectT) {
+		questionAnsweredEventFoo, err := findEvent[events.QuestionAnswered](suite.centrifugeClientFoo, events.ANSWER_QUESTION)
+		assert.Nil(c, err)
+		assert.Equal(c, question_FOO_Q.Id, questionAnsweredEventFoo.Id)
+
+		questionAnsweredEventBar, err1 := findEvent[events.QuestionAnswered](suite.centrifugeClientBar, events.ANSWER_QUESTION)
+		assert.Nil(c, err1)
+		assert.Equal(c, question_FOO_Q.Id, questionAnsweredEventBar.Id)
+	}, time.Second*3, time.Second*1, "No question answered event received")
 }
 
 func (suite *QuestionApiTestSuite) TestAnswerQuestion_FORBIDDEN_403_WHEN_NO_SESSION_ADMIN_OR_ADMIN() {
@@ -315,10 +409,34 @@ func (suite *QuestionApiTestSuite) TestUpvoteQuestion_SAME_QUESTION_PARALLEL_100
 		questionList := getSession(suite, w1, suite.tokenUser_Bar)
 		question := questionList[0]
 
-		time.Sleep(time.Second * 20)
-
-		assert.Equal(suite.T(), 100, question.Votes)
+		assert.EventuallyWithT(suite.T(), func(c *assert.CollectT) {
+			assert.Equal(suite.T(), 100, question.Votes)
+		}, time.Second*20, time.Second*1, "Question votes count does not match")
 	})
+}
+
+func (suite *QuestionApiTestSuite) TestUpvoteQuestion_EVENTS_RECEIVED_UPVOTE_QUESTION() {
+	w := httptest.NewRecorder()
+	jsonData := dtos.NewQuestionDto{Text: "new question"}
+	postNewQuestion(suite, w, jsonData, suite.tokenUser_Bar)
+	questionList := getSession(suite, w, suite.tokenUser_Bar)
+	questionId := questionList[0].Id
+
+	upvoteQuestion(suite, w, questionId, suite.tokenUser_Foo)
+
+	assert.EventuallyWithT(suite.T(), func(c *assert.CollectT) {
+		questionUpvotedEventFoo, err := findEvent[events.QuestionUpvoted](suite.centrifugeClientFoo, events.UPVOTE_QUESTION)
+		assert.Nil(c, err)
+		assert.Equal(c, questionId, questionUpvotedEventFoo.Id)
+		assert.Equal(c, true, questionUpvotedEventFoo.Voted)
+		assert.Equal(c, 2, questionUpvotedEventFoo.Votes)
+
+		questionUpvotedEventBar, err1 := findEvent[events.QuestionUpvoted](suite.centrifugeClientBar, events.UPVOTE_QUESTION)
+		assert.Nil(c, err1)
+		assert.Equal(c, questionId, questionUpvotedEventBar.Id)
+		assert.Equal(c, false, questionUpvotedEventBar.Voted)
+		assert.Equal(c, 2, questionUpvotedEventBar.Votes)
+	}, time.Second*3, time.Second*1, "No question upvote event received")
 }
 
 func (suite *QuestionApiTestSuite) TestUndVoteQuestion_NOTACCEPTABLE_406_WHEN_USER_NOT_VOTED() {
@@ -405,10 +523,36 @@ func (suite *QuestionApiTestSuite) TestUndovoteQuestion_SAME_QUESTION_PARALLEL_1
 		questionList := getSession(suite, w1, suite.tokenUser_Bar)
 		question := questionList[0]
 
-		time.Sleep(time.Second * 20)
-
-		assert.Equal(suite.T(), 0, question.Votes)
+		assert.EventuallyWithT(suite.T(), func(c *assert.CollectT) {
+			assert.Equal(suite.T(), 0, question.Votes)
+		}, time.Second*20, time.Second*1, "Question votes count is not 0")
 	})
+}
+
+func (suite *QuestionApiTestSuite) TestUndovoteQuestion_EVENTS_RECEIVED_UNDO_UPVOTE_QUESTION() {
+	w := httptest.NewRecorder()
+	jsonData := dtos.NewQuestionDto{Text: "new question"}
+	postNewQuestion(suite, w, jsonData, suite.tokenUser_Bar)
+	questionList := getSession(suite, w, suite.tokenUser_Bar)
+	questionId := questionList[0].Id
+
+	upvoteQuestion(suite, w, questionId, suite.tokenUser_Foo)
+	clearCentrifugeClientsMessages(suite)
+	undoVoteQuestion(suite, w, questionId, suite.tokenUser_Bar)
+
+	assert.EventuallyWithT(suite.T(), func(c *assert.CollectT) {
+		questionUpvotedEventFoo, err := findEvent[events.QuestionUpvoted](suite.centrifugeClientFoo, events.UNDO_UPVOTE_QUESTION)
+		assert.Nil(c, err)
+		assert.Equal(c, questionId, questionUpvotedEventFoo.Id)
+		assert.Equal(c, false, questionUpvotedEventFoo.Voted)
+		assert.Equal(c, 1, questionUpvotedEventFoo.Votes)
+
+		questionUpvotedEventBar, err1 := findEvent[events.QuestionUpvoted](suite.centrifugeClientBar, events.UNDO_UPVOTE_QUESTION)
+		assert.Nil(c, err1)
+		assert.Equal(c, questionId, questionUpvotedEventBar.Id)
+		assert.Equal(c, false, questionUpvotedEventBar.Voted)
+		assert.Equal(c, 1, questionUpvotedEventBar.Votes)
+	}, time.Second*3, time.Second*1, "No question undovote event received")
 }
 
 func (suite *QuestionApiTestSuite) TestGetSession_OK_200_CREATOR_SHOWN_ONLY_FOR_OWNED_AND_NOT_ANONYMOUS_QUESTIONS() {
@@ -477,6 +621,35 @@ func (suite *QuestionApiTestSuite) TestUpdateQuestion_OK_200_WHEN_QUESTION_IS_OW
 	assert.Equal(suite.T(), http.StatusOK, w.Code)
 }
 
+func (suite *QuestionApiTestSuite) TestUpdateQuestion_EVENTS_RECEIVED_UPDATE_QUESTION() {
+	w := httptest.NewRecorder()
+
+	tokenUser_Foo := suite.tokenUser_Foo
+	newQuestion := dtos.NewQuestionDto{Text: "Question to be updated", Anonymous: false}
+	postNewQuestion(suite, w, newQuestion, tokenUser_Foo)
+	questionList := getSession(suite, w, tokenUser_Foo)
+	question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Question to be updated" })]
+
+	updateQuestionDto := dtos.UpdateQuestionDto{Id: question_FOO_Q.Id, Text: "Updated Foo Question", Anonymous: true}
+
+	putUpdateQuestion(suite, w, updateQuestionDto, tokenUser_Foo)
+
+	assert.EventuallyWithT(suite.T(), func(c *assert.CollectT) {
+		questionUpdatedEventFoo, err := findEvent[events.QuestionUpdated](suite.centrifugeClientFoo, events.UPDATE_QUESTION)
+		assert.Nil(c, err)
+		assert.Equal(c, "Updated Foo Question", questionUpdatedEventFoo.Text)
+		assert.Equal(c, true, questionUpdatedEventFoo.Anonymous)
+		assert.Equal(c, "", questionUpdatedEventFoo.Creator)
+
+		questionUpdatedEventBar, err1 := findEvent[events.QuestionUpdated](suite.centrifugeClientBar, events.UPDATE_QUESTION)
+		assert.Nil(c, err1)
+		assert.Equal(c, "Updated Foo Question", questionUpdatedEventBar.Text)
+		assert.Equal(c, true, questionUpdatedEventBar.Anonymous)
+		assert.Equal(c, "", questionUpdatedEventBar.Creator)
+	}, time.Second*3, time.Second*1, "Updated question event has not been received")
+
+}
+
 func (suite *QuestionApiTestSuite) TestUpdateQuestion_FORBIDDEN_403_WHEN_QUESTION_IS_NOT_OWNED() {
 	w := httptest.NewRecorder()
 
@@ -518,6 +691,28 @@ func (suite *QuestionApiTestSuite) TestDeleteQuestion_OK_200_WHEN_QUESTION_IS_OW
 
 	assert.Equal(suite.T(), -1, idx)
 	assert.Equal(suite.T(), http.StatusOK, w.Code)
+}
+
+func (suite *QuestionApiTestSuite) TestDeleteQuestion_EVENTS_RECEIVED_DELETE_QUESTION() {
+	w := httptest.NewRecorder()
+
+	tokenUser_Foo := suite.tokenUser_Foo
+	newQuestion := dtos.NewQuestionDto{Text: "Question to be deleted", Anonymous: false}
+	postNewQuestion(suite, w, newQuestion, tokenUser_Foo)
+	questionList := getSession(suite, w, tokenUser_Foo)
+	question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Question to be deleted" })]
+
+	deleteQuestion(suite, w, question_FOO_Q.Id, tokenUser_Foo)
+
+	assert.EventuallyWithT(suite.T(), func(c *assert.CollectT) {
+		questionUpdatedEventFoo, err := findEvent[events.QuestionDeleted](suite.centrifugeClientFoo, events.DELETE_QUESTION)
+		assert.Nil(c, err)
+		assert.Equal(c, question_FOO_Q.Id, questionUpdatedEventFoo.Id)
+
+		questionUpdatedEventBar, err1 := findEvent[events.QuestionDeleted](suite.centrifugeClientBar, events.DELETE_QUESTION)
+		assert.Nil(c, err1)
+		assert.Equal(c, question_FOO_Q.Id, questionUpdatedEventBar.Id)
+	}, time.Second*3, time.Second*1, "Deleted question event has not been received")
 }
 
 func (suite *QuestionApiTestSuite) TestDeleteQuestion_FORBIDDEN_403_WHEN_QUESTION_IS_NOT_OWNED() {
@@ -689,4 +884,53 @@ func getSession(suite *QuestionApiTestSuite, w *httptest.ResponseRecorder, token
 	json.Unmarshal(body, &questionList)
 
 	return questionList
+}
+
+func findEvent[T any](centrifugeTestClient CentrifugeTestClient, eventType events.EventType) (*T, error) {
+	for i := range centrifugeTestClient.receivedMessages {
+		if centrifugeTestClient.receivedMessages[i].EventType == eventType {
+			var eventPayload T
+			json.Unmarshal([]byte(centrifugeTestClient.receivedMessages[i].Payload), &eventPayload)
+			return &eventPayload, nil
+		}
+	}
+
+	return nil, errors.New("Event not found")
+}
+
+func clearCentrifugeClientsMessages(suite *QuestionApiTestSuite) {
+	suite.centrifugeClientFoo.receivedMessages = suite.centrifugeClientFoo.receivedMessages[:0]
+	suite.centrifugeClientBar.receivedMessages = suite.centrifugeClientBar.receivedMessages[:0]
+}
+
+func initCentrifuge(suite *QuestionApiTestSuite) {
+	time.Sleep(time.Second * 2)
+
+	wsURL := "ws://localhost:3333/api/v1/connection/websocket"
+	cFoo := centrifuge.NewJsonClient(wsURL, centrifuge.Config{
+		Token: suite.tokenUser_Foo,
+	})
+	cBar := centrifuge.NewJsonClient(wsURL, centrifuge.Config{
+		Token: suite.tokenUser_Bar,
+	})
+
+	errFoo := cFoo.Connect()
+	errBar := cBar.Connect()
+
+	if errFoo != nil {
+		logrus.Fatal(errFoo)
+	}
+
+	if errBar != nil {
+		logrus.Fatal(errBar)
+	}
+
+	suite.centrifugeClientFoo = CentrifugeTestClient{
+		client:           cFoo,
+		receivedMessages: make([]events.Event, 0),
+	}
+	suite.centrifugeClientBar = CentrifugeTestClient{
+		client:           cBar,
+		receivedMessages: make([]events.Event, 0),
+	}
 }
