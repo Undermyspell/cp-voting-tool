@@ -62,6 +62,7 @@ jobs:
             build-args: |
               version_info=${{ github.event_name == 'workflow_dispatch' && inputs.build_tag || github.ref_type == 'tag' && github.ref_name || steps.short-sha.outputs.sha }}
               PUBLIC_API_BASE_URL=${{ vars.PUBLIC_API_BASE_URL }}
+              PUBLIC_API_BASE_URL_WS=${{ vars.PUBLIC_API_BASE_URL_WS }}
             tags: ${{ secrets.ACR_SERVER }}/cpvt-web:${{ github.event_name == 'workflow_dispatch' && inputs.build_tag || github.ref_type == 'tag' && github.ref_name || steps.short-sha.outputs.sha }}
   test_inmemory:
     name: Run Tests - Go Api - In Menory
