@@ -195,57 +195,57 @@ func (service *BrokeredQuestionsService) Delete(c *gin.Context) {
 // @Failure      401
 // @Failure      404 {string} error
 // @Router       /api/v1/question/upvote/{id} [put]
-func (service *BrokeredQuestionsService) Upvote(c *gin.Context) {
-	user, _ := c.Get(models.User)
-	questionId := c.Param("id")
-	userContext := user.(*models.UserContext)
+// func (service *BrokeredQuestionsService) Upvote(c *gin.Context) {
+// 	user, _ := c.Get(models.User)
+// 	questionId := c.Param("id")
+// 	userContext := user.(*models.UserContext)
 
-	votes, err := service.upVote(questionId, *userContext)
+// 	votes, err := service.upVote(questionId, *userContext)
 
-	if err != nil {
-		c.JSON(int(err.HttpStatus), gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
+// 	if err != nil {
+// 		c.JSON(int(err.HttpStatus), gin.H{
+// 			"error": err.Error(),
+// 		})
+// 		return
+// 	}
 
-	questionUpvoteMessage := struct {
-		Id    string
-		Votes int
-	}{questionId, votes}
+// 	questionUpvoteMessage := struct {
+// 		Id    string
+// 		Votes int
+// 	}{questionId, votes}
 
-	questionUpVoteForUserMessage := events.QuestionUpvoted{
-		Id:    questionId,
-		Votes: votes,
-		Voted: true,
-	}
+// 	questionUpVoteForUserMessage := events.QuestionUpvoted{
+// 		Id:    questionId,
+// 		Votes: votes,
+// 		Voted: true,
+// 	}
 
-	questionForUserPaylod, errf := json.Marshal(questionUpVoteForUserMessage)
-	questionPayload, errj := json.Marshal(questionUpvoteMessage)
+// 	questionForUserPaylod, errf := json.Marshal(questionUpVoteForUserMessage)
+// 	questionPayload, errj := json.Marshal(questionUpvoteMessage)
 
-	if errj != nil {
-		c.JSON(http.StatusBadRequest, "cant marshal question")
-		return
-	}
+// 	if errj != nil {
+// 		c.JSON(http.StatusBadRequest, "cant marshal question")
+// 		return
+// 	}
 
-	if errf != nil {
-		c.JSON(http.StatusBadRequest, "cant marshal question")
-		return
-	}
+// 	if errf != nil {
+// 		c.JSON(http.StatusBadRequest, "cant marshal question")
+// 		return
+// 	}
 
-	event := events.Event{
-		EventType: events.UPVOTE_QUESTION,
-		Payload:   string(questionPayload),
-	}
+// 	event := events.Event{
+// 		EventType: events.UPVOTE_QUESTION,
+// 		Payload:   string(questionPayload),
+// 	}
 
-	userevent := events.Event{
-		EventType: events.UPVOTE_QUESTION,
-		Payload:   string(questionForUserPaylod),
-	}
+// 	userevent := events.Event{
+// 		EventType: events.UPVOTE_QUESTION,
+// 		Payload:   string(questionForUserPaylod),
+// 	}
 
-	service.Broker.NotifyUser(userevent, *userContext)
-	service.Broker.NotifyAllButUser(event, *userContext)
-}
+// 	service.Broker.NotifyUser(userevent, *userContext)
+// 	service.Broker.NotifyAllButUser(event, *userContext)
+// }
 
 // UndovoteQuestion         godoc
 // @Security 	 JWT
