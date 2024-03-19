@@ -4,7 +4,7 @@ go 1.22
 
 require (
 	github.com/MicahParks/keyfunc/v3 v3.2.9
-	github.com/centrifugal/centrifuge v0.31.0
+	github.com/centrifugal/centrifuge v0.32.0
 	github.com/gin-contrib/cors v1.7.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/golang-jwt/jwt/v5 v5.2.1
@@ -18,13 +18,13 @@ require (
 	github.com/swaggo/gin-swagger v1.6.0
 	github.com/swaggo/swag v1.16.3
 	golang.org/x/crypto v0.21.0
-	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225
+	golang.org/x/exp v0.0.0-20240318143956-a85f2c67cd81
 )
 
 require (
 	github.com/FZambia/eagle v0.1.0 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
-	github.com/MicahParks/jwkset v0.5.15 // indirect
+	github.com/MicahParks/jwkset v0.5.16 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bytedance/sonic v1.11.3 // indirect
 	github.com/centrifugal/centrifuge-go v0.10.2 // indirect
@@ -68,7 +68,7 @@ require (
 	github.com/prometheus/client_model v0.6.0 // indirect
 	github.com/prometheus/common v0.50.0 // indirect
 	github.com/prometheus/procfs v0.13.0 // indirect
-	github.com/redis/rueidis v1.0.31 // indirect
+	github.com/redis/rueidis v1.0.32 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect

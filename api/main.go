@@ -12,6 +12,8 @@ import (
 	"voting/internal/votingstorage"
 	questionService "voting/services/question"
 	userService "voting/services/user"
+	votinginfra "voting/voting/infra"
+	votinghttp "voting/voting/interface/http"
 
 	_ "voting/docs"
 
@@ -62,6 +64,8 @@ func main() {
 		votingStorage = votingstorage.NewRedis()
 	}
 
+	votinginfra.InitInstances(internalBroker, votingStorage)
+
 	questionService := initQuestionService(internalBroker, votingStorage)
 	userService := userService.NewTestUser()
 
@@ -91,7 +95,7 @@ func main() {
 		q := v1.Group("/question", middleware.GinRequireAuth())
 		q.PUT("/answer/:id", middleware.RequireRole(roles.SessionAdmin, roles.Admin), questionService.Answer)
 		q.POST("/new", questionService.Add)
-		q.PUT("/upvote/:id", questionService.Upvote)
+		q.PUT("/upvote/:id", votinghttp.Upvote)
 		q.PUT("/undovote/:id", questionService.UndoVote)
 		q.PUT("/update", questionService.Update)
 		q.DELETE("/delete/:id", questionService.Delete)
