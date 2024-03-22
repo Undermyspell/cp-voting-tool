@@ -6,13 +6,14 @@ import (
 	"voting/dtos"
 	"voting/internal/events"
 	"voting/internal/models"
-	shared "voting/shared/logic"
-	votinginfra "voting/voting/infra"
+	shared "voting/shared"
+	shared_infra_broker "voting/shared/infra/broker"
+	voting_repositories "voting/voting/repositories"
 	errors "voting/voting/use-cases/_errors"
 )
 
 func Create(newQuestionDto dtos.NewQuestionDto, userContext models.UserContext) errors.VotingError {
-	broker := votinginfra.GetBroker()
+	broker := shared_infra_broker.GetInstance()
 
 	question, err := create(newQuestionDto.Text, newQuestionDto.Anonymous, userContext)
 
@@ -74,7 +75,7 @@ func Create(newQuestionDto dtos.NewQuestionDto, userContext models.UserContext) 
 }
 
 func create(text string, anonymous bool, creator models.UserContext) (*models.Question, errors.VotingError) {
-	votingStorage := votinginfra.GetVotingStorage()
+	votingStorage := voting_repositories.GetInstance()
 
 	if !votingStorage.IsRunning() {
 		return nil, &errors.QuestionSessionNotRunningError{

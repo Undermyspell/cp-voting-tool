@@ -1,4 +1,4 @@
-package broker
+package shared_infra_broker
 
 import (
 	"encoding/json"

@@ -1,4 +1,4 @@
-package broker
+package shared_infra_broker
 
 import (
 	"voting/internal/events"
@@ -16,7 +16,7 @@ func New() Broker {
 	}
 
 	go broker.Listen()
-	// go broker.SendHeartBeat()
+	initInstances(broker)
 
 	return broker
 }

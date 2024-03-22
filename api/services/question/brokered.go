@@ -4,18 +4,18 @@ import (
 	"encoding/json"
 	"net/http"
 	"voting/dtos"
-	"voting/internal/broker"
 	"voting/internal/events"
 	"voting/internal/models"
 	"voting/internal/validation"
 	"voting/internal/votingstorage"
+	shared_infra_broker "voting/shared/infra/broker"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
 
 type BrokeredQuestionsService struct {
-	Broker          broker.Broker
+	Broker          shared_infra_broker.Broker
 	QuestionSession votingstorage.VotingStorage
 }
 

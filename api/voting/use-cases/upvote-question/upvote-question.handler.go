@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"voting/internal/events"
 	"voting/internal/models"
-	shared "voting/shared/logic"
-	votinginfra "voting/voting/infra"
+	shared "voting/shared"
+	shared_infra_broker "voting/shared/infra/broker"
+	voting_repositories "voting/voting/repositories"
 	errors "voting/voting/use-cases/_errors"
 )
 
 func Upvote(questionId string, userContext models.UserContext) errors.VotingError {
-	broker := votinginfra.GetBroker()
+	broker := shared_infra_broker.GetInstance()
 
 	votes, err := upVote(questionId, userContext)
 
@@ -57,7 +58,7 @@ func Upvote(questionId string, userContext models.UserContext) errors.VotingErro
 }
 
 func upVote(id string, user models.UserContext) (int, errors.VotingError) {
-	votingStorage := votinginfra.GetVotingStorage()
+	votingStorage := voting_repositories.GetInstance()
 
 	if !votingStorage.IsRunning() {
 		return 0, &errors.QuestionSessionNotRunningError{

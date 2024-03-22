@@ -1,6 +1,6 @@
 package usecases
 
-import shared "voting/shared/logic"
+import shared "voting/shared"
 
 type VotingError interface {
 	IsVotingError() bool

@@ -3,7 +3,6 @@ package main
 import (
 	"net/http"
 	"time"
-	"voting/internal/broker"
 	"voting/internal/env"
 	"voting/internal/jwks"
 	"voting/internal/middleware"
@@ -12,8 +11,9 @@ import (
 	"voting/internal/votingstorage"
 	questionService "voting/services/question"
 	userService "voting/services/user"
-	votinginfra "voting/voting/infra"
+	shared_infra "voting/shared/infra/broker"
 	votinghttp "voting/voting/interface/http"
+	voting_repositories "voting/voting/repositories"
 
 	_ "voting/docs"
 
@@ -25,7 +25,7 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-var initQuestionService = func(broker broker.Broker, votingStorage votingstorage.VotingStorage) questionService.QuestionService {
+var initQuestionService = func(broker shared_infra.Broker, votingStorage votingstorage.VotingStorage) questionService.QuestionService {
 	return questionService.NewBrokered(broker, votingStorage)
 }
 
@@ -50,7 +50,7 @@ func main() {
 	env.Init()
 	jwks.Init()
 
-	internalBroker := broker.New()
+	internalBroker := shared_infra.New()
 	centrifugeBroker := notification.NewCentrifuge(internalBroker)
 
 	r = gin.Default()
@@ -64,7 +64,7 @@ func main() {
 		votingStorage = votingstorage.NewRedis()
 	}
 
-	votinginfra.InitInstances(internalBroker, votingStorage)
+	voting_repositories.InitInstances(votingStorage)
 
 	questionService := initQuestionService(internalBroker, votingStorage)
 	userService := userService.NewTestUser()

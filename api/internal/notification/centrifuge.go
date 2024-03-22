@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"time"
-	"voting/internal/broker"
 	"voting/internal/events"
 	"voting/internal/models"
+	shared_infra_broker "voting/shared/infra/broker"
 
 	"github.com/centrifugal/centrifuge"
 	"github.com/sirupsen/logrus"
@@ -18,7 +18,7 @@ func handleLog(e centrifuge.LogEntry) {
 
 var node *centrifuge.Node
 
-func initHandlers(internalBroker broker.Broker) {
+func initHandlers(internalBroker shared_infra_broker.Broker) {
 	node.OnConnecting(func(ctx context.Context, event centrifuge.ConnectEvent) (centrifuge.ConnectReply, error) {
 		userContext, err := models.GetUserContextFromToken(event.Token)
 
@@ -53,7 +53,7 @@ func initHandlers(internalBroker broker.Broker) {
 
 		logrus.Infof("🟩 connected via %s.", transport.Name())
 
-		userBoundChannel := broker.UserBoundChannel{
+		userBoundChannel := shared_infra_broker.UserBoundChannel{
 			Channel: make(chan events.Event),
 			User:    userContext,
 		}
