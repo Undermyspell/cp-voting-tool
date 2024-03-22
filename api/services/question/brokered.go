@@ -362,48 +362,6 @@ func (service *BrokeredQuestionsService) deleteQuestion(id string, creator model
 	return nil
 }
 
-func (service *BrokeredQuestionsService) upVote(id string, user models.UserContext) (int, *validation.ValidationError) {
-	if !service.QuestionSession.IsRunning() {
-		return 0, &validation.ValidationError{
-			ValidationError: "no questions session currently running",
-			HttpStatus:      http.StatusNotAcceptable,
-		}
-	}
-
-	question, ok := service.QuestionSession.GetQuestion(id)
-
-	if !ok {
-		return 0, &validation.ValidationError{
-			ValidationError: "question not found",
-			HttpStatus:      http.StatusNotFound,
-		}
-	}
-
-	answered := question.Answered
-	if answered {
-		return 0, &validation.ValidationError{
-			ValidationError: "question already answered",
-			HttpStatus:      http.StatusNotAcceptable,
-		}
-	}
-
-	hash := user.GetHash(service.QuestionSession.GetSecret())
-	_, ok = service.QuestionSession.GetUserVotes()[hash][id]
-
-	if ok {
-		return 0, &validation.ValidationError{
-			ValidationError: "user already voted",
-			HttpStatus:      http.StatusNotAcceptable,
-		}
-	}
-
-	service.QuestionSession.Vote(hash, id)
-
-	question, _ = service.QuestionSession.GetQuestion(question.Id)
-
-	return question.Votes, nil
-}
-
 func (service *BrokeredQuestionsService) undoVote(id string, user models.UserContext) (int, *validation.ValidationError) {
 	if !service.QuestionSession.IsRunning() {
 		return 0, &validation.ValidationError{
