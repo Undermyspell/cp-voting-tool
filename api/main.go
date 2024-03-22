@@ -97,7 +97,7 @@ func main() {
 		q.POST("/new", votinghttp.Create)
 		q.PUT("/upvote/:id", votinghttp.Upvote)
 		q.PUT("/undovote/:id", questionService.UndoVote)
-		q.PUT("/update", questionService.Update)
+		q.PUT("/update", votinghttp.Update)
 		q.DELETE("/delete/:id", questionService.Delete)
 
 		s := q.Group("/session", middleware.GinRequireAuth())

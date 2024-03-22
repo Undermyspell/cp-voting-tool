@@ -5,69 +5,17 @@ import (
 	"net/http"
 	"voting/dtos"
 	"voting/internal/events"
-	"voting/internal/models"
 	"voting/internal/validation"
 	"voting/internal/votingstorage"
 	shared_infra_broker "voting/shared/infra/broker"
 	"voting/shared/shared_models"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 )
 
 type BrokeredQuestionsService struct {
 	Broker          shared_infra_broker.Broker
 	QuestionSession votingstorage.VotingStorage
-}
-
-// UpdateQuestion         godoc
-// @Security 	 JWT
-// @Summary      Updates an existing question of the current session
-// @Description  Updates an existing question of the current session, only owned questions can be updated
-// @Tags         Question
-// @Produce      json
-// @Param        question  body      dtos.UpdateQuestionDto  true  "Question JSON"
-// @Success      200
-// @Failure      401
-// @Failure      403
-// @Router       /api/v1/question/update [put]
-func (service *BrokeredQuestionsService) Update(c *gin.Context) {
-	var updateQuestionDto dtos.UpdateQuestionDto
-	user, _ := c.Get(shared_models.User)
-	userContext := user.(*shared_models.UserContext)
-
-	err := c.BindJSON(&updateQuestionDto)
-
-	if err != nil {
-		logrus.Error(err.Error())
-		c.JSON(http.StatusBadRequest, "cant parse request")
-		return
-	}
-
-	questionToUpdate, errValidation := service.updateQuestion(updateQuestionDto, *userContext)
-
-	if errValidation != nil {
-		c.JSON(int(errValidation.HttpStatus), gin.H{
-			"error": errValidation.Error(),
-		})
-		return
-	}
-
-	questionToUpdateSseMessage := events.QuestionUpdated{
-		Id:        questionToUpdate.Id,
-		Text:      questionToUpdate.Text,
-		Creator:   questionToUpdate.CreatorName,
-		Anonymous: questionToUpdate.Anonymous,
-	}
-
-	newQuestionByteString, _ := json.Marshal(questionToUpdateSseMessage)
-
-	event := events.Event{
-		EventType: events.UPDATE_QUESTION,
-		Payload:   string(newQuestionByteString),
-	}
-
-	service.Broker.NotifyAll(event)
 }
 
 // AddQuestion         godoc
@@ -291,41 +239,6 @@ func (service *BrokeredQuestionsService) GetSession(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, questions)
-}
-
-func (service *BrokeredQuestionsService) updateQuestion(question dtos.UpdateQuestionDto, creator shared_models.UserContext) (models.Question, *validation.ValidationError) {
-	if !service.QuestionSession.IsRunning() {
-		return models.Question{}, &validation.ValidationError{
-			ValidationError: "no questions session currently running",
-			HttpStatus:      http.StatusNotAcceptable,
-		}
-	}
-
-	updatedQuestion, ok := service.QuestionSession.GetQuestion(question.Id)
-	if !ok {
-		return models.Question{}, &validation.ValidationError{
-			ValidationError: "question not found",
-			HttpStatus:      http.StatusNotFound,
-		}
-	}
-
-	if updatedQuestion.CreatorHash != creator.GetHash(service.QuestionSession.GetSecret()) {
-		return models.Question{}, &validation.ValidationError{
-			ValidationError: "you do not own this question",
-			HttpStatus:      http.StatusForbidden,
-		}
-	}
-
-	if updatedQuestion.Answered {
-		return models.Question{}, &validation.ValidationError{
-			ValidationError: "question has already been answered",
-			HttpStatus:      http.StatusNotAcceptable,
-		}
-	}
-
-	updatedQuestion = service.QuestionSession.UpdateQuestion(question.Id, question.Text, creator.Name, question.Anonymous)
-
-	return updatedQuestion, nil
 }
 
 func (service *BrokeredQuestionsService) deleteQuestion(id string, creator shared_models.UserContext) *validation.ValidationError {

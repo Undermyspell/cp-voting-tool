@@ -4,8 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type QuestionService interface {
-	Update(c *gin.Context)
+type QuestionService interface {	
 	UndoVote(c *gin.Context)
 	Delete(c *gin.Context)
 	Answer(c *gin.Context)

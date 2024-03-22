@@ -31,6 +31,10 @@ type QuestionMaxLengthExceededError struct {
 	shared.UseCaseError
 }
 
+type QuestionNotOwnedError struct {
+	shared.UseCaseError
+}
+
 func (err *QuestionNotFoundError) IsVotingError() bool {
 	return true
 }
@@ -76,5 +80,13 @@ func (err *QuestionMaxLengthExceededError) IsVotingError() bool {
 }
 
 func (err *QuestionMaxLengthExceededError) Error() string {
+	return err.ErrMessage
+}
+
+func (err *QuestionNotOwnedError) IsVotingError() bool {
+	return true
+}
+
+func (err *QuestionNotOwnedError) Error() string {
 	return err.ErrMessage
 }
