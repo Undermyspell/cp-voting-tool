@@ -2,7 +2,6 @@ package services
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"voting/dtos"
 	"voting/internal/broker"
@@ -18,82 +17,6 @@ import (
 type BrokeredQuestionsService struct {
 	Broker          broker.Broker
 	QuestionSession votingstorage.VotingStorage
-}
-
-// AddQuestion         godoc
-// @Security 	 JWT
-// @Summary      Adds a new question
-// @Description  Adds a new question to the current session
-// @Tags         Question
-// @Produce      json
-// @Param        question  body      dtos.NewQuestionDto  true  "Question JSON"
-// @Success      200
-// @Failure      401
-// @Router       /api/v1/question/new [post]
-func (service *BrokeredQuestionsService) Add(c *gin.Context) {
-	var newQuestionDto dtos.NewQuestionDto
-	user, _ := c.Get(models.User)
-
-	userContext := user.(*models.UserContext)
-
-	err := c.BindJSON(&newQuestionDto)
-
-	if err != nil {
-		logrus.Error(err.Error())
-		c.JSON(http.StatusBadRequest, "cant parse request")
-		return
-	}
-
-	question, errValidation := service.newQuestion(newQuestionDto.Text, newQuestionDto.Anonymous, *userContext)
-
-	if errValidation != nil {
-		c.JSON(int(errValidation.HttpStatus), gin.H{
-			"error": errValidation.Error(),
-		})
-		return
-	}
-
-	newQuestionForUserSseMessage := events.QuestionCreated{
-		Id:        question.Id,
-		Text:      question.Text,
-		Creator:   question.CreatorName,
-		Answered:  question.Answered,
-		Votes:     1,
-		Voted:     true,
-		Anonymous: question.Anonymous,
-		Owned:     true,
-	}
-
-	creatorForAllButUser := ""
-
-	if !question.Anonymous {
-		creatorForAllButUser = question.CreatorName
-	}
-
-	newQuestionForAllButUserSseMessage := events.QuestionCreated{
-		Id:        question.Id,
-		Text:      question.Text,
-		Creator:   creatorForAllButUser,
-		Answered:  question.Answered,
-		Votes:     1,
-		Anonymous: question.Anonymous,
-		Owned:     false,
-	}
-
-	newQuestionForUserByteString, _ := json.Marshal(newQuestionForUserSseMessage)
-	newQuestionForAllButUserByteString, _ := json.Marshal(newQuestionForAllButUserSseMessage)
-
-	eventForUser := events.Event{
-		EventType: events.NEW_QUESTION,
-		Payload:   string(newQuestionForUserByteString),
-	}
-	eventForAllButUser := events.Event{
-		EventType: events.NEW_QUESTION,
-		Payload:   string(newQuestionForAllButUserByteString),
-	}
-
-	service.Broker.NotifyUser(eventForUser, *userContext)
-	service.Broker.NotifyAllButUser(eventForAllButUser, *userContext)
 }
 
 // UpdateQuestion         godoc
@@ -183,69 +106,6 @@ func (service *BrokeredQuestionsService) Delete(c *gin.Context) {
 
 	service.Broker.NotifyAll(event)
 }
-
-// UpvoteQuestion         godoc
-// @Security 	 JWT
-// @Summary      Upvotes a question
-// @Description  Upvotes a question of the current session
-// @Tags         Question
-// @Produce      json
-// @Param        id  path  string  true  "Id of question to upvote"
-// @Success      200
-// @Failure      401
-// @Failure      404 {string} error
-// @Router       /api/v1/question/upvote/{id} [put]
-// func (service *BrokeredQuestionsService) Upvote(c *gin.Context) {
-// 	user, _ := c.Get(models.User)
-// 	questionId := c.Param("id")
-// 	userContext := user.(*models.UserContext)
-
-// 	votes, err := service.upVote(questionId, *userContext)
-
-// 	if err != nil {
-// 		c.JSON(int(err.HttpStatus), gin.H{
-// 			"error": err.Error(),
-// 		})
-// 		return
-// 	}
-
-// 	questionUpvoteMessage := struct {
-// 		Id    string
-// 		Votes int
-// 	}{questionId, votes}
-
-// 	questionUpVoteForUserMessage := events.QuestionUpvoted{
-// 		Id:    questionId,
-// 		Votes: votes,
-// 		Voted: true,
-// 	}
-
-// 	questionForUserPaylod, errf := json.Marshal(questionUpVoteForUserMessage)
-// 	questionPayload, errj := json.Marshal(questionUpvoteMessage)
-
-// 	if errj != nil {
-// 		c.JSON(http.StatusBadRequest, "cant marshal question")
-// 		return
-// 	}
-
-// 	if errf != nil {
-// 		c.JSON(http.StatusBadRequest, "cant marshal question")
-// 		return
-// 	}
-
-// 	event := events.Event{
-// 		EventType: events.UPVOTE_QUESTION,
-// 		Payload:   string(questionPayload),
-// 	}
-
-// 	userevent := events.Event{
-// 		EventType: events.UPVOTE_QUESTION,
-// 		Payload:   string(questionForUserPaylod),
-// 	}
-
-// 	service.Broker.NotifyUser(userevent, *userContext)
-// 	service.Broker.NotifyAllButUser(event, *userContext)
-// }
 
 // UndovoteQuestion         godoc
 // @Security 	 JWT
@@ -430,25 +290,6 @@ func (service *BrokeredQuestionsService) GetSession(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, questions)
-}
-
-func (service *BrokeredQuestionsService) newQuestion(text string, anonymous bool, creator models.UserContext) (models.Question, *validation.ValidationError) {
-	if !service.QuestionSession.IsRunning() {
-		return models.Question{}, &validation.ValidationError{
-			ValidationError: "no questions session currently running",
-			HttpStatus:      http.StatusNotAcceptable,
-		}
-	}
-
-	if len(text) > models.MaxLength {
-		return models.Question{}, &validation.ValidationError{
-			ValidationError: fmt.Sprintf("Question text must have a max length of %d", models.MaxLength),
-			HttpStatus:      http.StatusBadRequest,
-		}
-	}
-
-	question := service.QuestionSession.AddQuestion(text, anonymous, creator.Name, creator.GetHash(service.QuestionSession.GetSecret()))
-	return question, nil
 }
 
 func (service *BrokeredQuestionsService) updateQuestion(question dtos.UpdateQuestionDto, creator models.UserContext) (models.Question, *validation.ValidationError) {

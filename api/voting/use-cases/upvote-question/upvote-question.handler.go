@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"voting/internal/events"
 	"voting/internal/models"
+	shared "voting/shared/logic"
 	votinginfra "voting/voting/infra"
+	errors "voting/voting/use-cases/_errors"
 )
 
-func Upvote(questionId string, userContext models.UserContext) UpvoteQuestionError {
+func Upvote(questionId string, userContext models.UserContext) errors.VotingError {
 	broker := votinginfra.GetBroker()
 
 	votes, err := upVote(questionId, userContext)
@@ -31,8 +33,8 @@ func Upvote(questionId string, userContext models.UserContext) UpvoteQuestionErr
 	questionPayload, errj := json.Marshal(questionUpvoteMessage)
 
 	if errj != nil || errf != nil {
-		return &UnexpectedError{
-			UseCaseError: UseCaseError{
+		return &errors.UnexpectedError{
+			UseCaseError: shared.UseCaseError{
 				ErrMessage: "cant marshal question",
 			},
 		}
@@ -54,12 +56,12 @@ func Upvote(questionId string, userContext models.UserContext) UpvoteQuestionErr
 	return nil
 }
 
-func upVote(id string, user models.UserContext) (int, UpvoteQuestionError) {
+func upVote(id string, user models.UserContext) (int, errors.VotingError) {
 	votingStorage := votinginfra.GetVotingStorage()
 
 	if !votingStorage.IsRunning() {
-		return 0, &QuestionSessionNotRunningError{
-			UseCaseError: UseCaseError{
+		return 0, &errors.QuestionSessionNotRunningError{
+			UseCaseError: shared.UseCaseError{
 				ErrMessage: "no questions session currently running",
 			},
 		}
@@ -68,8 +70,8 @@ func upVote(id string, user models.UserContext) (int, UpvoteQuestionError) {
 	question, ok := votingStorage.GetQuestion(id)
 
 	if !ok {
-		return 0, &QuestionNotFoundError{
-			UseCaseError: UseCaseError{
+		return 0, &errors.QuestionNotFoundError{
+			UseCaseError: shared.UseCaseError{
 				ErrMessage: "question not found",
 			},
 		}
@@ -77,8 +79,8 @@ func upVote(id string, user models.UserContext) (int, UpvoteQuestionError) {
 
 	answered := question.Answered
 	if answered {
-		return 0, &QuestionAlreadyAnsweredError{
-			UseCaseError: UseCaseError{
+		return 0, &errors.QuestionAlreadyAnsweredError{
+			UseCaseError: shared.UseCaseError{
 				ErrMessage: "question already answered",
 			},
 		}
@@ -89,8 +91,8 @@ func upVote(id string, user models.UserContext) (int, UpvoteQuestionError) {
 
 	if ok {
 		return 0,
-			&UserAlreadyVotedError{
-				UseCaseError: UseCaseError{
+			&errors.UserAlreadyVotedError{
+				UseCaseError: shared.UseCaseError{
 					ErrMessage: "user already voted",
 				},
 			}

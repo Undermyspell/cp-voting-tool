@@ -5,9 +5,7 @@ import (
 )
 
 type QuestionService interface {
-	Add(c *gin.Context)
 	Update(c *gin.Context)
-	// Upvote(c *gin.Context)
 	UndoVote(c *gin.Context)
 	Delete(c *gin.Context)
 	Answer(c *gin.Context)
