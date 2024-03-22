@@ -160,46 +160,6 @@ func (service *BrokeredQuestionsService) Answer(c *gin.Context) {
 	service.Broker.NotifyAll(event)
 }
 
-// StopSession         godoc
-// @Security 	 JWT
-// @Summary      Stops the current questions session
-// @Description  Stops the current questions session
-// @Tags         Question
-// @Produce      json
-// @Success      200
-// @Failure      401
-// @Router       /api/v1/question/session/stop [post]
-func (service *BrokeredQuestionsService) Stop(c *gin.Context) {
-	service.QuestionSession.Stop()
-
-	event := events.Event{
-		EventType: events.STOP_SESSION,
-		Payload:   events.PayloadEmpty,
-	}
-
-	service.Broker.NotifyAll(event)
-}
-
-// StartSession         godoc
-// @Security 	 JWT
-// @Summary      Starts a new questions session
-// @Description  Starts a new questions session
-// @Tags         Question
-// @Produce      json
-// @Success      200
-// @Failure      401
-// @Router       /api/v1/question/session/start [post]
-func (service *BrokeredQuestionsService) Start(c *gin.Context) {
-	service.QuestionSession.Start()
-
-	event := events.Event{
-		EventType: events.START_SESSION,
-		Payload:   events.PayloadEmpty,
-	}
-
-	service.Broker.NotifyAll(event)
-}
-
 // GetSession         godoc
 // @Security 	 JWT
 // @Summary      Gets the questions of the current session

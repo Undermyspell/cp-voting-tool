@@ -4,11 +4,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type QuestionService interface {	
+type QuestionService interface {
 	UndoVote(c *gin.Context)
 	Delete(c *gin.Context)
 	Answer(c *gin.Context)
-	Stop(c *gin.Context)
-	Start(c *gin.Context)
 	GetSession(c *gin.Context)
 }

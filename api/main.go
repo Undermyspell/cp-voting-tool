@@ -101,8 +101,8 @@ func main() {
 		q.DELETE("/delete/:id", questionService.Delete)
 
 		s := q.Group("/session", middleware.GinRequireAuth())
-		s.POST("/start", middleware.RequireRole(roles.Admin), questionService.Start)
-		s.POST("/stop", middleware.RequireRole(roles.Admin), questionService.Stop)
+		s.POST("/start", middleware.RequireRole(roles.Admin), votinghttp.StartSession)
+		s.POST("/stop", middleware.RequireRole(roles.Admin), votinghttp.StopSession)
 		s.GET("", questionService.GetSession)
 
 		ut := v1.Group("/user/test")
