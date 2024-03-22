@@ -3,7 +3,7 @@ package votinghttp
 import (
 	"net/http"
 	"voting/dtos"
-	"voting/internal/models"
+	"voting/shared/shared_models"
 	usecaseErrors "voting/voting/use-cases/_errors"
 	ucCreate "voting/voting/use-cases/create-question"
 	usecases "voting/voting/use-cases/upvote-question"
@@ -14,9 +14,9 @@ import (
 
 func Create(c *gin.Context) {
 	var newQuestionDto dtos.NewQuestionDto
-	user, _ := c.Get(models.User)
+	user, _ := c.Get(shared_models.User)
 
-	userContext := user.(*models.UserContext)
+	userContext := user.(*shared_models.UserContext)
 
 	err := c.BindJSON(&newQuestionDto)
 
@@ -48,9 +48,9 @@ func Create(c *gin.Context) {
 }
 
 func Upvote(c *gin.Context) {
-	user, _ := c.Get(models.User)
+	user, _ := c.Get(shared_models.User)
 	questionId := c.Param("id")
-	userContext := user.(*models.UserContext)
+	userContext := user.(*shared_models.UserContext)
 
 	err := usecases.Upvote(questionId, *userContext)
 

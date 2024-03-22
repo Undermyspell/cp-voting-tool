@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"time"
 	"voting/internal/events"
-	"voting/internal/models"
 	shared_infra_broker "voting/shared/infra/broker"
+	"voting/shared/shared_models"
 
 	"github.com/centrifugal/centrifuge"
 	"github.com/sirupsen/logrus"
@@ -20,7 +20,7 @@ var node *centrifuge.Node
 
 func initHandlers(internalBroker shared_infra_broker.Broker) {
 	node.OnConnecting(func(ctx context.Context, event centrifuge.ConnectEvent) (centrifuge.ConnectReply, error) {
-		userContext, err := models.GetUserContextFromToken(event.Token)
+		userContext, err := shared_models.GetUserContextFromToken(event.Token)
 
 		if err != nil {
 			return centrifuge.ConnectReply{}, centrifuge.ErrorUnauthorized
@@ -48,7 +48,7 @@ func initHandlers(internalBroker shared_infra_broker.Broker) {
 	node.OnConnect(func(client *centrifuge.Client) {
 		transport := client.Transport()
 
-		var userContext models.UserContext
+		var userContext shared_models.UserContext
 		json.Unmarshal(client.Info(), &userContext)
 
 		logrus.Infof("🟩 connected via %s.", transport.Name())

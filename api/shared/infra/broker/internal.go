@@ -4,14 +4,14 @@ import (
 	"encoding/json"
 	"time"
 	"voting/internal/events"
-	"voting/internal/models"
+	"voting/shared/shared_models"
 
 	"github.com/sirupsen/logrus"
 )
 
 type UserBoundChannel struct {
 	Channel chan events.Event
-	User    models.UserContext
+	User    shared_models.UserContext
 }
 
 type InternalBroker struct {
@@ -64,14 +64,14 @@ func (broker *InternalBroker) NotifyAll(event events.Event) {
 	broker.NotifierAll <- event
 }
 
-func (broker *InternalBroker) NotifyUser(event events.Event, user models.UserContext) {
+func (broker *InternalBroker) NotifyUser(event events.Event, user shared_models.UserContext) {
 	broker.NotifierUser <- events.UserBoundEvent{
 		Event: event,
 		User:  user,
 	}
 }
 
-func (broker *InternalBroker) NotifyAllButUser(event events.Event, user models.UserContext) {
+func (broker *InternalBroker) NotifyAllButUser(event events.Event, user shared_models.UserContext) {
 	broker.NotifierAllButUser <- events.UserBoundEvent{
 		Event: event,
 		User:  user,
@@ -79,7 +79,7 @@ func (broker *InternalBroker) NotifyAllButUser(event events.Event, user models.U
 }
 
 func (broker *InternalBroker) DistinctClientsCount() int {
-	distinctClients := make(map[models.UserContext]bool)
+	distinctClients := make(map[shared_models.UserContext]bool)
 	for clientMessageChan := range broker.Clients {
 		if _, ok := distinctClients[clientMessageChan.User]; !ok {
 			distinctClients[clientMessageChan.User] = true

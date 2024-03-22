@@ -3,16 +3,16 @@ package notification
 import (
 	"io"
 	"voting/internal/events"
-	"voting/internal/models"
 	shared_infra_broker "voting/shared/infra/broker"
+	"voting/shared/shared_models"
 
 	"github.com/gin-gonic/gin"
 )
 
 func SseStream(internalBroker shared_infra_broker.Broker) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		user, _ := c.Get(models.User)
-		userContext := user.(*models.UserContext)
+		user, _ := c.Get(shared_models.User)
+		userContext := user.(*shared_models.UserContext)
 
 		userBoundChannel := shared_infra_broker.UserBoundChannel{
 			Channel: make(chan events.Event),

@@ -9,6 +9,7 @@ import (
 	"voting/internal/validation"
 	"voting/internal/votingstorage"
 	shared_infra_broker "voting/shared/infra/broker"
+	"voting/shared/shared_models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -32,8 +33,8 @@ type BrokeredQuestionsService struct {
 // @Router       /api/v1/question/update [put]
 func (service *BrokeredQuestionsService) Update(c *gin.Context) {
 	var updateQuestionDto dtos.UpdateQuestionDto
-	user, _ := c.Get(models.User)
-	userContext := user.(*models.UserContext)
+	user, _ := c.Get(shared_models.User)
+	userContext := user.(*shared_models.UserContext)
 
 	err := c.BindJSON(&updateQuestionDto)
 
@@ -81,8 +82,8 @@ func (service *BrokeredQuestionsService) Update(c *gin.Context) {
 // @Failure      403 {string} error
 // @Router       /api/v1/question/delete/{id} [delete]
 func (service *BrokeredQuestionsService) Delete(c *gin.Context) {
-	user, _ := c.Get(models.User)
-	userContext := user.(*models.UserContext)
+	user, _ := c.Get(shared_models.User)
+	userContext := user.(*shared_models.UserContext)
 	questionId := c.Param("id")
 
 	err := service.deleteQuestion(questionId, *userContext)
@@ -119,9 +120,9 @@ func (service *BrokeredQuestionsService) Delete(c *gin.Context) {
 // @Failure      404 {string} error
 // @Router       /api/v1/question/undovote/{id} [put]
 func (service *BrokeredQuestionsService) UndoVote(c *gin.Context) {
-	user, _ := c.Get(models.User)
+	user, _ := c.Get(shared_models.User)
 	questionId := c.Param("id")
-	userContext := user.(*models.UserContext)
+	userContext := user.(*shared_models.UserContext)
 
 	votes, err := service.undoVote(questionId, *userContext)
 
@@ -268,8 +269,8 @@ func (service *BrokeredQuestionsService) GetSession(c *gin.Context) {
 		return
 	}
 
-	user, _ := c.Get(models.User)
-	userContext := user.(*models.UserContext)
+	user, _ := c.Get(shared_models.User)
+	userContext := user.(*shared_models.UserContext)
 	hash := userContext.GetHash(service.QuestionSession.GetSecret())
 	questions := []dtos.QuestionDto{}
 
@@ -292,7 +293,7 @@ func (service *BrokeredQuestionsService) GetSession(c *gin.Context) {
 	c.JSON(http.StatusOK, questions)
 }
 
-func (service *BrokeredQuestionsService) updateQuestion(question dtos.UpdateQuestionDto, creator models.UserContext) (models.Question, *validation.ValidationError) {
+func (service *BrokeredQuestionsService) updateQuestion(question dtos.UpdateQuestionDto, creator shared_models.UserContext) (models.Question, *validation.ValidationError) {
 	if !service.QuestionSession.IsRunning() {
 		return models.Question{}, &validation.ValidationError{
 			ValidationError: "no questions session currently running",
@@ -327,7 +328,7 @@ func (service *BrokeredQuestionsService) updateQuestion(question dtos.UpdateQues
 	return updatedQuestion, nil
 }
 
-func (service *BrokeredQuestionsService) deleteQuestion(id string, creator models.UserContext) *validation.ValidationError {
+func (service *BrokeredQuestionsService) deleteQuestion(id string, creator shared_models.UserContext) *validation.ValidationError {
 	if !service.QuestionSession.IsRunning() {
 		return &validation.ValidationError{
 			ValidationError: "no questions session currently running",
@@ -362,7 +363,7 @@ func (service *BrokeredQuestionsService) deleteQuestion(id string, creator model
 	return nil
 }
 
-func (service *BrokeredQuestionsService) undoVote(id string, user models.UserContext) (int, *validation.ValidationError) {
+func (service *BrokeredQuestionsService) undoVote(id string, user shared_models.UserContext) (int, *validation.ValidationError) {
 	if !service.QuestionSession.IsRunning() {
 		return 0, &validation.ValidationError{
 			ValidationError: "no questions session currently running",

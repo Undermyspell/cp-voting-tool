@@ -1,4 +1,4 @@
-package models
+package shared_models
 
 import (
 	"crypto/hmac"

@@ -2,8 +2,8 @@ package middleware
 
 import (
 	"net/http"
-	"voting/internal/models"
 	"voting/internal/models/roles"
+	"voting/shared/shared_models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -11,8 +11,8 @@ import (
 
 func RequireRole(requiredRoles ...roles.Role) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		u, _ := c.Get(models.User)
-		user := u.(*models.UserContext)
+		u, _ := c.Get(shared_models.User)
+		user := u.(*shared_models.UserContext)
 
 		hasRequiredRole := false
 		for _, r := range requiredRoles {

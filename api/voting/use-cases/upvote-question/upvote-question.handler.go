@@ -3,14 +3,14 @@ package usecases
 import (
 	"encoding/json"
 	"voting/internal/events"
-	"voting/internal/models"
 	shared "voting/shared"
 	shared_infra_broker "voting/shared/infra/broker"
+	"voting/shared/shared_models"
 	voting_repositories "voting/voting/repositories"
 	errors "voting/voting/use-cases/_errors"
 )
 
-func Upvote(questionId string, userContext models.UserContext) errors.VotingError {
+func Upvote(questionId string, userContext shared_models.UserContext) errors.VotingError {
 	broker := shared_infra_broker.GetInstance()
 
 	votes, err := upVote(questionId, userContext)
@@ -57,7 +57,7 @@ func Upvote(questionId string, userContext models.UserContext) errors.VotingErro
 	return nil
 }
 
-func upVote(id string, user models.UserContext) (int, errors.VotingError) {
+func upVote(id string, user shared_models.UserContext) (int, errors.VotingError) {
 	votingStorage := voting_repositories.GetInstance()
 
 	if !votingStorage.IsRunning() {

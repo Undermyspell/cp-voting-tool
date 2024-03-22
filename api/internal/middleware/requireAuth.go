@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"net/http"
-	"voting/internal/models"
+	"voting/shared/shared_models"
 
 	"github.com/centrifugal/centrifuge"
 	"github.com/gin-gonic/gin"
@@ -11,14 +11,14 @@ import (
 
 func GinRequireAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userContext, statusCode := models.GetUserContextFromGinContext(c)
+		userContext, statusCode := shared_models.GetUserContextFromGinContext(c)
 
 		if statusCode > 0 {
 			c.AbortWithStatus(statusCode)
 			return
 		}
 
-		c.Set(models.User, userContext)
+		c.Set(shared_models.User, userContext)
 
 		c.Next()
 	}
