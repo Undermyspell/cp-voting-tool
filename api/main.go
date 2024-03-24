@@ -93,7 +93,7 @@ func main() {
 		}))))
 		v1.GET("/events", middleware.GinRequireAuth(), notification.SseStream(internalBroker))
 		q := v1.Group("/question", middleware.GinRequireAuth())
-		q.PUT("/answer/:id", middleware.RequireRole(roles.SessionAdmin, roles.Admin), questionService.Answer)
+		q.PUT("/answer/:id", middleware.RequireRole(roles.SessionAdmin, roles.Admin), votinghttp.Answer)
 		q.POST("/new", votinghttp.Create)
 		q.PUT("/upvote/:id", votinghttp.Upvote)
 		q.PUT("/undovote/:id", votinghttp.UndoVote)

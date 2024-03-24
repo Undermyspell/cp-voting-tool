@@ -5,6 +5,5 @@ import (
 )
 
 type QuestionService interface {
-	Answer(c *gin.Context)
 	GetSession(c *gin.Context)
 }

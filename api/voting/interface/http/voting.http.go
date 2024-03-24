@@ -5,6 +5,7 @@ import (
 	"voting/dtos"
 	"voting/shared/shared_models"
 	usecaseErrors "voting/voting/use-cases/_errors"
+	ucAnswer "voting/voting/use-cases/answer-question"
 	ucCreate "voting/voting/use-cases/create-question"
 	ucDelete "voting/voting/use-cases/delete-question"
 	ucStart "voting/voting/use-cases/start-session"
@@ -173,6 +174,32 @@ func UndoVote(c *gin.Context) {
 		case *usecaseErrors.QuestionAlreadyAnsweredError:
 			httpStatus = http.StatusNotAcceptable
 		case *usecaseErrors.UserHasNotVotedError:
+			httpStatus = http.StatusNotAcceptable
+		case *usecaseErrors.QuestionSessionNotRunningError:
+			httpStatus = http.StatusNotAcceptable
+		case *usecaseErrors.UnexpectedError:
+			httpStatus = http.StatusBadRequest
+		}
+	}
+
+	if err != nil {
+		c.JSON(int(httpStatus), gin.H{
+			"error": err.Error(),
+		})
+	}
+}
+
+func Answer(c *gin.Context) {
+	questionId := c.Param("id")
+
+	err := ucAnswer.Answer(questionId)
+
+	httpStatus := http.StatusOK
+	if err != nil {
+		switch err.(type) {
+		case *usecaseErrors.QuestionNotFoundError:
+			httpStatus = http.StatusNotFound
+		case *usecaseErrors.QuestionAlreadyAnsweredError:
 			httpStatus = http.StatusNotAcceptable
 		case *usecaseErrors.QuestionSessionNotRunningError:
 			httpStatus = http.StatusNotAcceptable
