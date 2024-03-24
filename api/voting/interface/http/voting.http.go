@@ -6,6 +6,7 @@ import (
 	"voting/shared/shared_models"
 	usecaseErrors "voting/voting/use-cases/_errors"
 	ucCreate "voting/voting/use-cases/create-question"
+	ucDelete "voting/voting/use-cases/delete-question"
 	ucStart "voting/voting/use-cases/start-session"
 	ucStop "voting/voting/use-cases/stop-session"
 	ucUpdate "voting/voting/use-cases/update-question"
@@ -72,6 +73,36 @@ func Update(c *gin.Context) {
 	}
 
 	err = ucUpdate.UpdateQuestion(updateQuestionDto, *userContext)
+
+	httpStatus := http.StatusOK
+	if err != nil {
+		switch err.(type) {
+		case *usecaseErrors.QuestionNotFoundError:
+			httpStatus = http.StatusNotFound
+		case *usecaseErrors.QuestionAlreadyAnsweredError:
+			httpStatus = http.StatusNotAcceptable
+		case *usecaseErrors.QuestionSessionNotRunningError:
+			httpStatus = http.StatusNotAcceptable
+		case *usecaseErrors.QuestionNotOwnedError:
+			httpStatus = http.StatusForbidden
+		case *usecaseErrors.UnexpectedError:
+			httpStatus = http.StatusBadRequest
+		}
+	}
+
+	if err != nil {
+		c.JSON(int(httpStatus), gin.H{
+			"error": err.Error(),
+		})
+	}
+}
+
+func Delete(c *gin.Context) {
+	user, _ := c.Get(shared_models.User)
+	userContext := user.(*shared_models.UserContext)
+	questionId := c.Param("id")
+
+	err := ucDelete.Delete(questionId, *userContext)
 
 	httpStatus := http.StatusOK
 	if err != nil {

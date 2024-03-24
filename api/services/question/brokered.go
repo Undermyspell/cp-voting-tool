@@ -18,44 +18,6 @@ type BrokeredQuestionsService struct {
 	QuestionSession votingstorage.VotingStorage
 }
 
-// AddQuestion         godoc
-// @Security 	 JWT
-// @Summary      Deletes an existing question of the current session
-// @Description  Deletes an existing question of the current session, only owned questions can be updated
-// @Tags         Question
-// @Produce      json
-// @Param        id  path  string  true  "Id of question to delete"
-// @Success      200
-// @Failure      401
-// @Failure      403 {string} error
-// @Router       /api/v1/question/delete/{id} [delete]
-func (service *BrokeredQuestionsService) Delete(c *gin.Context) {
-	user, _ := c.Get(shared_models.User)
-	userContext := user.(*shared_models.UserContext)
-	questionId := c.Param("id")
-
-	err := service.deleteQuestion(questionId, *userContext)
-
-	if err != nil {
-		c.JSON(int(err.HttpStatus), gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
-	questionDeletedSseMessage := events.QuestionDeleted{
-		Id: questionId,
-	}
-	questionDeletedByteString, _ := json.Marshal(questionDeletedSseMessage)
-
-	event := events.Event{
-		EventType: events.DELETE_QUESTION,
-		Payload:   string(questionDeletedByteString),
-	}
-
-	service.Broker.NotifyAll(event)
-}
-
 // UndovoteQuestion         godoc
 // @Security 	 JWT
 // @Summary      Undo the upvote for a question
@@ -199,41 +161,6 @@ func (service *BrokeredQuestionsService) GetSession(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, questions)
-}
-
-func (service *BrokeredQuestionsService) deleteQuestion(id string, creator shared_models.UserContext) *validation.ValidationError {
-	if !service.QuestionSession.IsRunning() {
-		return &validation.ValidationError{
-			ValidationError: "no questions session currently running",
-			HttpStatus:      http.StatusNotAcceptable,
-		}
-	}
-
-	questionToDelete, ok := service.QuestionSession.GetQuestion(id)
-	if !ok {
-		return &validation.ValidationError{
-			ValidationError: "question not found",
-			HttpStatus:      http.StatusNotFound,
-		}
-	}
-
-	if questionToDelete.CreatorHash != creator.GetHash(service.QuestionSession.GetSecret()) {
-		return &validation.ValidationError{
-			ValidationError: "you do not own this question",
-			HttpStatus:      http.StatusForbidden,
-		}
-	}
-
-	if questionToDelete.Answered {
-		return &validation.ValidationError{
-			ValidationError: "question has already been answered",
-			HttpStatus:      http.StatusNotAcceptable,
-		}
-	}
-
-	service.QuestionSession.DeleteQuestion(questionToDelete.Id)
-
-	return nil
 }
 
 func (service *BrokeredQuestionsService) undoVote(id string, user shared_models.UserContext) (int, *validation.ValidationError) {

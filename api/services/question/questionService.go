@@ -6,7 +6,6 @@ import (
 
 type QuestionService interface {
 	UndoVote(c *gin.Context)
-	Delete(c *gin.Context)
 	Answer(c *gin.Context)
 	GetSession(c *gin.Context)
 }
