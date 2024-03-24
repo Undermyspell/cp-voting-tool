@@ -18,69 +18,6 @@ type BrokeredQuestionsService struct {
 	QuestionSession votingstorage.VotingStorage
 }
 
-// UndovoteQuestion         godoc
-// @Security 	 JWT
-// @Summary      Undo the upvote for a question
-// @Description  Undo the upvote of a question of the current session
-// @Tags         Question
-// @Produce      json
-// @Param        id  path  string  true  "Id of question to undo the vote"
-// @Success      200
-// @Failure      401
-// @Failure      404 {string} error
-// @Router       /api/v1/question/undovote/{id} [put]
-func (service *BrokeredQuestionsService) UndoVote(c *gin.Context) {
-	user, _ := c.Get(shared_models.User)
-	questionId := c.Param("id")
-	userContext := user.(*shared_models.UserContext)
-
-	votes, err := service.undoVote(questionId, *userContext)
-
-	if err != nil {
-		c.JSON(int(err.HttpStatus), gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
-	questionUndoUpvoteMessage := struct {
-		Id    string
-		Votes int
-	}{questionId, votes}
-
-	questionUndoUpVoteForUserMessage := events.QuestionUpvoted{
-		Id:    questionId,
-		Votes: votes,
-		Voted: false,
-	}
-
-	questionForUserPaylod, errf := json.Marshal(questionUndoUpVoteForUserMessage)
-	questionPayload, errj := json.Marshal(questionUndoUpvoteMessage)
-
-	if errj != nil {
-		c.JSON(http.StatusBadRequest, "cant marshal question")
-		return
-	}
-
-	if errf != nil {
-		c.JSON(http.StatusBadRequest, "cant marshal question")
-		return
-	}
-
-	event := events.Event{
-		EventType: events.UNDO_UPVOTE_QUESTION,
-		Payload:   string(questionPayload),
-	}
-
-	userevent := events.Event{
-		EventType: events.UNDO_UPVOTE_QUESTION,
-		Payload:   string(questionForUserPaylod),
-	}
-
-	service.Broker.NotifyUser(userevent, *userContext)
-	service.Broker.NotifyAllButUser(event, *userContext)
-}
-
 // AnswerQuestion         godoc
 // @Security 	 JWT
 // @Summary      Answers a question
@@ -161,48 +98,6 @@ func (service *BrokeredQuestionsService) GetSession(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, questions)
-}
-
-func (service *BrokeredQuestionsService) undoVote(id string, user shared_models.UserContext) (int, *validation.ValidationError) {
-	if !service.QuestionSession.IsRunning() {
-		return 0, &validation.ValidationError{
-			ValidationError: "no questions session currently running",
-			HttpStatus:      http.StatusNotAcceptable,
-		}
-	}
-
-	question, ok := service.QuestionSession.GetQuestion(id)
-
-	if !ok {
-		return 0, &validation.ValidationError{
-			ValidationError: "question not found",
-			HttpStatus:      http.StatusNotFound,
-		}
-	}
-
-	answered := question.Answered
-	if answered {
-		return 0, &validation.ValidationError{
-			ValidationError: "question already answered",
-			HttpStatus:      http.StatusNotAcceptable,
-		}
-	}
-
-	hash := user.GetHash(service.QuestionSession.GetSecret())
-	_, ok = service.QuestionSession.GetUserVotes()[hash][id]
-
-	if !ok {
-		return 0, &validation.ValidationError{
-			ValidationError: "user has not voted",
-			HttpStatus:      http.StatusNotAcceptable,
-		}
-	}
-
-	service.QuestionSession.UndoVote(hash, id)
-
-	question, _ = service.QuestionSession.GetQuestion(question.Id)
-
-	return question.Votes, nil
 }
 
 func (service *BrokeredQuestionsService) answer(id string) *validation.ValidationError {
