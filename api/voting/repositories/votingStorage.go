@@ -1,8 +1,18 @@
-package votingstorage
+package voting_repositories
 
 import (
 	"voting/internal/models"
 )
+
+var vs VotingStorage
+
+func GetInstance() VotingStorage {
+	return vs
+}
+
+func InitInstances(votingStorage VotingStorage) {
+	vs = votingStorage
+}
 
 type VotingStorage interface {
 	Start()

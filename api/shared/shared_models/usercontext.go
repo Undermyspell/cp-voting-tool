@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"voting/internal/jwks"
 	"voting/internal/models/roles"
+	"voting/shared/auth/jwks"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"

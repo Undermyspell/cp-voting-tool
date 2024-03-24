@@ -8,6 +8,7 @@ import (
 	ucAnswer "voting/voting/use-cases/answer-question"
 	ucCreate "voting/voting/use-cases/create-question"
 	ucDelete "voting/voting/use-cases/delete-question"
+	ucGetSession "voting/voting/use-cases/get-session"
 	ucStart "voting/voting/use-cases/start-session"
 	ucStop "voting/voting/use-cases/stop-session"
 	ucUndoVote "voting/voting/use-cases/undovote-question"
@@ -17,6 +18,29 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
+
+func GetSession(c *gin.Context) {
+	user, _ := c.Get(shared_models.User)
+	userContext := user.(*shared_models.UserContext)
+
+	questions, err := ucGetSession.GetSession(userContext)
+
+	httpStatus := http.StatusOK
+	if err != nil {
+		switch err.(type) {
+		case *usecaseErrors.QuestionSessionNotRunningError:
+			httpStatus = http.StatusNotAcceptable
+		case *usecaseErrors.UnexpectedError:
+			httpStatus = http.StatusBadRequest
+		}
+
+		c.JSON(int(httpStatus), gin.H{
+			"error": err.Error(),
+		})
+	}
+
+	c.JSON(http.StatusOK, questions)
+}
 
 func StartSession(c *gin.Context) {
 	ucStart.StartSession()

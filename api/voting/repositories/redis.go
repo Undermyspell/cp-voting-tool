@@ -1,4 +1,4 @@
-package votingstorage
+package voting_repositories
 
 import (
 	"context"

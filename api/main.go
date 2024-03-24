@@ -4,13 +4,11 @@ import (
 	"net/http"
 	"time"
 	"voting/internal/env"
-	"voting/internal/jwks"
-	"voting/internal/middleware"
 	"voting/internal/models/roles"
 	"voting/internal/notification"
-	"voting/internal/votingstorage"
-	questionService "voting/services/question"
 	userService "voting/services/user"
+	"voting/shared/auth/jwks"
+	"voting/shared/auth/middleware"
 	shared_infra "voting/shared/infra/broker"
 	votinghttp "voting/voting/interface/http"
 	voting_repositories "voting/voting/repositories"
@@ -24,10 +22,6 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
-
-var initQuestionService = func(broker shared_infra.Broker, votingStorage votingstorage.VotingStorage) questionService.QuestionService {
-	return questionService.NewBrokered(broker, votingStorage)
-}
 
 var start = func(r *gin.Engine) {
 	r.Run(":3333")
@@ -56,17 +50,15 @@ func main() {
 	r = gin.Default()
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	var votingStorage votingstorage.VotingStorage
+	var votingStorage voting_repositories.VotingStorage
 	if env.Env.VotingStorageInMemory {
-		votingStorage = votingstorage.NewInMemory()
+		votingStorage = voting_repositories.NewInMemory()
 	} else {
 		logrus.Info("WE USE REDIS")
-		votingStorage = votingstorage.NewRedis()
+		votingStorage = voting_repositories.NewRedis()
 	}
 
 	voting_repositories.InitInstances(votingStorage)
-
-	questionService := initQuestionService(internalBroker, votingStorage)
 	userService := userService.NewTestUser()
 
 	config := cors.Config{
@@ -103,7 +95,7 @@ func main() {
 		s := q.Group("/session", middleware.GinRequireAuth())
 		s.POST("/start", middleware.RequireRole(roles.Admin), votinghttp.StartSession)
 		s.POST("/stop", middleware.RequireRole(roles.Admin), votinghttp.StopSession)
-		s.GET("", questionService.GetSession)
+		s.GET("", votinghttp.GetSession)
 
 		ut := v1.Group("/user/test")
 		ut.POST("/contributor", userService.GetContributor)

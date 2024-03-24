@@ -1,4 +1,4 @@
-package votingstorage
+package voting_repositories
 
 import (
 	"voting/internal/helper"
