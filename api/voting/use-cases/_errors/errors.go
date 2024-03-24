@@ -35,6 +35,10 @@ type QuestionNotOwnedError struct {
 	shared.UseCaseError
 }
 
+type UserHasNotVotedError struct {
+	shared.UseCaseError
+}
+
 func (err *QuestionNotFoundError) IsVotingError() bool {
 	return true
 }
@@ -88,5 +92,13 @@ func (err *QuestionNotOwnedError) IsVotingError() bool {
 }
 
 func (err *QuestionNotOwnedError) Error() string {
+	return err.ErrMessage
+}
+
+func (err *UserHasNotVotedError) IsVotingError() bool {
+	return true
+}
+
+func (err *UserHasNotVotedError) Error() string {
 	return err.ErrMessage
 }

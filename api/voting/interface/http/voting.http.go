@@ -9,6 +9,7 @@ import (
 	ucDelete "voting/voting/use-cases/delete-question"
 	ucStart "voting/voting/use-cases/start-session"
 	ucStop "voting/voting/use-cases/stop-session"
+	ucUndoVote "voting/voting/use-cases/undovote-question"
 	ucUpdate "voting/voting/use-cases/update-question"
 	ucUpvote "voting/voting/use-cases/upvote-question"
 
@@ -142,6 +143,36 @@ func Upvote(c *gin.Context) {
 		case *usecaseErrors.QuestionAlreadyAnsweredError:
 			httpStatus = http.StatusNotAcceptable
 		case *usecaseErrors.UserAlreadyVotedError:
+			httpStatus = http.StatusNotAcceptable
+		case *usecaseErrors.QuestionSessionNotRunningError:
+			httpStatus = http.StatusNotAcceptable
+		case *usecaseErrors.UnexpectedError:
+			httpStatus = http.StatusBadRequest
+		}
+	}
+
+	if err != nil {
+		c.JSON(int(httpStatus), gin.H{
+			"error": err.Error(),
+		})
+	}
+}
+
+func UndoVote(c *gin.Context) {
+	user, _ := c.Get(shared_models.User)
+	questionId := c.Param("id")
+	userContext := user.(*shared_models.UserContext)
+
+	err := ucUndoVote.UndoVote(questionId, *userContext)
+
+	httpStatus := http.StatusOK
+	if err != nil {
+		switch err.(type) {
+		case *usecaseErrors.QuestionNotFoundError:
+			httpStatus = http.StatusNotFound
+		case *usecaseErrors.QuestionAlreadyAnsweredError:
+			httpStatus = http.StatusNotAcceptable
+		case *usecaseErrors.UserHasNotVotedError:
 			httpStatus = http.StatusNotAcceptable
 		case *usecaseErrors.QuestionSessionNotRunningError:
 			httpStatus = http.StatusNotAcceptable

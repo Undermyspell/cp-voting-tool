@@ -96,7 +96,7 @@ func main() {
 		q.PUT("/answer/:id", middleware.RequireRole(roles.SessionAdmin, roles.Admin), questionService.Answer)
 		q.POST("/new", votinghttp.Create)
 		q.PUT("/upvote/:id", votinghttp.Upvote)
-		q.PUT("/undovote/:id", questionService.UndoVote)
+		q.PUT("/undovote/:id", votinghttp.UndoVote)
 		q.PUT("/update", votinghttp.Update)
 		q.DELETE("/delete/:id", votinghttp.Delete)
 
