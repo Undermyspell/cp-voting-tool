@@ -1,22 +1,17 @@
 package usecases_events
 
-type EventType string
+import "voting/shared"
 
 const (
-	NEW_QUESTION         EventType = "new_question"
-	UPDATE_QUESTION      EventType = "update_question"
-	UPVOTE_QUESTION      EventType = "upvote_question"
-	UNDO_UPVOTE_QUESTION EventType = "undo_upvote_question"
-	ANSWER_QUESTION      EventType = "answer_question"
-	DELETE_QUESTION      EventType = "delete_question"
-	STOP_SESSION         EventType = "stop_session"
-	START_SESSION        EventType = "start_session"
-	USER_CONNECTED       EventType = "user_connected"
-	USER_DISCONNECTED    EventType = "user_disconnected"
-	HEART_BEAT           EventType = "heart_beat"
+	NEW_QUESTION         shared.EventType = "new_question"
+	UPDATE_QUESTION      shared.EventType = "update_question"
+	UPVOTE_QUESTION      shared.EventType = "upvote_question"
+	UNDO_UPVOTE_QUESTION shared.EventType = "undo_upvote_question"
+	ANSWER_QUESTION      shared.EventType = "answer_question"
+	DELETE_QUESTION      shared.EventType = "delete_question"
+	STOP_SESSION         shared.EventType = "stop_session"
+	START_SESSION        shared.EventType = "start_session"
+	USER_CONNECTED       shared.EventType = "user_connected"
+	USER_DISCONNECTED    shared.EventType = "user_disconnected"
+	HEART_BEAT           shared.EventType = "heart_beat"
 )
-
-type Event struct {
-	EventType
-	Payload string
-}

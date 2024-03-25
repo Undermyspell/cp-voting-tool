@@ -4,11 +4,11 @@ import (
 	"net/http"
 	"time"
 	"voting/internal/env"
-	userService "voting/services/user"
 	"voting/shared/auth"
 	"voting/shared/auth/jwks"
 	"voting/shared/auth/middleware"
 	shared_infra "voting/shared/infra/broker"
+	user_http "voting/user/interface/http"
 	votinghttp "voting/voting/interface/http"
 	voting_sse "voting/voting/interface/sse"
 	voting_ws "voting/voting/interface/ws"
@@ -60,7 +60,6 @@ func main() {
 	}
 
 	voting_repositories.InitInstances(votingStorage)
-	userService := userService.NewTestUser()
 
 	config := cors.Config{
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
@@ -99,9 +98,9 @@ func main() {
 		s.GET("", votinghttp.GetSession)
 
 		ut := v1.Group("/user/test")
-		ut.POST("/contributor", userService.GetContributor)
-		ut.POST("/admin", userService.GetAdmin)
-		ut.POST("/sessionadmin", userService.GetAdmin)
+		ut.POST("/contributor", user_http.GetContributor)
+		ut.POST("/admin", user_http.GetAdmin)
+		ut.POST("/sessionadmin", user_http.GetAdmin)
 	}
 
 	start(r)

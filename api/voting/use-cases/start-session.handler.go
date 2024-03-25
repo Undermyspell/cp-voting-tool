@@ -1,6 +1,7 @@
 package usecases
 
 import (
+	"voting/shared"
 	shared_infra_broker "voting/shared/infra/broker"
 	voting_repositories "voting/voting/repositories"
 	errors "voting/voting/use-cases/_errors"
@@ -12,7 +13,7 @@ func StartSession() errors.VotingError {
 	votingStorage := voting_repositories.GetInstance()
 	votingStorage.Start()
 
-	event := usecases_events.Event{
+	event := shared.Event{
 		EventType: usecases_events.START_SESSION,
 		Payload:   usecases_events.PayloadEmpty,
 	}

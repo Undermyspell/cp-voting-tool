@@ -36,7 +36,7 @@ func UpdateQuestion(updateQuestionDto UpdateQuestionDto, creator shared_models.U
 
 	newQuestionByteString, _ := json.Marshal(questionToUpdateSseMessage)
 
-	event := usecases_events.Event{
+	event := shared.Event{
 		EventType: usecases_events.UPDATE_QUESTION,
 		Payload:   string(newQuestionByteString),
 	}

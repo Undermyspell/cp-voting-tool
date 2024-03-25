@@ -41,12 +41,12 @@ func UndoVote(questionId string, userContext shared_models.UserContext) errors.V
 		}
 	}
 
-	event := usecases_events.Event{
+	event := shared.Event{
 		EventType: usecases_events.UNDO_UPVOTE_QUESTION,
 		Payload:   string(questionPayload),
 	}
 
-	userevent := usecases_events.Event{
+	userevent := shared.Event{
 		EventType: usecases_events.UNDO_UPVOTE_QUESTION,
 		Payload:   string(questionForUserPaylod),
 	}

@@ -1,4 +1,4 @@
-package dtos
+package user_dtos
 
 type NewTestUserDto struct {
 	FirstName string `json:"firstname" binding:"required"`

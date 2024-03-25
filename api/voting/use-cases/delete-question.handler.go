@@ -24,7 +24,7 @@ func Delete(questionId string, creator shared_models.UserContext) errors.VotingE
 	}
 	questionDeletedByteString, _ := json.Marshal(questionDeletedSseMessage)
 
-	event := usecases_events.Event{
+	event := shared.Event{
 		EventType: usecases_events.DELETE_QUESTION,
 		Payload:   string(questionDeletedByteString),
 	}

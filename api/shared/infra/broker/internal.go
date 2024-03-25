@@ -3,6 +3,7 @@ package shared_infra_broker
 import (
 	"encoding/json"
 	"time"
+	"voting/shared"
 	shared_models "voting/shared/models"
 	usecases_events "voting/voting/use-cases/_events"
 
@@ -10,14 +11,14 @@ import (
 )
 
 type UserBoundChannel struct {
-	Channel chan usecases_events.Event
+	Channel chan shared.Event
 	User    shared_models.UserContext
 }
 
 type InternalBroker struct {
-	NotifierAll        chan usecases_events.Event
-	NotifierUser       chan usecases_events.UserBoundEvent
-	NotifierAllButUser chan usecases_events.UserBoundEvent
+	NotifierAll        chan shared.Event
+	NotifierUser       chan shared.UserBoundEvent
+	NotifierAllButUser chan shared.UserBoundEvent
 	NewClients         chan UserBoundChannel
 	ClosingClients     chan UserBoundChannel
 	Clients            map[UserBoundChannel]bool
@@ -60,19 +61,19 @@ func (broker *InternalBroker) Listen() {
 	}
 }
 
-func (broker *InternalBroker) NotifyAll(event usecases_events.Event) {
+func (broker *InternalBroker) NotifyAll(event shared.Event) {
 	broker.NotifierAll <- event
 }
 
-func (broker *InternalBroker) NotifyUser(event usecases_events.Event, user shared_models.UserContext) {
-	broker.NotifierUser <- usecases_events.UserBoundEvent{
+func (broker *InternalBroker) NotifyUser(event shared.Event, user shared_models.UserContext) {
+	broker.NotifierUser <- shared.UserBoundEvent{
 		Event: event,
 		User:  user,
 	}
 }
 
-func (broker *InternalBroker) NotifyAllButUser(event usecases_events.Event, user shared_models.UserContext) {
-	broker.NotifierAllButUser <- usecases_events.UserBoundEvent{
+func (broker *InternalBroker) NotifyAllButUser(event shared.Event, user shared_models.UserContext) {
+	broker.NotifierAllButUser <- shared.UserBoundEvent{
 		Event: event,
 		User:  user,
 	}
@@ -90,7 +91,7 @@ func (broker *InternalBroker) DistinctClientsCount() int {
 }
 
 func (broker *InternalBroker) SendHeartBeat() {
-	event := usecases_events.Event{
+	event := shared.Event{
 		EventType: usecases_events.HEART_BEAT,
 		Payload:   "",
 	}
@@ -110,12 +111,12 @@ func (broker *InternalBroker) RemoveClient(client UserBoundChannel) {
 	broker.ClosingClients <- client
 }
 
-func (broker *InternalBroker) createUserConnectionEvent(eventType usecases_events.EventType) usecases_events.Event {
+func (broker *InternalBroker) createUserConnectionEvent(eventType shared.EventType) shared.Event {
 	event := usecases_events.UserConnected{
 		UserCount: broker.DistinctClientsCount(),
 	}
 	eventByteArray, _ := json.Marshal(event)
-	disconnectedEvent := usecases_events.Event{
+	disconnectedEvent := shared.Event{
 		EventType: eventType,
 		Payload:   string(eventByteArray),
 	}

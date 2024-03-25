@@ -2,9 +2,9 @@ package voting_sse
 
 import (
 	"io"
+	"voting/shared"
 	shared_infra_broker "voting/shared/infra/broker"
 	shared_models "voting/shared/models"
-	usecases_events "voting/voting/use-cases/_events"
 
 	"github.com/gin-gonic/gin"
 )
@@ -15,7 +15,7 @@ func SseStream(internalBroker shared_infra_broker.Broker) func(c *gin.Context) {
 		userContext := user.(*shared_models.UserContext)
 
 		userBoundChannel := shared_infra_broker.UserBoundChannel{
-			Channel: make(chan usecases_events.Event),
+			Channel: make(chan shared.Event),
 			User:    *userContext,
 		}
 

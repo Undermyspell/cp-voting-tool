@@ -41,12 +41,12 @@ func Upvote(questionId string, userContext shared_models.UserContext) errors.Vot
 		}
 	}
 
-	event := usecases_events.Event{
+	event := shared.Event{
 		EventType: usecases_events.UPVOTE_QUESTION,
 		Payload:   string(questionPayload),
 	}
 
-	userevent := usecases_events.Event{
+	userevent := shared.Event{
 		EventType: usecases_events.UPVOTE_QUESTION,
 		Payload:   string(questionForUserPaylod),
 	}

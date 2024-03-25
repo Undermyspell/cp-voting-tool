@@ -5,7 +5,7 @@ import (
 	"fmt"
 	shared "voting/shared"
 	shared_infra_broker "voting/shared/infra/broker"
-	"voting/shared/models"
+	shared_models "voting/shared/models"
 	voting_models "voting/voting/models"
 	voting_repositories "voting/voting/repositories"
 	errors "voting/voting/use-cases/_errors"
@@ -64,11 +64,11 @@ func Create(newQuestionDto NewQuestionDto, userContext shared_models.UserContext
 		}
 	}
 
-	eventForUser := usecases_events.Event{
+	eventForUser := shared.Event{
 		EventType: usecases_events.NEW_QUESTION,
 		Payload:   string(newQuestionForUserByteString),
 	}
-	eventForAllButUser := usecases_events.Event{
+	eventForAllButUser := shared.Event{
 		EventType: usecases_events.NEW_QUESTION,
 		Payload:   string(newQuestionForAllButUserByteString),
 	}

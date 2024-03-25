@@ -13,7 +13,8 @@ import (
 	"sync"
 	"testing"
 	"time"
-	"voting/internal/mocks"
+	"voting/shared"
+	user_usecases "voting/user/use-cases"
 	usecases "voting/voting/use-cases"
 	usecases_events "voting/voting/use-cases/_events"
 
@@ -26,7 +27,7 @@ import (
 
 type CentrifugeTestClient struct {
 	client           *centrifuge.Client
-	receivedMessages []usecases_events.Event
+	receivedMessages []shared.Event
 }
 
 type QuestionApiTestSuite struct {
@@ -60,23 +61,23 @@ func (suite *QuestionApiTestSuite) SetupSuite() {
 
 	suite.router = r
 	suite.apiPrefix = "/api/v1"
-	suite.tokenUser_Foo = mocks.GetUserToken("Foo", "Foo_Tester")
-	suite.tokenUser_Bar = mocks.GetUserToken("Bar", "Bar_Tester")
-	suite.tokenUser_Admin = mocks.GetAdminUserToken("Admin", "Admin_Tester")
-	suite.tokenUser_SessionAdmin = mocks.GetSessionAdminUserToken("SessionAdmin", "Session_Admin_Tester")
+	suite.tokenUser_Foo = user_usecases.GetContributorToken("Foo", "Foo_Tester")
+	suite.tokenUser_Bar = user_usecases.GetContributorToken("Bar", "Bar_Tester")
+	suite.tokenUser_Admin = user_usecases.GetAdminUserToken("Admin", "Admin_Tester")
+	suite.tokenUser_SessionAdmin = user_usecases.GetSessionAdminUserToken("SessionAdmin", "Session_Admin_Tester")
 
 	initCentrifuge(suite)
 
 	suite.centrifugeClientFoo.client.OnMessage(func(me centrifuge.MessageEvent) {
 
-		var event usecases_events.Event
+		var event shared.Event
 
 		json.Unmarshal([]byte(me.Data), &event)
 		suite.centrifugeClientFoo.receivedMessages = append(suite.centrifugeClientFoo.receivedMessages, event)
 	})
 
 	suite.centrifugeClientBar.client.OnMessage(func(me centrifuge.MessageEvent) {
-		var event usecases_events.Event
+		var event shared.Event
 		json.Unmarshal([]byte(me.Data), &event)
 
 		suite.centrifugeClientBar.receivedMessages = append(suite.centrifugeClientBar.receivedMessages, event)
@@ -396,7 +397,7 @@ func (suite *QuestionApiTestSuite) TestUpvoteQuestion_SAME_QUESTION_PARALLEL_100
 		var wg sync.WaitGroup
 		for i := 1; i <= 99; i++ {
 			wg.Add(1)
-			tokenUser := mocks.GetUserToken(fmt.Sprintf("User_%d", i), fmt.Sprintf("User_%d", i))
+			tokenUser := user_usecases.GetContributorToken(fmt.Sprintf("User_%d", i), fmt.Sprintf("User_%d", i))
 			go func(tokenUser string, w *httptest.ResponseRecorder, questionId string) {
 				defer wg.Done()
 				upvoteQuestion(suite, w, questionId, tokenUser)
@@ -496,7 +497,7 @@ func (suite *QuestionApiTestSuite) TestUndovoteQuestion_SAME_QUESTION_PARALLEL_1
 		var wg sync.WaitGroup
 		for i := 1; i <= 99; i++ {
 			wg.Add(1)
-			tokenUser := mocks.GetUserToken(fmt.Sprintf("User_%d", i), fmt.Sprintf("User_%d", i))
+			tokenUser := user_usecases.GetContributorToken(fmt.Sprintf("User_%d", i), fmt.Sprintf("User_%d", i))
 			go func(tokenUser string, w *httptest.ResponseRecorder, questionId string) {
 				defer wg.Done()
 				upvoteQuestion(suite, w, questionId, tokenUser)
@@ -510,7 +511,7 @@ func (suite *QuestionApiTestSuite) TestUndovoteQuestion_SAME_QUESTION_PARALLEL_1
 		undoVoteQuestion(suite, w, questionId, suite.tokenUser_Bar)
 		for i := 1; i <= 99; i++ {
 			wg.Add(1)
-			tokenUser := mocks.GetUserToken(fmt.Sprintf("User_%d", i), fmt.Sprintf("User_%d", i))
+			tokenUser := user_usecases.GetContributorToken(fmt.Sprintf("User_%d", i), fmt.Sprintf("User_%d", i))
 			go func(tokenUser string, w *httptest.ResponseRecorder, questionId string) {
 				defer wg.Done()
 				undoVoteQuestion(suite, w, questionId, tokenUser)
@@ -886,7 +887,7 @@ func getSession(suite *QuestionApiTestSuite, w *httptest.ResponseRecorder, token
 	return questionList
 }
 
-func findEvent[T any](centrifugeTestClient CentrifugeTestClient, eventType usecases_events.EventType) (*T, error) {
+func findEvent[T any](centrifugeTestClient CentrifugeTestClient, eventType shared.EventType) (*T, error) {
 	for i := range centrifugeTestClient.receivedMessages {
 		if centrifugeTestClient.receivedMessages[i].EventType == eventType {
 			var eventPayload T
@@ -927,10 +928,10 @@ func initCentrifuge(suite *QuestionApiTestSuite) {
 
 	suite.centrifugeClientFoo = CentrifugeTestClient{
 		client:           cFoo,
-		receivedMessages: make([]usecases_events.Event, 0),
+		receivedMessages: make([]shared.Event, 0),
 	}
 	suite.centrifugeClientBar = CentrifugeTestClient{
 		client:           cBar,
-		receivedMessages: make([]usecases_events.Event, 0),
+		receivedMessages: make([]shared.Event, 0),
 	}
 }

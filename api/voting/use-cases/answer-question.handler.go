@@ -31,7 +31,7 @@ func Answer(questionId string) errors.VotingError {
 		}
 	}
 
-	event := usecases_events.Event{
+	event := shared.Event{
 		EventType: usecases_events.ANSWER_QUESTION,
 		Payload:   string(questionPayload),
 	}
