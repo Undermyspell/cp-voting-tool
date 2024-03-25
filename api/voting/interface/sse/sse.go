@@ -3,7 +3,7 @@ package voting_sse
 import (
 	"io"
 	shared_infra_broker "voting/shared/infra/broker"
-	"voting/shared/shared_models"
+	shared_models "voting/shared/models"
 	usecases_events "voting/voting/use-cases/_events"
 
 	"github.com/gin-gonic/gin"

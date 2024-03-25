@@ -2,7 +2,7 @@ package voting_http
 
 import (
 	"net/http"
-	"voting/shared/shared_models"
+	shared_models "voting/shared/models"
 	usecases "voting/voting/use-cases"
 	usecaseErrors "voting/voting/use-cases/_errors"
 

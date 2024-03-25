@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"voting/shared"
 	shared_infra_broker "voting/shared/infra/broker"
-	"voting/shared/shared_models"
+	shared_models "voting/shared/models"
 	voting_repositories "voting/voting/repositories"
 	errors "voting/voting/use-cases/_errors"
 	usecases_events "voting/voting/use-cases/_events"

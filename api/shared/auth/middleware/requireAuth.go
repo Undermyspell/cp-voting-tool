@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"net/http"
-	"voting/shared/shared_models"
+	shared_models "voting/shared/models"
 
 	"github.com/centrifugal/centrifuge"
 	"github.com/gin-gonic/gin"

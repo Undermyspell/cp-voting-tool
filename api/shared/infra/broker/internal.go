@@ -3,7 +3,7 @@ package shared_infra_broker
 import (
 	"encoding/json"
 	"time"
-	"voting/shared/shared_models"
+	shared_models "voting/shared/models"
 	usecases_events "voting/voting/use-cases/_events"
 
 	"github.com/sirupsen/logrus"

@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 	"voting/shared/auth"
-	"voting/shared/shared_models"
+	shared_models "voting/shared/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"

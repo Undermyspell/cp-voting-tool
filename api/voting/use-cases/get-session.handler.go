@@ -2,7 +2,7 @@ package usecases
 
 import (
 	"voting/shared"
-	"voting/shared/shared_models"
+	shared_models "voting/shared/models"
 	voting_repositories "voting/voting/repositories"
 	errors "voting/voting/use-cases/_errors"
 )

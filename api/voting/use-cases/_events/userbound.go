@@ -1,6 +1,6 @@
 package usecases_events
 
-import "voting/shared/shared_models"
+import shared_models "voting/shared/models"
 
 type UserBoundEvent struct {
 	Event Event
