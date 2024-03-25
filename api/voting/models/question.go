@@ -1,4 +1,4 @@
-package models
+package voting_models
 
 const (
 	MaxLength int = 500

@@ -2,36 +2,36 @@ package usecases
 
 import (
 	"encoding/json"
-	"voting/internal/events"
 	shared "voting/shared"
 	shared_infra_broker "voting/shared/infra/broker"
 	"voting/shared/shared_models"
 	voting_repositories "voting/voting/repositories"
 	errors "voting/voting/use-cases/_errors"
+	usecases_events "voting/voting/use-cases/_events"
 )
 
-func UndoVote(questionId string, userContext shared_models.UserContext) errors.VotingError {
+func Upvote(questionId string, userContext shared_models.UserContext) errors.VotingError {
 	broker := shared_infra_broker.GetInstance()
 
-	votes, err := undoVote(questionId, userContext)
+	votes, err := upVote(questionId, userContext)
 
 	if err != nil {
 		return err
 	}
 
-	questionUndoUpvoteMessage := struct {
+	questionUpvoteMessage := struct {
 		Id    string
 		Votes int
 	}{questionId, votes}
 
-	questionUndoUpVoteForUserMessage := events.QuestionUpvoted{
+	questionUpVoteForUserMessage := usecases_events.QuestionUpvoted{
 		Id:    questionId,
 		Votes: votes,
-		Voted: false,
+		Voted: true,
 	}
 
-	questionForUserPaylod, errf := json.Marshal(questionUndoUpVoteForUserMessage)
-	questionPayload, errj := json.Marshal(questionUndoUpvoteMessage)
+	questionForUserPaylod, errf := json.Marshal(questionUpVoteForUserMessage)
+	questionPayload, errj := json.Marshal(questionUpvoteMessage)
 
 	if errj != nil || errf != nil {
 		return &errors.UnexpectedError{
@@ -41,13 +41,13 @@ func UndoVote(questionId string, userContext shared_models.UserContext) errors.V
 		}
 	}
 
-	event := events.Event{
-		EventType: events.UNDO_UPVOTE_QUESTION,
+	event := usecases_events.Event{
+		EventType: usecases_events.UPVOTE_QUESTION,
 		Payload:   string(questionPayload),
 	}
 
-	userevent := events.Event{
-		EventType: events.UNDO_UPVOTE_QUESTION,
+	userevent := usecases_events.Event{
+		EventType: usecases_events.UPVOTE_QUESTION,
 		Payload:   string(questionForUserPaylod),
 	}
 
@@ -57,7 +57,7 @@ func UndoVote(questionId string, userContext shared_models.UserContext) errors.V
 	return nil
 }
 
-func undoVote(id string, user shared_models.UserContext) (int, errors.VotingError) {
+func upVote(id string, user shared_models.UserContext) (int, errors.VotingError) {
 	votingStorage := voting_repositories.GetInstance()
 
 	if !votingStorage.IsRunning() {
@@ -90,16 +90,16 @@ func undoVote(id string, user shared_models.UserContext) (int, errors.VotingErro
 	hash := user.GetHash(votingStorage.GetSecret())
 	_, ok = votingStorage.GetUserVotes()[hash][id]
 
-	if !ok {
+	if ok {
 		return 0,
-			&errors.UserHasNotVotedError{
+			&errors.UserAlreadyVotedError{
 				UseCaseError: shared.UseCaseError{
-					ErrMessage: "user has not voted",
+					ErrMessage: "user already voted",
 				},
 			}
 	}
 
-	votingStorage.UndoVote(hash, id)
+	votingStorage.Vote(hash, id)
 
 	question, _ = votingStorage.GetQuestion(question.Id)
 

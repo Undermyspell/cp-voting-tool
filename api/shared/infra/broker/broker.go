@@ -1,8 +1,8 @@
 package shared_infra_broker
 
 import (
-	"voting/internal/events"
 	"voting/shared/shared_models"
+	usecases_events "voting/voting/use-cases/_events"
 )
 
 var b Broker
@@ -17,9 +17,9 @@ func initInstances(broker Broker) {
 
 type Broker interface {
 	Listen()
-	NotifyAll(events.Event)
-	NotifyUser(event events.Event, user shared_models.UserContext)
-	NotifyAllButUser(event events.Event, user shared_models.UserContext)
+	NotifyAll(usecases_events.Event)
+	NotifyUser(event usecases_events.Event, user shared_models.UserContext)
+	NotifyAllButUser(event usecases_events.Event, user shared_models.UserContext)
 	DistinctClientsCount() int
 	SendHeartBeat()
 	AddClient(client UserBoundChannel)

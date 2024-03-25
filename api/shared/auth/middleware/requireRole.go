@@ -2,14 +2,14 @@ package middleware
 
 import (
 	"net/http"
-	"voting/internal/models/roles"
+	"voting/shared/auth"
 	"voting/shared/shared_models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
 
-func RequireRole(requiredRoles ...roles.Role) gin.HandlerFunc {
+func RequireRole(requiredRoles ...auth.Role) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		u, _ := c.Get(shared_models.User)
 		user := u.(*shared_models.UserContext)

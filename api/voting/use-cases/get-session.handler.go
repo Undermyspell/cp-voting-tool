@@ -1,18 +1,28 @@
 package usecases
 
 import (
-	"voting/dtos"
 	"voting/shared"
 	"voting/shared/shared_models"
 	voting_repositories "voting/voting/repositories"
 	errors "voting/voting/use-cases/_errors"
 )
 
-func GetSession(userContext *shared_models.UserContext) ([]dtos.QuestionDto, errors.VotingError) {
+type QuestionDto struct {
+	Id        string
+	Text      string
+	Votes     int
+	Voted     bool
+	Answered  bool
+	Creator   string
+	Anonymous bool
+	Owned     bool
+}
+
+func GetSession(userContext *shared_models.UserContext) ([]QuestionDto, errors.VotingError) {
 	votingStorage := voting_repositories.GetInstance()
 
 	if !votingStorage.IsRunning() {
-		return []dtos.QuestionDto{}, &errors.QuestionSessionNotRunningError{
+		return []QuestionDto{}, &errors.QuestionSessionNotRunningError{
 			UseCaseError: shared.UseCaseError{
 				ErrMessage: "no questions session currently running",
 			},
@@ -20,13 +30,13 @@ func GetSession(userContext *shared_models.UserContext) ([]dtos.QuestionDto, err
 	}
 
 	hash := userContext.GetHash(votingStorage.GetSecret())
-	questions := []dtos.QuestionDto{}
+	questions := []QuestionDto{}
 
 	for _, v := range votingStorage.GetQuestions() {
 		creator := v.CreatorName
 		owned := v.CreatorHash == userContext.GetHash(votingStorage.GetSecret())
 
-		questions = append(questions, dtos.QuestionDto{
+		questions = append(questions, QuestionDto{
 			Id:        v.Id,
 			Text:      v.Text,
 			Votes:     v.Votes,

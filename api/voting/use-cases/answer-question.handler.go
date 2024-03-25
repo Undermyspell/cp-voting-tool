@@ -2,11 +2,11 @@ package usecases
 
 import (
 	"encoding/json"
-	"voting/internal/events"
 	"voting/shared"
 	shared_infra_broker "voting/shared/infra/broker"
 	voting_repositories "voting/voting/repositories"
 	errors "voting/voting/use-cases/_errors"
+	usecases_events "voting/voting/use-cases/_events"
 )
 
 func Answer(questionId string) errors.VotingError {
@@ -18,7 +18,7 @@ func Answer(questionId string) errors.VotingError {
 		return err
 	}
 
-	questionMessage := events.QuestionAnswered{
+	questionMessage := usecases_events.QuestionAnswered{
 		Id: questionId,
 	}
 	questionPayload, errj := json.Marshal(questionMessage)
@@ -31,8 +31,8 @@ func Answer(questionId string) errors.VotingError {
 		}
 	}
 
-	event := events.Event{
-		EventType: events.ANSWER_QUESTION,
+	event := usecases_events.Event{
+		EventType: usecases_events.ANSWER_QUESTION,
 		Payload:   string(questionPayload),
 	}
 

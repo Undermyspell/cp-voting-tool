@@ -2,17 +2,22 @@ package usecases
 
 import (
 	"encoding/json"
-	"voting/dtos"
-	"voting/internal/events"
-	"voting/internal/models"
 	"voting/shared"
 	shared_infra_broker "voting/shared/infra/broker"
 	"voting/shared/shared_models"
+	voting_models "voting/voting/models"
 	voting_repositories "voting/voting/repositories"
 	errors "voting/voting/use-cases/_errors"
+	usecases_events "voting/voting/use-cases/_events"
 )
 
-func UpdateQuestion(updateQuestionDto dtos.UpdateQuestionDto, creator shared_models.UserContext) errors.VotingError {
+type UpdateQuestionDto struct {
+	Id        string `json:"id" binding:"required"`
+	Text      string `json:"text" binding:"required"`
+	Anonymous bool   `json:"anonymous"`
+}
+
+func UpdateQuestion(updateQuestionDto UpdateQuestionDto, creator shared_models.UserContext) errors.VotingError {
 
 	broker := shared_infra_broker.GetInstance()
 
@@ -22,7 +27,7 @@ func UpdateQuestion(updateQuestionDto dtos.UpdateQuestionDto, creator shared_mod
 		return err
 	}
 
-	questionToUpdateSseMessage := events.QuestionUpdated{
+	questionToUpdateSseMessage := usecases_events.QuestionUpdated{
 		Id:        questionToUpdate.Id,
 		Text:      questionToUpdate.Text,
 		Creator:   questionToUpdate.CreatorName,
@@ -31,8 +36,8 @@ func UpdateQuestion(updateQuestionDto dtos.UpdateQuestionDto, creator shared_mod
 
 	newQuestionByteString, _ := json.Marshal(questionToUpdateSseMessage)
 
-	event := events.Event{
-		EventType: events.UPDATE_QUESTION,
+	event := usecases_events.Event{
+		EventType: usecases_events.UPDATE_QUESTION,
 		Payload:   string(newQuestionByteString),
 	}
 
@@ -41,7 +46,7 @@ func UpdateQuestion(updateQuestionDto dtos.UpdateQuestionDto, creator shared_mod
 	return nil
 }
 
-func update(question dtos.UpdateQuestionDto, creator shared_models.UserContext) (*models.Question, errors.VotingError) {
+func update(question UpdateQuestionDto, creator shared_models.UserContext) (*voting_models.Question, errors.VotingError) {
 	votingStorage := voting_repositories.GetInstance()
 
 	if !votingStorage.IsRunning() {

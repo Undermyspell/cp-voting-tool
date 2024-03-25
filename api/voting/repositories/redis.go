@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
-	"voting/internal/helper"
-	"voting/internal/models"
+	shared "voting/shared/helper"
+	voting_models "voting/voting/models"
 
 	"github.com/nitishm/go-rejson/v4"
 	"github.com/oklog/ulid/v2"
@@ -55,7 +55,7 @@ func (session *Redis) Start() {
 	votingSession := VotingSession{
 		UserVotes:     make(map[string]map[string]bool),
 		Questions:     make(map[string]redisQuestion),
-		SessionSecret: helper.GetRandomId(30),
+		SessionSecret: shared.GetRandomId(30),
 	}
 
 	_, err := session.redisHandler.JSONSet(session.redisRootKey, ".", votingSession)
@@ -70,7 +70,7 @@ func (session *Redis) Stop() {
 	logrus.Info("Redis: cleared root key: " + session.redisRootKey)
 }
 
-func (session *Redis) GetQuestion(id string) (models.Question, bool) {
+func (session *Redis) GetQuestion(id string) (voting_models.Question, bool) {
 	res, err := session.executeWithRetryOnConnectionLimit(func() (res interface{}, err error) {
 		r, e := session.redisHandler.JSONGet(session.redisRootKey, fmt.Sprintf(".Questions.%s", id))
 		return r, e
@@ -78,7 +78,7 @@ func (session *Redis) GetQuestion(id string) (models.Question, bool) {
 
 	if err != nil {
 		logrus.Error(err.Error())
-		return models.Question{}, false
+		return voting_models.Question{}, false
 	}
 
 	redisQuestion := redisQuestion{}
@@ -115,20 +115,20 @@ func (session *Redis) GetSecret() string {
 	return string(res.([]byte))
 }
 
-func (session *Redis) GetQuestions() map[string]models.Question {
+func (session *Redis) GetQuestions() map[string]voting_models.Question {
 	res, err := session.executeWithRetryOnConnectionLimit(func() (res interface{}, err error) {
 		return session.redisHandler.JSONGet(session.redisRootKey, ".Questions")
 	})
 
 	if err != nil {
 		logrus.Error(err.Error())
-		return make(map[string]models.Question)
+		return make(map[string]voting_models.Question)
 	}
 
 	redisQuestions := make(map[string]redisQuestion)
 	json.Unmarshal(res.([]byte), &redisQuestions)
 
-	questions := make(map[string]models.Question)
+	questions := make(map[string]voting_models.Question)
 
 	for id, question := range redisQuestions {
 		questions[id] = questionFromRedisQuestion(question)
@@ -153,7 +153,7 @@ func (session *Redis) GetUserVotes() map[string]map[string]bool {
 	return userVotes
 }
 
-func (session *Redis) AddQuestion(text string, anonymous bool, creatorName, creatorHash string) models.Question {
+func (session *Redis) AddQuestion(text string, anonymous bool, creatorName, creatorHash string) voting_models.Question {
 	question := newRedisQuestion(text, anonymous, creatorName, creatorHash)
 
 	_, err := session.executeWithRetryOnConnectionLimit(func() (res interface{}, err error) {
@@ -162,7 +162,7 @@ func (session *Redis) AddQuestion(text string, anonymous bool, creatorName, crea
 
 	if err != nil {
 		logrus.Error(err.Error())
-		return models.Question{}
+		return voting_models.Question{}
 	}
 
 	session.Vote(creatorHash, question.Id)
@@ -170,7 +170,7 @@ func (session *Redis) AddQuestion(text string, anonymous bool, creatorName, crea
 	return questionFromRedisQuestion(question)
 }
 
-func (session *Redis) UpdateQuestion(id, text, creatorName string, anonymous bool) models.Question {
+func (session *Redis) UpdateQuestion(id, text, creatorName string, anonymous bool) voting_models.Question {
 	if anonymous {
 		creatorName = ""
 	}
@@ -181,7 +181,7 @@ func (session *Redis) UpdateQuestion(id, text, creatorName string, anonymous boo
 
 	if err != nil {
 		logrus.Error(err.Error())
-		return models.Question{}
+		return voting_models.Question{}
 	}
 
 	_, err = session.executeWithRetryOnConnectionLimit(func() (res interface{}, err error) {
@@ -190,7 +190,7 @@ func (session *Redis) UpdateQuestion(id, text, creatorName string, anonymous boo
 
 	if err != nil {
 		logrus.Error(err.Error())
-		return models.Question{}
+		return voting_models.Question{}
 	}
 
 	_, err = session.executeWithRetryOnConnectionLimit(func() (res interface{}, err error) {
@@ -199,7 +199,7 @@ func (session *Redis) UpdateQuestion(id, text, creatorName string, anonymous boo
 
 	if err != nil {
 		logrus.Error(err.Error())
-		return models.Question{}
+		return voting_models.Question{}
 	}
 
 	res, err1 := session.executeWithRetryOnConnectionLimit(func() (res interface{}, err error) {
@@ -208,7 +208,7 @@ func (session *Redis) UpdateQuestion(id, text, creatorName string, anonymous boo
 
 	if err1 != nil {
 		logrus.Error(err1.Error())
-		return models.Question{}
+		return voting_models.Question{}
 	}
 
 	redisQuestion := redisQuestion{}
@@ -309,8 +309,8 @@ func (session *Redis) executeWithRetryOnConnectionLimit(redisFunc func() (res in
 	}
 }
 
-func questionFromRedisQuestion(question redisQuestion) models.Question {
-	return models.NewQuestion(
+func questionFromRedisQuestion(question redisQuestion) voting_models.Question {
+	return voting_models.NewQuestion(
 		question.Id,
 		question.Text,
 		question.Votes,

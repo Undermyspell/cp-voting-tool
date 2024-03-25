@@ -1,19 +1,10 @@
-package votinghttp
+package voting_http
 
 import (
 	"net/http"
-	"voting/dtos"
 	"voting/shared/shared_models"
+	usecases "voting/voting/use-cases"
 	usecaseErrors "voting/voting/use-cases/_errors"
-	ucAnswer "voting/voting/use-cases/answer-question"
-	ucCreate "voting/voting/use-cases/create-question"
-	ucDelete "voting/voting/use-cases/delete-question"
-	ucGetSession "voting/voting/use-cases/get-session"
-	ucStart "voting/voting/use-cases/start-session"
-	ucStop "voting/voting/use-cases/stop-session"
-	ucUndoVote "voting/voting/use-cases/undovote-question"
-	ucUpdate "voting/voting/use-cases/update-question"
-	ucUpvote "voting/voting/use-cases/upvote-question"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -23,7 +14,7 @@ func GetSession(c *gin.Context) {
 	user, _ := c.Get(shared_models.User)
 	userContext := user.(*shared_models.UserContext)
 
-	questions, err := ucGetSession.GetSession(userContext)
+	questions, err := usecases.GetSession(userContext)
 
 	httpStatus := http.StatusOK
 	if err != nil {
@@ -43,15 +34,15 @@ func GetSession(c *gin.Context) {
 }
 
 func StartSession(c *gin.Context) {
-	ucStart.StartSession()
+	usecases.StartSession()
 }
 
 func StopSession(c *gin.Context) {
-	ucStop.StopSession()
+	usecases.StopSession()
 }
 
 func Create(c *gin.Context) {
-	var newQuestionDto dtos.NewQuestionDto
+	var newQuestionDto usecases.NewQuestionDto
 	user, _ := c.Get(shared_models.User)
 
 	userContext := user.(*shared_models.UserContext)
@@ -64,7 +55,7 @@ func Create(c *gin.Context) {
 		return
 	}
 
-	err = ucCreate.Create(newQuestionDto, *userContext)
+	err = usecases.Create(newQuestionDto, *userContext)
 
 	httpStatus := http.StatusOK
 	if err != nil {
@@ -86,7 +77,7 @@ func Create(c *gin.Context) {
 }
 
 func Update(c *gin.Context) {
-	var updateQuestionDto dtos.UpdateQuestionDto
+	var updateQuestionDto usecases.UpdateQuestionDto
 	user, _ := c.Get(shared_models.User)
 	userContext := user.(*shared_models.UserContext)
 
@@ -98,7 +89,7 @@ func Update(c *gin.Context) {
 		return
 	}
 
-	err = ucUpdate.UpdateQuestion(updateQuestionDto, *userContext)
+	err = usecases.UpdateQuestion(updateQuestionDto, *userContext)
 
 	httpStatus := http.StatusOK
 	if err != nil {
@@ -128,7 +119,7 @@ func Delete(c *gin.Context) {
 	userContext := user.(*shared_models.UserContext)
 	questionId := c.Param("id")
 
-	err := ucDelete.Delete(questionId, *userContext)
+	err := usecases.Delete(questionId, *userContext)
 
 	httpStatus := http.StatusOK
 	if err != nil {
@@ -158,7 +149,7 @@ func Upvote(c *gin.Context) {
 	questionId := c.Param("id")
 	userContext := user.(*shared_models.UserContext)
 
-	err := ucUpvote.Upvote(questionId, *userContext)
+	err := usecases.Upvote(questionId, *userContext)
 
 	httpStatus := http.StatusOK
 	if err != nil {
@@ -188,7 +179,7 @@ func UndoVote(c *gin.Context) {
 	questionId := c.Param("id")
 	userContext := user.(*shared_models.UserContext)
 
-	err := ucUndoVote.UndoVote(questionId, *userContext)
+	err := usecases.UndoVote(questionId, *userContext)
 
 	httpStatus := http.StatusOK
 	if err != nil {
@@ -216,7 +207,7 @@ func UndoVote(c *gin.Context) {
 func Answer(c *gin.Context) {
 	questionId := c.Param("id")
 
-	err := ucAnswer.Answer(questionId)
+	err := usecases.Answer(questionId)
 
 	httpStatus := http.StatusOK
 	if err != nil {

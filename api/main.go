@@ -4,13 +4,14 @@ import (
 	"net/http"
 	"time"
 	"voting/internal/env"
-	"voting/internal/models/roles"
-	"voting/internal/notification"
 	userService "voting/services/user"
+	"voting/shared/auth"
 	"voting/shared/auth/jwks"
 	"voting/shared/auth/middleware"
 	shared_infra "voting/shared/infra/broker"
 	votinghttp "voting/voting/interface/http"
+	voting_sse "voting/voting/interface/sse"
+	voting_ws "voting/voting/interface/ws"
 	voting_repositories "voting/voting/repositories"
 
 	_ "voting/docs"
@@ -45,7 +46,7 @@ func main() {
 	jwks.Init()
 
 	internalBroker := shared_infra.New()
-	centrifugeBroker := notification.NewCentrifuge(internalBroker)
+	centrifugeBroker := voting_ws.NewCentrifuge(internalBroker)
 
 	r = gin.Default()
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
@@ -83,9 +84,9 @@ func main() {
 				return originHeader == env.Env.AllowedOrigin
 			},
 		}))))
-		v1.GET("/events", middleware.GinRequireAuth(), notification.SseStream(internalBroker))
+		v1.GET("/events", middleware.GinRequireAuth(), voting_sse.SseStream(internalBroker))
 		q := v1.Group("/question", middleware.GinRequireAuth())
-		q.PUT("/answer/:id", middleware.RequireRole(roles.SessionAdmin, roles.Admin), votinghttp.Answer)
+		q.PUT("/answer/:id", middleware.RequireRole(auth.SessionAdmin, auth.Admin), votinghttp.Answer)
 		q.POST("/new", votinghttp.Create)
 		q.PUT("/upvote/:id", votinghttp.Upvote)
 		q.PUT("/undovote/:id", votinghttp.UndoVote)
@@ -93,8 +94,8 @@ func main() {
 		q.DELETE("/delete/:id", votinghttp.Delete)
 
 		s := q.Group("/session", middleware.GinRequireAuth())
-		s.POST("/start", middleware.RequireRole(roles.Admin), votinghttp.StartSession)
-		s.POST("/stop", middleware.RequireRole(roles.Admin), votinghttp.StopSession)
+		s.POST("/start", middleware.RequireRole(auth.Admin), votinghttp.StartSession)
+		s.POST("/stop", middleware.RequireRole(auth.Admin), votinghttp.StopSession)
 		s.GET("", votinghttp.GetSession)
 
 		ut := v1.Group("/user/test")

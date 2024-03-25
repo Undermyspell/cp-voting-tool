@@ -1,4 +1,4 @@
-package events
+package usecases_events
 
 type EventType string
 

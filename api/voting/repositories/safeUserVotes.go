@@ -1,4 +1,4 @@
-package models
+package voting_repositories
 
 import "sync"
 

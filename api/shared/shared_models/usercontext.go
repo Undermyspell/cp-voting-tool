@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"voting/internal/models/roles"
+	"voting/shared/auth"
 	"voting/shared/auth/jwks"
 
 	"github.com/gin-gonic/gin"
@@ -20,7 +20,7 @@ import (
 type UserContext struct {
 	Name  string
 	Email string
-	Role  roles.Role
+	Role  auth.Role
 }
 
 func (userContext *UserContext) GetHash(secret string) string {
@@ -55,11 +55,11 @@ func GetUserContextFromToken(jwtToken string) (*UserContext, error) {
 	}
 
 	userRoles, okRole := token.Claims.(jwt.MapClaims)["roles"]
-	role := roles.Contributor
+	role := auth.Contributor
 
 	if okRole {
 		t := userRoles.([]interface{})
-		role = roles.Role(t[0].(string))
+		role = auth.Role(t[0].(string))
 	}
 
 	return &UserContext{Name: name.(string), Email: email.(string), Role: role}, nil

@@ -2,12 +2,12 @@ package usecases
 
 import (
 	"encoding/json"
-	"voting/internal/events"
 	"voting/shared"
 	shared_infra_broker "voting/shared/infra/broker"
 	"voting/shared/shared_models"
 	voting_repositories "voting/voting/repositories"
 	errors "voting/voting/use-cases/_errors"
+	usecases_events "voting/voting/use-cases/_events"
 )
 
 func Delete(questionId string, creator shared_models.UserContext) errors.VotingError {
@@ -19,13 +19,13 @@ func Delete(questionId string, creator shared_models.UserContext) errors.VotingE
 		return err
 	}
 
-	questionDeletedSseMessage := events.QuestionDeleted{
+	questionDeletedSseMessage := usecases_events.QuestionDeleted{
 		Id: questionId,
 	}
 	questionDeletedByteString, _ := json.Marshal(questionDeletedSseMessage)
 
-	event := events.Event{
-		EventType: events.DELETE_QUESTION,
+	event := usecases_events.Event{
+		EventType: usecases_events.DELETE_QUESTION,
 		Payload:   string(questionDeletedByteString),
 	}
 

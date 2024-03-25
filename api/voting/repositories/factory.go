@@ -4,7 +4,7 @@ import (
 	"context"
 	"flag"
 	"voting/internal/env"
-	"voting/internal/helper"
+	shared "voting/shared/helper"
 
 	"github.com/nitishm/go-rejson/v4"
 	"github.com/redis/go-redis/v9"
@@ -22,7 +22,7 @@ func NewRedis() *Redis {
 	redisRk := DefaultStorageRootKey
 
 	if generateRedisStorageRootKey {
-		redisRk = helper.GetRandomId(15)
+		redisRk = shared.GetRandomId(15)
 	}
 
 	var addr = flag.String("Server", redisEndpoint, "Redis server address")

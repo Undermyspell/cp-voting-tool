@@ -1,20 +1,20 @@
 package usecases
 
 import (
-	"voting/internal/events"
 	shared_infra_broker "voting/shared/infra/broker"
 	voting_repositories "voting/voting/repositories"
 	errors "voting/voting/use-cases/_errors"
+	usecases_events "voting/voting/use-cases/_events"
 )
 
-func StartSession() errors.VotingError {
+func StopSession() errors.VotingError {
 	broker := shared_infra_broker.GetInstance()
 	votingStorage := voting_repositories.GetInstance()
-	votingStorage.Start()
+	votingStorage.Stop()
 
-	event := events.Event{
-		EventType: events.START_SESSION,
-		Payload:   events.PayloadEmpty,
+	event := usecases_events.Event{
+		EventType: usecases_events.STOP_SESSION,
+		Payload:   usecases_events.PayloadEmpty,
 	}
 
 	broker.NotifyAll(event)

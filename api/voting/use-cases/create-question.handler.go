@@ -3,17 +3,21 @@ package usecases
 import (
 	"encoding/json"
 	"fmt"
-	"voting/dtos"
-	"voting/internal/events"
-	"voting/internal/models"
 	shared "voting/shared"
 	shared_infra_broker "voting/shared/infra/broker"
 	"voting/shared/shared_models"
+	voting_models "voting/voting/models"
 	voting_repositories "voting/voting/repositories"
 	errors "voting/voting/use-cases/_errors"
+	usecases_events "voting/voting/use-cases/_events"
 )
 
-func Create(newQuestionDto dtos.NewQuestionDto, userContext shared_models.UserContext) errors.VotingError {
+type NewQuestionDto struct {
+	Text      string `json:"text" binding:"required"`
+	Anonymous bool   `json:"anonymous"`
+}
+
+func Create(newQuestionDto NewQuestionDto, userContext shared_models.UserContext) errors.VotingError {
 	broker := shared_infra_broker.GetInstance()
 
 	question, err := create(newQuestionDto.Text, newQuestionDto.Anonymous, userContext)
@@ -22,7 +26,7 @@ func Create(newQuestionDto dtos.NewQuestionDto, userContext shared_models.UserCo
 		return err
 	}
 
-	newQuestionForUserSseMessage := events.QuestionCreated{
+	newQuestionForUserSseMessage := usecases_events.QuestionCreated{
 		Id:        question.Id,
 		Text:      question.Text,
 		Creator:   question.CreatorName,
@@ -39,7 +43,7 @@ func Create(newQuestionDto dtos.NewQuestionDto, userContext shared_models.UserCo
 		creatorForAllButUser = question.CreatorName
 	}
 
-	newQuestionForAllButUserSseMessage := events.QuestionCreated{
+	newQuestionForAllButUserSseMessage := usecases_events.QuestionCreated{
 		Id:        question.Id,
 		Text:      question.Text,
 		Creator:   creatorForAllButUser,
@@ -60,12 +64,12 @@ func Create(newQuestionDto dtos.NewQuestionDto, userContext shared_models.UserCo
 		}
 	}
 
-	eventForUser := events.Event{
-		EventType: events.NEW_QUESTION,
+	eventForUser := usecases_events.Event{
+		EventType: usecases_events.NEW_QUESTION,
 		Payload:   string(newQuestionForUserByteString),
 	}
-	eventForAllButUser := events.Event{
-		EventType: events.NEW_QUESTION,
+	eventForAllButUser := usecases_events.Event{
+		EventType: usecases_events.NEW_QUESTION,
 		Payload:   string(newQuestionForAllButUserByteString),
 	}
 
@@ -75,7 +79,7 @@ func Create(newQuestionDto dtos.NewQuestionDto, userContext shared_models.UserCo
 	return nil
 }
 
-func create(text string, anonymous bool, creator shared_models.UserContext) (*models.Question, errors.VotingError) {
+func create(text string, anonymous bool, creator shared_models.UserContext) (*voting_models.Question, errors.VotingError) {
 	votingStorage := voting_repositories.GetInstance()
 
 	if !votingStorage.IsRunning() {
@@ -86,10 +90,10 @@ func create(text string, anonymous bool, creator shared_models.UserContext) (*mo
 		}
 	}
 
-	if len(text) > models.MaxLength {
+	if len(text) > voting_models.MaxLength {
 		return nil, &errors.QuestionMaxLengthExceededError{
 			UseCaseError: shared.UseCaseError{
-				ErrMessage: fmt.Sprintf("Question text must have a max length of %d", models.MaxLength),
+				ErrMessage: fmt.Sprintf("Question text must have a max length of %d", voting_models.MaxLength),
 			},
 		}
 	}

@@ -1,4 +1,4 @@
-package notification
+package voting_ws
 
 import (
 	shared_infra_broker "voting/shared/infra/broker"

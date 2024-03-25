@@ -13,9 +13,9 @@ import (
 	"sync"
 	"testing"
 	"time"
-	"voting/dtos"
-	"voting/internal/events"
 	"voting/internal/mocks"
+	usecases "voting/voting/use-cases"
+	usecases_events "voting/voting/use-cases/_events"
 
 	"github.com/centrifugal/centrifuge-go"
 	"github.com/gin-gonic/gin"
@@ -26,7 +26,7 @@ import (
 
 type CentrifugeTestClient struct {
 	client           *centrifuge.Client
-	receivedMessages []events.Event
+	receivedMessages []usecases_events.Event
 }
 
 type QuestionApiTestSuite struct {
@@ -69,14 +69,14 @@ func (suite *QuestionApiTestSuite) SetupSuite() {
 
 	suite.centrifugeClientFoo.client.OnMessage(func(me centrifuge.MessageEvent) {
 
-		var event events.Event
+		var event usecases_events.Event
 
 		json.Unmarshal([]byte(me.Data), &event)
 		suite.centrifugeClientFoo.receivedMessages = append(suite.centrifugeClientFoo.receivedMessages, event)
 	})
 
 	suite.centrifugeClientBar.client.OnMessage(func(me centrifuge.MessageEvent) {
-		var event events.Event
+		var event usecases_events.Event
 		json.Unmarshal([]byte(me.Data), &event)
 
 		suite.centrifugeClientBar.receivedMessages = append(suite.centrifugeClientBar.receivedMessages, event)
@@ -172,7 +172,7 @@ func (suite *QuestionApiTestSuite) TestNewQuestion_OK_200() {
 	w := httptest.NewRecorder()
 
 	token := suite.tokenUser_Foo
-	newQuestion := dtos.NewQuestionDto{Text: "Foo Question", Anonymous: false}
+	newQuestion := usecases.NewQuestionDto{Text: "Foo Question", Anonymous: false}
 
 	postNewQuestion(suite, w, newQuestion, token)
 
@@ -187,12 +187,12 @@ func (suite *QuestionApiTestSuite) TestNewQuestion_EVENTS_RECEIVED_NEW_QUESTION(
 	w := httptest.NewRecorder()
 
 	token := suite.tokenUser_Foo
-	newQuestion := dtos.NewQuestionDto{Text: "This is a new question", Anonymous: false}
+	newQuestion := usecases.NewQuestionDto{Text: "This is a new question", Anonymous: false}
 
 	postNewQuestion(suite, w, newQuestion, token)
 
 	assert.EventuallyWithT(suite.T(), func(c *assert.CollectT) {
-		questionCreatedEventFoo, err := findEvent[events.QuestionCreated](suite.centrifugeClientFoo, events.NEW_QUESTION)
+		questionCreatedEventFoo, err := findEvent[usecases_events.QuestionCreated](suite.centrifugeClientFoo, usecases_events.NEW_QUESTION)
 		assert.Nil(c, err)
 		assert.Equal(c, "This is a new question", questionCreatedEventFoo.Text)
 		assert.Equal(c, false, questionCreatedEventFoo.Answered)
@@ -202,7 +202,7 @@ func (suite *QuestionApiTestSuite) TestNewQuestion_EVENTS_RECEIVED_NEW_QUESTION(
 		assert.Equal(c, true, questionCreatedEventFoo.Voted)
 		assert.Equal(c, 1, questionCreatedEventFoo.Votes)
 
-		questionCreatedEventBar, err1 := findEvent[events.QuestionCreated](suite.centrifugeClientBar, events.NEW_QUESTION)
+		questionCreatedEventBar, err1 := findEvent[usecases_events.QuestionCreated](suite.centrifugeClientBar, usecases_events.NEW_QUESTION)
 		assert.Nil(c, err1)
 		assert.Equal(c, "This is a new question", questionCreatedEventBar.Text)
 		assert.Equal(c, false, questionCreatedEventBar.Answered)
@@ -218,7 +218,7 @@ func (suite *QuestionApiTestSuite) TestNewQuestion_404_WHEN_TEXT_LENTGH_OVER_MAX
 	w := httptest.NewRecorder()
 
 	token := suite.tokenUser_Foo
-	newQuestion := dtos.NewQuestionDto{Text: "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.", Anonymous: false}
+	newQuestion := usecases.NewQuestionDto{Text: "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.", Anonymous: false}
 
 	postNewQuestion(suite, w, newQuestion, token)
 
@@ -263,10 +263,10 @@ func (suite *QuestionApiTestSuite) TestAnswerQuestion_OK_200() {
 		suite.T().Run(test.name, func(t *testing.T) {
 			w := httptest.NewRecorder()
 
-			newQuestion := dtos.NewQuestionDto{Text: "Foo Question", Anonymous: false}
+			newQuestion := usecases.NewQuestionDto{Text: "Foo Question", Anonymous: false}
 			postNewQuestion(suite, w, newQuestion, suite.tokenUser_Bar)
 			questionList := getSession(suite, w, suite.tokenUser_Bar)
-			question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Foo Question" })]
+			question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c usecases.QuestionDto) bool { return c.Text == "Foo Question" })]
 
 			assert.Equal(suite.T(), "Foo Question", question_FOO_Q.Text)
 			assert.Equal(suite.T(), false, question_FOO_Q.Anonymous)
@@ -282,19 +282,19 @@ func (suite *QuestionApiTestSuite) TestAnswerQuestion_OK_200() {
 func (suite *QuestionApiTestSuite) TestAnswerQuestion_EVENTS_RECEIVED_ANSWER_QUESTION() {
 	w := httptest.NewRecorder()
 
-	newQuestion := dtos.NewQuestionDto{Text: "Question to be answered", Anonymous: false}
+	newQuestion := usecases.NewQuestionDto{Text: "Question to be answered", Anonymous: false}
 	postNewQuestion(suite, w, newQuestion, suite.tokenUser_Foo)
 	questionList := getSession(suite, w, suite.tokenUser_Foo)
-	question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Question to be answered" })]
+	question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c usecases.QuestionDto) bool { return c.Text == "Question to be answered" })]
 
 	answerQuestion(suite, w, question_FOO_Q.Id, suite.tokenUser_Admin)
 
 	assert.EventuallyWithT(suite.T(), func(c *assert.CollectT) {
-		questionAnsweredEventFoo, err := findEvent[events.QuestionAnswered](suite.centrifugeClientFoo, events.ANSWER_QUESTION)
+		questionAnsweredEventFoo, err := findEvent[usecases_events.QuestionAnswered](suite.centrifugeClientFoo, usecases_events.ANSWER_QUESTION)
 		assert.Nil(c, err)
 		assert.Equal(c, question_FOO_Q.Id, questionAnsweredEventFoo.Id)
 
-		questionAnsweredEventBar, err1 := findEvent[events.QuestionAnswered](suite.centrifugeClientBar, events.ANSWER_QUESTION)
+		questionAnsweredEventBar, err1 := findEvent[usecases_events.QuestionAnswered](suite.centrifugeClientBar, usecases_events.ANSWER_QUESTION)
 		assert.Nil(c, err1)
 		assert.Equal(c, question_FOO_Q.Id, questionAnsweredEventBar.Id)
 	}, time.Second*3, time.Second*1, "No question answered event received")
@@ -314,7 +314,7 @@ func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTACCEPTABLE_406_WHEN_DOU
 	w := httptest.NewRecorder()
 
 	token := suite.tokenUser_Foo
-	newQuestion := dtos.NewQuestionDto{Text: "new question"}
+	newQuestion := usecases.NewQuestionDto{Text: "new question"}
 	postNewQuestion(suite, w, newQuestion, token)
 
 	questionList := getSession(suite, w, token)
@@ -332,7 +332,7 @@ func (suite *QuestionApiTestSuite) TestUpvoteQuestion_NOTACCEPTABLE_406_WHEN_VOT
 
 	token := suite.tokenUser_SessionAdmin
 
-	jsonData := dtos.NewQuestionDto{Text: "new question"}
+	jsonData := usecases.NewQuestionDto{Text: "new question"}
 
 	postNewQuestion(suite, w, jsonData, token)
 
@@ -351,7 +351,7 @@ func (suite *QuestionApiTestSuite) TestDeleteQuestion_NOTACCEPTABLE_406_WHEN_DEL
 
 	token := suite.tokenUser_SessionAdmin
 
-	jsonData := dtos.NewQuestionDto{Text: "new question"}
+	jsonData := usecases.NewQuestionDto{Text: "new question"}
 
 	postNewQuestion(suite, w, jsonData, token)
 
@@ -370,7 +370,7 @@ func (suite *QuestionApiTestSuite) TestUpdateQuestion_NOTACCEPTABLE_406_WHEN_UPD
 
 	token := suite.tokenUser_SessionAdmin
 
-	jsonData := dtos.NewQuestionDto{Text: "new question"}
+	jsonData := usecases.NewQuestionDto{Text: "new question"}
 
 	postNewQuestion(suite, w, jsonData, token)
 
@@ -379,7 +379,7 @@ func (suite *QuestionApiTestSuite) TestUpdateQuestion_NOTACCEPTABLE_406_WHEN_UPD
 	answerQuestion(suite, w, questionList[0].Id, token)
 
 	w2 := httptest.NewRecorder()
-	updateQuestionDto := dtos.UpdateQuestionDto{Id: questionList[0].Id, Text: "Updated Question", Anonymous: true}
+	updateQuestionDto := usecases.UpdateQuestionDto{Id: questionList[0].Id, Text: "Updated Question", Anonymous: true}
 	putUpdateQuestion(suite, w2, updateQuestionDto, token)
 
 	assert.Equal(suite.T(), http.StatusNotAcceptable, w2.Code)
@@ -387,7 +387,7 @@ func (suite *QuestionApiTestSuite) TestUpdateQuestion_NOTACCEPTABLE_406_WHEN_UPD
 
 func (suite *QuestionApiTestSuite) TestUpvoteQuestion_SAME_QUESTION_PARALLEL_100_SHOULD_RETURN_100() {
 	w := httptest.NewRecorder()
-	jsonData := dtos.NewQuestionDto{Text: "new question"}
+	jsonData := usecases.NewQuestionDto{Text: "new question"}
 	postNewQuestion(suite, w, jsonData, suite.tokenUser_Bar)
 	questionList := getSession(suite, w, suite.tokenUser_Bar)
 	questionId := questionList[0].Id
@@ -417,7 +417,7 @@ func (suite *QuestionApiTestSuite) TestUpvoteQuestion_SAME_QUESTION_PARALLEL_100
 
 func (suite *QuestionApiTestSuite) TestUpvoteQuestion_EVENTS_RECEIVED_UPVOTE_QUESTION() {
 	w := httptest.NewRecorder()
-	jsonData := dtos.NewQuestionDto{Text: "new question"}
+	jsonData := usecases.NewQuestionDto{Text: "new question"}
 	postNewQuestion(suite, w, jsonData, suite.tokenUser_Bar)
 	questionList := getSession(suite, w, suite.tokenUser_Bar)
 	questionId := questionList[0].Id
@@ -425,13 +425,13 @@ func (suite *QuestionApiTestSuite) TestUpvoteQuestion_EVENTS_RECEIVED_UPVOTE_QUE
 	upvoteQuestion(suite, w, questionId, suite.tokenUser_Foo)
 
 	assert.EventuallyWithT(suite.T(), func(c *assert.CollectT) {
-		questionUpvotedEventFoo, err := findEvent[events.QuestionUpvoted](suite.centrifugeClientFoo, events.UPVOTE_QUESTION)
+		questionUpvotedEventFoo, err := findEvent[usecases_events.QuestionUpvoted](suite.centrifugeClientFoo, usecases_events.UPVOTE_QUESTION)
 		assert.Nil(c, err)
 		assert.Equal(c, questionId, questionUpvotedEventFoo.Id)
 		assert.Equal(c, true, questionUpvotedEventFoo.Voted)
 		assert.Equal(c, 2, questionUpvotedEventFoo.Votes)
 
-		questionUpvotedEventBar, err1 := findEvent[events.QuestionUpvoted](suite.centrifugeClientBar, events.UPVOTE_QUESTION)
+		questionUpvotedEventBar, err1 := findEvent[usecases_events.QuestionUpvoted](suite.centrifugeClientBar, usecases_events.UPVOTE_QUESTION)
 		assert.Nil(c, err1)
 		assert.Equal(c, questionId, questionUpvotedEventBar.Id)
 		assert.Equal(c, false, questionUpvotedEventBar.Voted)
@@ -443,7 +443,7 @@ func (suite *QuestionApiTestSuite) TestUndVoteQuestion_NOTACCEPTABLE_406_WHEN_US
 	w := httptest.NewRecorder()
 
 	token := suite.tokenUser_Foo
-	newQuestion := dtos.NewQuestionDto{Text: "new question"}
+	newQuestion := usecases.NewQuestionDto{Text: "new question"}
 	postNewQuestion(suite, w, newQuestion, token)
 
 	questionList := getSession(suite, w, token)
@@ -461,7 +461,7 @@ func (suite *QuestionApiTestSuite) TestUndovoteQuestion_NOTACCEPTABLE_406_WHEN_U
 
 	token := suite.tokenUser_SessionAdmin
 
-	jsonData := dtos.NewQuestionDto{Text: "new question"}
+	jsonData := usecases.NewQuestionDto{Text: "new question"}
 
 	postNewQuestion(suite, w, jsonData, token)
 
@@ -487,7 +487,7 @@ func (suite *QuestionApiTestSuite) TestUndovoteeQuestion_NOTFOUND_404() {
 
 func (suite *QuestionApiTestSuite) TestUndovoteQuestion_SAME_QUESTION_PARALLEL_100_SHOULD_RETURN_0() {
 	w := httptest.NewRecorder()
-	jsonData := dtos.NewQuestionDto{Text: "new question"}
+	jsonData := usecases.NewQuestionDto{Text: "new question"}
 	postNewQuestion(suite, w, jsonData, suite.tokenUser_Bar)
 	questionList := getSession(suite, w, suite.tokenUser_Bar)
 	questionId := questionList[0].Id
@@ -531,7 +531,7 @@ func (suite *QuestionApiTestSuite) TestUndovoteQuestion_SAME_QUESTION_PARALLEL_1
 
 func (suite *QuestionApiTestSuite) TestUndovoteQuestion_EVENTS_RECEIVED_UNDO_UPVOTE_QUESTION() {
 	w := httptest.NewRecorder()
-	jsonData := dtos.NewQuestionDto{Text: "new question"}
+	jsonData := usecases.NewQuestionDto{Text: "new question"}
 	postNewQuestion(suite, w, jsonData, suite.tokenUser_Bar)
 	questionList := getSession(suite, w, suite.tokenUser_Bar)
 	questionId := questionList[0].Id
@@ -541,13 +541,13 @@ func (suite *QuestionApiTestSuite) TestUndovoteQuestion_EVENTS_RECEIVED_UNDO_UPV
 	undoVoteQuestion(suite, w, questionId, suite.tokenUser_Bar)
 
 	assert.EventuallyWithT(suite.T(), func(c *assert.CollectT) {
-		questionUpvotedEventFoo, err := findEvent[events.QuestionUpvoted](suite.centrifugeClientFoo, events.UNDO_UPVOTE_QUESTION)
+		questionUpvotedEventFoo, err := findEvent[usecases_events.QuestionUpvoted](suite.centrifugeClientFoo, usecases_events.UNDO_UPVOTE_QUESTION)
 		assert.Nil(c, err)
 		assert.Equal(c, questionId, questionUpvotedEventFoo.Id)
 		assert.Equal(c, false, questionUpvotedEventFoo.Voted)
 		assert.Equal(c, 1, questionUpvotedEventFoo.Votes)
 
-		questionUpvotedEventBar, err1 := findEvent[events.QuestionUpvoted](suite.centrifugeClientBar, events.UNDO_UPVOTE_QUESTION)
+		questionUpvotedEventBar, err1 := findEvent[usecases_events.QuestionUpvoted](suite.centrifugeClientBar, usecases_events.UNDO_UPVOTE_QUESTION)
 		assert.Nil(c, err1)
 		assert.Equal(c, questionId, questionUpvotedEventBar.Id)
 		assert.Equal(c, false, questionUpvotedEventBar.Voted)
@@ -561,10 +561,10 @@ func (suite *QuestionApiTestSuite) TestGetSession_OK_200_CREATOR_SHOWN_ONLY_FOR_
 	tokenUser_Foo := suite.tokenUser_Foo
 	tokenUser_Bar := suite.tokenUser_Bar
 
-	newQuestion_FOO_Q1 := dtos.NewQuestionDto{Text: "Foo Question1", Anonymous: false}
-	newQuestion_FOO_Q2 := dtos.NewQuestionDto{Text: "Foo Question2 anonynmous", Anonymous: true}
-	newQuestion_BAR_Q1 := dtos.NewQuestionDto{Text: "Bar Question1", Anonymous: false}
-	newQuestion_BAR_Q2 := dtos.NewQuestionDto{Text: "Bar Question2 anonynmous", Anonymous: true}
+	newQuestion_FOO_Q1 := usecases.NewQuestionDto{Text: "Foo Question1", Anonymous: false}
+	newQuestion_FOO_Q2 := usecases.NewQuestionDto{Text: "Foo Question2 anonynmous", Anonymous: true}
+	newQuestion_BAR_Q1 := usecases.NewQuestionDto{Text: "Bar Question1", Anonymous: false}
+	newQuestion_BAR_Q2 := usecases.NewQuestionDto{Text: "Bar Question2 anonynmous", Anonymous: true}
 
 	postNewQuestion(suite, w, newQuestion_FOO_Q1, tokenUser_Foo)
 	postNewQuestion(suite, w, newQuestion_FOO_Q2, tokenUser_Foo)
@@ -573,10 +573,10 @@ func (suite *QuestionApiTestSuite) TestGetSession_OK_200_CREATOR_SHOWN_ONLY_FOR_
 
 	questionList := getSession(suite, w, tokenUser_Foo)
 
-	question_FOO_Q1 := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Foo Question1" })]
-	question_FOO_Q2 := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Foo Question2 anonynmous" })]
-	question_BAR_Q1 := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Bar Question1" })]
-	question_BAR_Q2 := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Bar Question2 anonynmous" })]
+	question_FOO_Q1 := questionList[slices.IndexFunc(questionList, func(c usecases.QuestionDto) bool { return c.Text == "Foo Question1" })]
+	question_FOO_Q2 := questionList[slices.IndexFunc(questionList, func(c usecases.QuestionDto) bool { return c.Text == "Foo Question2 anonynmous" })]
+	question_BAR_Q1 := questionList[slices.IndexFunc(questionList, func(c usecases.QuestionDto) bool { return c.Text == "Bar Question1" })]
+	question_BAR_Q2 := questionList[slices.IndexFunc(questionList, func(c usecases.QuestionDto) bool { return c.Text == "Bar Question2 anonynmous" })]
 
 	assert.Equal(suite.T(), true, question_FOO_Q1.Owned)
 	assert.Equal(suite.T(), false, question_FOO_Q1.Anonymous)
@@ -601,12 +601,12 @@ func (suite *QuestionApiTestSuite) TestUpdateQuestion_OK_200_WHEN_QUESTION_IS_OW
 	w := httptest.NewRecorder()
 
 	tokenUser_Foo := suite.tokenUser_Foo
-	newQuestion := dtos.NewQuestionDto{Text: "Foo Question", Anonymous: false}
+	newQuestion := usecases.NewQuestionDto{Text: "Foo Question", Anonymous: false}
 	postNewQuestion(suite, w, newQuestion, tokenUser_Foo)
 	questionList := getSession(suite, w, tokenUser_Foo)
-	question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Foo Question" })]
+	question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c usecases.QuestionDto) bool { return c.Text == "Foo Question" })]
 
-	updateQuestionDto := dtos.UpdateQuestionDto{Id: question_FOO_Q.Id, Text: "Updated Foo Question", Anonymous: true}
+	updateQuestionDto := usecases.UpdateQuestionDto{Id: question_FOO_Q.Id, Text: "Updated Foo Question", Anonymous: true}
 
 	assert.Equal(suite.T(), "Foo Question", question_FOO_Q.Text)
 	assert.Equal(suite.T(), false, question_FOO_Q.Anonymous)
@@ -614,7 +614,7 @@ func (suite *QuestionApiTestSuite) TestUpdateQuestion_OK_200_WHEN_QUESTION_IS_OW
 	putUpdateQuestion(suite, w, updateQuestionDto, tokenUser_Foo)
 
 	updatedQuestionList := getSession(suite, w, tokenUser_Foo)
-	updated_question_FOO_Q := updatedQuestionList[slices.IndexFunc(updatedQuestionList, func(c dtos.QuestionDto) bool { return c.Id == question_FOO_Q.Id })]
+	updated_question_FOO_Q := updatedQuestionList[slices.IndexFunc(updatedQuestionList, func(c usecases.QuestionDto) bool { return c.Id == question_FOO_Q.Id })]
 
 	assert.Equal(suite.T(), "Updated Foo Question", updated_question_FOO_Q.Text)
 	assert.Equal(suite.T(), true, updated_question_FOO_Q.Anonymous)
@@ -625,23 +625,23 @@ func (suite *QuestionApiTestSuite) TestUpdateQuestion_EVENTS_RECEIVED_UPDATE_QUE
 	w := httptest.NewRecorder()
 
 	tokenUser_Foo := suite.tokenUser_Foo
-	newQuestion := dtos.NewQuestionDto{Text: "Question to be updated", Anonymous: false}
+	newQuestion := usecases.NewQuestionDto{Text: "Question to be updated", Anonymous: false}
 	postNewQuestion(suite, w, newQuestion, tokenUser_Foo)
 	questionList := getSession(suite, w, tokenUser_Foo)
-	question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Question to be updated" })]
+	question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c usecases.QuestionDto) bool { return c.Text == "Question to be updated" })]
 
-	updateQuestionDto := dtos.UpdateQuestionDto{Id: question_FOO_Q.Id, Text: "Updated Foo Question", Anonymous: true}
+	updateQuestionDto := usecases.UpdateQuestionDto{Id: question_FOO_Q.Id, Text: "Updated Foo Question", Anonymous: true}
 
 	putUpdateQuestion(suite, w, updateQuestionDto, tokenUser_Foo)
 
 	assert.EventuallyWithT(suite.T(), func(c *assert.CollectT) {
-		questionUpdatedEventFoo, err := findEvent[events.QuestionUpdated](suite.centrifugeClientFoo, events.UPDATE_QUESTION)
+		questionUpdatedEventFoo, err := findEvent[usecases_events.QuestionUpdated](suite.centrifugeClientFoo, usecases_events.UPDATE_QUESTION)
 		assert.Nil(c, err)
 		assert.Equal(c, "Updated Foo Question", questionUpdatedEventFoo.Text)
 		assert.Equal(c, true, questionUpdatedEventFoo.Anonymous)
 		assert.Equal(c, "", questionUpdatedEventFoo.Creator)
 
-		questionUpdatedEventBar, err1 := findEvent[events.QuestionUpdated](suite.centrifugeClientBar, events.UPDATE_QUESTION)
+		questionUpdatedEventBar, err1 := findEvent[usecases_events.QuestionUpdated](suite.centrifugeClientBar, usecases_events.UPDATE_QUESTION)
 		assert.Nil(c, err1)
 		assert.Equal(c, "Updated Foo Question", questionUpdatedEventBar.Text)
 		assert.Equal(c, true, questionUpdatedEventBar.Anonymous)
@@ -656,12 +656,12 @@ func (suite *QuestionApiTestSuite) TestUpdateQuestion_FORBIDDEN_403_WHEN_QUESTIO
 	tokenUser_Foo := suite.tokenUser_Foo
 	tokenUser_Bar := suite.tokenUser_Bar
 
-	newQuestion := dtos.NewQuestionDto{Text: "Foo Question", Anonymous: false}
+	newQuestion := usecases.NewQuestionDto{Text: "Foo Question", Anonymous: false}
 	postNewQuestion(suite, w, newQuestion, tokenUser_Foo)
 	questionList := getSession(suite, w, tokenUser_Foo)
-	question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Foo Question" })]
+	question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c usecases.QuestionDto) bool { return c.Text == "Foo Question" })]
 
-	updateQuestionDto := dtos.UpdateQuestionDto{Id: question_FOO_Q.Id, Text: "Updated Foo Question", Anonymous: true}
+	updateQuestionDto := usecases.UpdateQuestionDto{Id: question_FOO_Q.Id, Text: "Updated Foo Question", Anonymous: true}
 
 	assert.Equal(suite.T(), "Foo Question", question_FOO_Q.Text)
 	assert.Equal(suite.T(), false, question_FOO_Q.Anonymous)
@@ -676,10 +676,10 @@ func (suite *QuestionApiTestSuite) TestDeleteQuestion_OK_200_WHEN_QUESTION_IS_OW
 	w := httptest.NewRecorder()
 
 	tokenUser_Foo := suite.tokenUser_Foo
-	newQuestion := dtos.NewQuestionDto{Text: "Foo Question", Anonymous: false}
+	newQuestion := usecases.NewQuestionDto{Text: "Foo Question", Anonymous: false}
 	postNewQuestion(suite, w, newQuestion, tokenUser_Foo)
 	questionList := getSession(suite, w, tokenUser_Foo)
-	question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Foo Question" })]
+	question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c usecases.QuestionDto) bool { return c.Text == "Foo Question" })]
 
 	assert.Equal(suite.T(), "Foo Question", question_FOO_Q.Text)
 	assert.Equal(suite.T(), false, question_FOO_Q.Anonymous)
@@ -687,7 +687,7 @@ func (suite *QuestionApiTestSuite) TestDeleteQuestion_OK_200_WHEN_QUESTION_IS_OW
 	deleteQuestion(suite, w, question_FOO_Q.Id, tokenUser_Foo)
 
 	updatedQuestionList := getSession(suite, w, tokenUser_Foo)
-	idx := slices.IndexFunc(updatedQuestionList, func(c dtos.QuestionDto) bool { return c.Id == question_FOO_Q.Id })
+	idx := slices.IndexFunc(updatedQuestionList, func(c usecases.QuestionDto) bool { return c.Id == question_FOO_Q.Id })
 
 	assert.Equal(suite.T(), -1, idx)
 	assert.Equal(suite.T(), http.StatusOK, w.Code)
@@ -697,19 +697,19 @@ func (suite *QuestionApiTestSuite) TestDeleteQuestion_EVENTS_RECEIVED_DELETE_QUE
 	w := httptest.NewRecorder()
 
 	tokenUser_Foo := suite.tokenUser_Foo
-	newQuestion := dtos.NewQuestionDto{Text: "Question to be deleted", Anonymous: false}
+	newQuestion := usecases.NewQuestionDto{Text: "Question to be deleted", Anonymous: false}
 	postNewQuestion(suite, w, newQuestion, tokenUser_Foo)
 	questionList := getSession(suite, w, tokenUser_Foo)
-	question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Question to be deleted" })]
+	question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c usecases.QuestionDto) bool { return c.Text == "Question to be deleted" })]
 
 	deleteQuestion(suite, w, question_FOO_Q.Id, tokenUser_Foo)
 
 	assert.EventuallyWithT(suite.T(), func(c *assert.CollectT) {
-		questionUpdatedEventFoo, err := findEvent[events.QuestionDeleted](suite.centrifugeClientFoo, events.DELETE_QUESTION)
+		questionUpdatedEventFoo, err := findEvent[usecases_events.QuestionDeleted](suite.centrifugeClientFoo, usecases_events.DELETE_QUESTION)
 		assert.Nil(c, err)
 		assert.Equal(c, question_FOO_Q.Id, questionUpdatedEventFoo.Id)
 
-		questionUpdatedEventBar, err1 := findEvent[events.QuestionDeleted](suite.centrifugeClientBar, events.DELETE_QUESTION)
+		questionUpdatedEventBar, err1 := findEvent[usecases_events.QuestionDeleted](suite.centrifugeClientBar, usecases_events.DELETE_QUESTION)
 		assert.Nil(c, err1)
 		assert.Equal(c, question_FOO_Q.Id, questionUpdatedEventBar.Id)
 	}, time.Second*3, time.Second*1, "Deleted question event has not been received")
@@ -721,10 +721,10 @@ func (suite *QuestionApiTestSuite) TestDeleteQuestion_FORBIDDEN_403_WHEN_QUESTIO
 	tokenUser_Foo := suite.tokenUser_Foo
 	tokenUser_Bar := suite.tokenUser_Bar
 
-	newQuestion := dtos.NewQuestionDto{Text: "Foo Question", Anonymous: false}
+	newQuestion := usecases.NewQuestionDto{Text: "Foo Question", Anonymous: false}
 	postNewQuestion(suite, w, newQuestion, tokenUser_Foo)
 	questionList := getSession(suite, w, tokenUser_Foo)
-	question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Foo Question" })]
+	question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c usecases.QuestionDto) bool { return c.Text == "Foo Question" })]
 
 	assert.Equal(suite.T(), "Foo Question", question_FOO_Q.Text)
 	assert.Equal(suite.T(), false, question_FOO_Q.Anonymous)
@@ -741,10 +741,10 @@ func (suite *QuestionApiTestSuite) TestAnswerQuestion_FORBIDDEN_403_WHEN_USER_NO
 	tokenUser_Foo := suite.tokenUser_Foo
 	tokenUser_Bar := suite.tokenUser_Bar
 
-	newQuestion := dtos.NewQuestionDto{Text: "Foo Question", Anonymous: false}
+	newQuestion := usecases.NewQuestionDto{Text: "Foo Question", Anonymous: false}
 	postNewQuestion(suite, w, newQuestion, tokenUser_Foo)
 	questionList := getSession(suite, w, tokenUser_Foo)
-	question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c dtos.QuestionDto) bool { return c.Text == "Foo Question" })]
+	question_FOO_Q := questionList[slices.IndexFunc(questionList, func(c usecases.QuestionDto) bool { return c.Text == "Foo Question" })]
 
 	assert.Equal(suite.T(), "Foo Question", question_FOO_Q.Text)
 	assert.Equal(suite.T(), false, question_FOO_Q.Anonymous)
@@ -828,7 +828,7 @@ func answerQuestion(suite *QuestionApiTestSuite, w *httptest.ResponseRecorder, q
 	suite.router.ServeHTTP(w, req)
 }
 
-func postNewQuestion(suite *QuestionApiTestSuite, w *httptest.ResponseRecorder, question dtos.NewQuestionDto, token string) {
+func postNewQuestion(suite *QuestionApiTestSuite, w *httptest.ResponseRecorder, question usecases.NewQuestionDto, token string) {
 	newQuestion, _ := json.Marshal(question)
 	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/question/new", suite.apiPrefix), bytes.NewBuffer(newQuestion))
 	req.Header.Set("Content-Type", "application/json")
@@ -836,7 +836,7 @@ func postNewQuestion(suite *QuestionApiTestSuite, w *httptest.ResponseRecorder, 
 	suite.router.ServeHTTP(w, req)
 }
 
-func putUpdateQuestion(suite *QuestionApiTestSuite, w *httptest.ResponseRecorder, question dtos.UpdateQuestionDto, token string) {
+func putUpdateQuestion(suite *QuestionApiTestSuite, w *httptest.ResponseRecorder, question usecases.UpdateQuestionDto, token string) {
 	updateQuestion, _ := json.Marshal(question)
 	req, _ := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/question/update", suite.apiPrefix), bytes.NewBuffer(updateQuestion))
 	req.Header.Set("Content-Type", "application/json")
@@ -873,20 +873,20 @@ func stopSession(suite *QuestionApiTestSuite) {
 	suite.router.ServeHTTP(w, req)
 }
 
-func getSession(suite *QuestionApiTestSuite, w *httptest.ResponseRecorder, token string) []dtos.QuestionDto {
+func getSession(suite *QuestionApiTestSuite, w *httptest.ResponseRecorder, token string) []usecases.QuestionDto {
 	reql, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/question/session", suite.apiPrefix), nil)
 	reql.Header.Set("Content-Type", "application/json")
 	reql.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 	suite.router.ServeHTTP(w, reql)
 
-	var questionList []dtos.QuestionDto
+	var questionList []usecases.QuestionDto
 	body, _ := io.ReadAll(w.Body)
 	json.Unmarshal(body, &questionList)
 
 	return questionList
 }
 
-func findEvent[T any](centrifugeTestClient CentrifugeTestClient, eventType events.EventType) (*T, error) {
+func findEvent[T any](centrifugeTestClient CentrifugeTestClient, eventType usecases_events.EventType) (*T, error) {
 	for i := range centrifugeTestClient.receivedMessages {
 		if centrifugeTestClient.receivedMessages[i].EventType == eventType {
 			var eventPayload T
@@ -927,10 +927,10 @@ func initCentrifuge(suite *QuestionApiTestSuite) {
 
 	suite.centrifugeClientFoo = CentrifugeTestClient{
 		client:           cFoo,
-		receivedMessages: make([]events.Event, 0),
+		receivedMessages: make([]usecases_events.Event, 0),
 	}
 	suite.centrifugeClientBar = CentrifugeTestClient{
 		client:           cBar,
-		receivedMessages: make([]events.Event, 0),
+		receivedMessages: make([]usecases_events.Event, 0),
 	}
 }

@@ -1,8 +1,8 @@
 package voting_repositories
 
 import (
-	"voting/internal/helper"
-	"voting/internal/models"
+	shared "voting/shared/helper"
+	voting_models "voting/voting/models"
 
 	"github.com/oklog/ulid/v2"
 )
@@ -10,7 +10,7 @@ import (
 type questionInMemory struct {
 	Id          string `json:"id"`
 	Text        string `json:"text"`
-	Votes       models.SafeCounter
+	Votes       SafeCounter
 	Answered    bool
 	CreatorHash string
 	CreatorName string
@@ -24,7 +24,7 @@ func newQuestion(text string, anonymous bool, creatorName, creatorHash string) *
 	return &questionInMemory{
 		Id:          ulid.Make().String(),
 		Text:        text,
-		Votes:       models.SafeCounter{},
+		Votes:       SafeCounter{},
 		Answered:    false,
 		CreatorHash: creatorHash,
 		CreatorName: creatorName,
@@ -34,14 +34,14 @@ func newQuestion(text string, anonymous bool, creatorName, creatorHash string) *
 
 type InMemory struct {
 	Questions     map[string]*questionInMemory
-	UserVotes     *models.SafeUserVotes
+	UserVotes     *SafeUserVotes
 	SessionSecret string
 }
 
 func (session *InMemory) Start() {
-	session.UserVotes = models.NewSafeUserVotes()
+	session.UserVotes = NewSafeUserVotes()
 	session.Questions = make(map[string]*questionInMemory)
-	session.SessionSecret = helper.GetRandomId(30)
+	session.SessionSecret = shared.GetRandomId(30)
 }
 
 func (session *InMemory) Stop() {
@@ -50,10 +50,10 @@ func (session *InMemory) Stop() {
 	session.SessionSecret = ""
 }
 
-func (session *InMemory) GetQuestion(id string) (models.Question, bool) {
+func (session *InMemory) GetQuestion(id string) (voting_models.Question, bool) {
 	questionInMemory, ok := session.Questions[id]
 
-	question := models.Question{}
+	question := voting_models.Question{}
 	if ok {
 		question = questionFromInMemoryQuestion(questionInMemory)
 	}
@@ -69,8 +69,8 @@ func (session *InMemory) GetSecret() string {
 	return session.SessionSecret
 }
 
-func (session *InMemory) GetQuestions() map[string]models.Question {
-	questions := make(map[string]models.Question)
+func (session *InMemory) GetQuestions() map[string]voting_models.Question {
+	questions := make(map[string]voting_models.Question)
 
 	for id, question := range session.Questions {
 		questions[id] = questionFromInMemoryQuestion(question)
@@ -83,14 +83,14 @@ func (session *InMemory) GetUserVotes() map[string]map[string]bool {
 	return session.UserVotes.Value()
 }
 
-func (session *InMemory) AddQuestion(text string, anonymous bool, creatorName, creatorHash string) models.Question {
+func (session *InMemory) AddQuestion(text string, anonymous bool, creatorName, creatorHash string) voting_models.Question {
 	question := newQuestion(text, anonymous, creatorName, creatorHash)
 	session.Questions[question.Id] = question
 	session.Vote(creatorHash, question.Id)
 	return questionFromInMemoryQuestion(question)
 }
 
-func (session *InMemory) UpdateQuestion(id, text, creatorName string, anonymous bool) models.Question {
+func (session *InMemory) UpdateQuestion(id, text, creatorName string, anonymous bool) voting_models.Question {
 	questionToUpdate := session.Questions[id]
 	questionToUpdate.Text = text
 	questionToUpdate.Anonymous = anonymous
@@ -120,8 +120,8 @@ func (session *InMemory) UndoVote(userHash, id string) {
 	session.Questions[id].Votes.Decrement()
 }
 
-func questionFromInMemoryQuestion(question *questionInMemory) models.Question {
-	return models.NewQuestion(
+func questionFromInMemoryQuestion(question *questionInMemory) voting_models.Question {
+	return voting_models.NewQuestion(
 		question.Id,
 		question.Text,
 		question.Votes.Value(),

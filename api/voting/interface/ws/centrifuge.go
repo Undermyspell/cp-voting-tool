@@ -1,12 +1,12 @@
-package notification
+package voting_ws
 
 import (
 	"context"
 	"encoding/json"
 	"time"
-	"voting/internal/events"
 	shared_infra_broker "voting/shared/infra/broker"
 	"voting/shared/shared_models"
+	usecases_events "voting/voting/use-cases/_events"
 
 	"github.com/centrifugal/centrifuge"
 	"github.com/sirupsen/logrus"
@@ -54,7 +54,7 @@ func initHandlers(internalBroker shared_infra_broker.Broker) {
 		logrus.Infof("🟩 connected via %s.", transport.Name())
 
 		userBoundChannel := shared_infra_broker.UserBoundChannel{
-			Channel: make(chan events.Event),
+			Channel: make(chan usecases_events.Event),
 			User:    userContext,
 		}
 
