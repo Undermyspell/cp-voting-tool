@@ -1,4 +1,4 @@
-package usecases
+package voting_errors
 
 import shared "voting/shared"
 

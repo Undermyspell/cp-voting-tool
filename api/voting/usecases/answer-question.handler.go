@@ -1,12 +1,12 @@
-package usecases
+package voting_usecases
 
 import (
 	"encoding/json"
 	"voting/shared"
 	shared_infra_broker "voting/shared/infra/broker"
 	voting_repositories "voting/voting/repositories"
-	errors "voting/voting/use-cases/_errors"
-	usecases_events "voting/voting/use-cases/_events"
+	errors "voting/voting/usecases/_errors"
+	usecases_events "voting/voting/usecases/_events"
 )
 
 func Answer(questionId string) errors.VotingError {

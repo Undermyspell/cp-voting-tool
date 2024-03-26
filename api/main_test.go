@@ -14,9 +14,9 @@ import (
 	"testing"
 	"time"
 	"voting/shared"
-	user_usecases "voting/user/use-cases"
-	usecases "voting/voting/use-cases"
-	usecases_events "voting/voting/use-cases/_events"
+	user_usecases "voting/user/usecases"
+	usecases "voting/voting/usecases"
+	voting_usecases_events "voting/voting/usecases/_events"
 
 	"github.com/centrifugal/centrifuge-go"
 	"github.com/gin-gonic/gin"
@@ -193,7 +193,7 @@ func (suite *QuestionApiTestSuite) TestNewQuestion_EVENTS_RECEIVED_NEW_QUESTION(
 	postNewQuestion(suite, w, newQuestion, token)
 
 	assert.EventuallyWithT(suite.T(), func(c *assert.CollectT) {
-		questionCreatedEventFoo, err := findEvent[usecases_events.QuestionCreated](suite.centrifugeClientFoo, usecases_events.NEW_QUESTION)
+		questionCreatedEventFoo, err := findEvent[voting_usecases_events.QuestionCreated](suite.centrifugeClientFoo, voting_usecases_events.NEW_QUESTION)
 		assert.Nil(c, err)
 		assert.Equal(c, "This is a new question", questionCreatedEventFoo.Text)
 		assert.Equal(c, false, questionCreatedEventFoo.Answered)
@@ -203,7 +203,7 @@ func (suite *QuestionApiTestSuite) TestNewQuestion_EVENTS_RECEIVED_NEW_QUESTION(
 		assert.Equal(c, true, questionCreatedEventFoo.Voted)
 		assert.Equal(c, 1, questionCreatedEventFoo.Votes)
 
-		questionCreatedEventBar, err1 := findEvent[usecases_events.QuestionCreated](suite.centrifugeClientBar, usecases_events.NEW_QUESTION)
+		questionCreatedEventBar, err1 := findEvent[voting_usecases_events.QuestionCreated](suite.centrifugeClientBar, voting_usecases_events.NEW_QUESTION)
 		assert.Nil(c, err1)
 		assert.Equal(c, "This is a new question", questionCreatedEventBar.Text)
 		assert.Equal(c, false, questionCreatedEventBar.Answered)
@@ -291,11 +291,11 @@ func (suite *QuestionApiTestSuite) TestAnswerQuestion_EVENTS_RECEIVED_ANSWER_QUE
 	answerQuestion(suite, w, question_FOO_Q.Id, suite.tokenUser_Admin)
 
 	assert.EventuallyWithT(suite.T(), func(c *assert.CollectT) {
-		questionAnsweredEventFoo, err := findEvent[usecases_events.QuestionAnswered](suite.centrifugeClientFoo, usecases_events.ANSWER_QUESTION)
+		questionAnsweredEventFoo, err := findEvent[voting_usecases_events.QuestionAnswered](suite.centrifugeClientFoo, voting_usecases_events.ANSWER_QUESTION)
 		assert.Nil(c, err)
 		assert.Equal(c, question_FOO_Q.Id, questionAnsweredEventFoo.Id)
 
-		questionAnsweredEventBar, err1 := findEvent[usecases_events.QuestionAnswered](suite.centrifugeClientBar, usecases_events.ANSWER_QUESTION)
+		questionAnsweredEventBar, err1 := findEvent[voting_usecases_events.QuestionAnswered](suite.centrifugeClientBar, voting_usecases_events.ANSWER_QUESTION)
 		assert.Nil(c, err1)
 		assert.Equal(c, question_FOO_Q.Id, questionAnsweredEventBar.Id)
 	}, time.Second*3, time.Second*1, "No question answered event received")
@@ -426,13 +426,13 @@ func (suite *QuestionApiTestSuite) TestUpvoteQuestion_EVENTS_RECEIVED_UPVOTE_QUE
 	upvoteQuestion(suite, w, questionId, suite.tokenUser_Foo)
 
 	assert.EventuallyWithT(suite.T(), func(c *assert.CollectT) {
-		questionUpvotedEventFoo, err := findEvent[usecases_events.QuestionUpvoted](suite.centrifugeClientFoo, usecases_events.UPVOTE_QUESTION)
+		questionUpvotedEventFoo, err := findEvent[voting_usecases_events.QuestionUpvoted](suite.centrifugeClientFoo, voting_usecases_events.UPVOTE_QUESTION)
 		assert.Nil(c, err)
 		assert.Equal(c, questionId, questionUpvotedEventFoo.Id)
 		assert.Equal(c, true, questionUpvotedEventFoo.Voted)
 		assert.Equal(c, 2, questionUpvotedEventFoo.Votes)
 
-		questionUpvotedEventBar, err1 := findEvent[usecases_events.QuestionUpvoted](suite.centrifugeClientBar, usecases_events.UPVOTE_QUESTION)
+		questionUpvotedEventBar, err1 := findEvent[voting_usecases_events.QuestionUpvoted](suite.centrifugeClientBar, voting_usecases_events.UPVOTE_QUESTION)
 		assert.Nil(c, err1)
 		assert.Equal(c, questionId, questionUpvotedEventBar.Id)
 		assert.Equal(c, false, questionUpvotedEventBar.Voted)
@@ -542,13 +542,13 @@ func (suite *QuestionApiTestSuite) TestUndovoteQuestion_EVENTS_RECEIVED_UNDO_UPV
 	undoVoteQuestion(suite, w, questionId, suite.tokenUser_Bar)
 
 	assert.EventuallyWithT(suite.T(), func(c *assert.CollectT) {
-		questionUpvotedEventFoo, err := findEvent[usecases_events.QuestionUpvoted](suite.centrifugeClientFoo, usecases_events.UNDO_UPVOTE_QUESTION)
+		questionUpvotedEventFoo, err := findEvent[voting_usecases_events.QuestionUpvoted](suite.centrifugeClientFoo, voting_usecases_events.UNDO_UPVOTE_QUESTION)
 		assert.Nil(c, err)
 		assert.Equal(c, questionId, questionUpvotedEventFoo.Id)
 		assert.Equal(c, false, questionUpvotedEventFoo.Voted)
 		assert.Equal(c, 1, questionUpvotedEventFoo.Votes)
 
-		questionUpvotedEventBar, err1 := findEvent[usecases_events.QuestionUpvoted](suite.centrifugeClientBar, usecases_events.UNDO_UPVOTE_QUESTION)
+		questionUpvotedEventBar, err1 := findEvent[voting_usecases_events.QuestionUpvoted](suite.centrifugeClientBar, voting_usecases_events.UNDO_UPVOTE_QUESTION)
 		assert.Nil(c, err1)
 		assert.Equal(c, questionId, questionUpvotedEventBar.Id)
 		assert.Equal(c, false, questionUpvotedEventBar.Voted)
@@ -636,13 +636,13 @@ func (suite *QuestionApiTestSuite) TestUpdateQuestion_EVENTS_RECEIVED_UPDATE_QUE
 	putUpdateQuestion(suite, w, updateQuestionDto, tokenUser_Foo)
 
 	assert.EventuallyWithT(suite.T(), func(c *assert.CollectT) {
-		questionUpdatedEventFoo, err := findEvent[usecases_events.QuestionUpdated](suite.centrifugeClientFoo, usecases_events.UPDATE_QUESTION)
+		questionUpdatedEventFoo, err := findEvent[voting_usecases_events.QuestionUpdated](suite.centrifugeClientFoo, voting_usecases_events.UPDATE_QUESTION)
 		assert.Nil(c, err)
 		assert.Equal(c, "Updated Foo Question", questionUpdatedEventFoo.Text)
 		assert.Equal(c, true, questionUpdatedEventFoo.Anonymous)
 		assert.Equal(c, "", questionUpdatedEventFoo.Creator)
 
-		questionUpdatedEventBar, err1 := findEvent[usecases_events.QuestionUpdated](suite.centrifugeClientBar, usecases_events.UPDATE_QUESTION)
+		questionUpdatedEventBar, err1 := findEvent[voting_usecases_events.QuestionUpdated](suite.centrifugeClientBar, voting_usecases_events.UPDATE_QUESTION)
 		assert.Nil(c, err1)
 		assert.Equal(c, "Updated Foo Question", questionUpdatedEventBar.Text)
 		assert.Equal(c, true, questionUpdatedEventBar.Anonymous)
@@ -706,11 +706,11 @@ func (suite *QuestionApiTestSuite) TestDeleteQuestion_EVENTS_RECEIVED_DELETE_QUE
 	deleteQuestion(suite, w, question_FOO_Q.Id, tokenUser_Foo)
 
 	assert.EventuallyWithT(suite.T(), func(c *assert.CollectT) {
-		questionUpdatedEventFoo, err := findEvent[usecases_events.QuestionDeleted](suite.centrifugeClientFoo, usecases_events.DELETE_QUESTION)
+		questionUpdatedEventFoo, err := findEvent[voting_usecases_events.QuestionDeleted](suite.centrifugeClientFoo, voting_usecases_events.DELETE_QUESTION)
 		assert.Nil(c, err)
 		assert.Equal(c, question_FOO_Q.Id, questionUpdatedEventFoo.Id)
 
-		questionUpdatedEventBar, err1 := findEvent[usecases_events.QuestionDeleted](suite.centrifugeClientBar, usecases_events.DELETE_QUESTION)
+		questionUpdatedEventBar, err1 := findEvent[voting_usecases_events.QuestionDeleted](suite.centrifugeClientBar, voting_usecases_events.DELETE_QUESTION)
 		assert.Nil(c, err1)
 		assert.Equal(c, question_FOO_Q.Id, questionUpdatedEventBar.Id)
 	}, time.Second*3, time.Second*1, "Deleted question event has not been received")

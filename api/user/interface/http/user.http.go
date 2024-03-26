@@ -2,8 +2,8 @@ package user_http
 
 import (
 	"net/http"
-	user_usecases "voting/user/use-cases"
-	user_dtos "voting/user/use-cases/_dtos"
+	user_usecases "voting/user/usecases"
+	user_dtos "voting/user/usecases/_dtos"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"

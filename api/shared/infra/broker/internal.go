@@ -5,7 +5,7 @@ import (
 	"time"
 	"voting/shared"
 	shared_models "voting/shared/models"
-	usecases_events "voting/voting/use-cases/_events"
+	usecases_events "voting/voting/usecases/_events"
 
 	"github.com/sirupsen/logrus"
 )

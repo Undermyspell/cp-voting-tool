@@ -3,8 +3,8 @@ package voting_http
 import (
 	"net/http"
 	shared_models "voting/shared/models"
-	usecases "voting/voting/use-cases"
-	usecaseErrors "voting/voting/use-cases/_errors"
+	usecases "voting/voting/usecases"
+	usecaseErrors "voting/voting/usecases/_errors"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"

@@ -1,4 +1,4 @@
-package usecases_events
+package voting_usecases_events
 
 import "voting/shared"
 

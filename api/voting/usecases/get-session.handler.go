@@ -1,10 +1,10 @@
-package usecases
+package voting_usecases
 
 import (
 	"voting/shared"
 	shared_models "voting/shared/models"
 	voting_repositories "voting/voting/repositories"
-	errors "voting/voting/use-cases/_errors"
+	errors "voting/voting/usecases/_errors"
 )
 
 type QuestionDto struct {
