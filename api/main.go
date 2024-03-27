@@ -3,15 +3,16 @@ package main
 import (
 	"net/http"
 	"time"
-	"voting/internal/broker"
 	"voting/internal/env"
-	"voting/internal/jwks"
-	"voting/internal/middleware"
-	"voting/internal/models/roles"
-	"voting/internal/notification"
-	"voting/internal/votingstorage"
-	questionService "voting/services/question"
-	userService "voting/services/user"
+	"voting/shared/auth"
+	"voting/shared/auth/jwks"
+	"voting/shared/auth/middleware"
+	shared_infra "voting/shared/infra/broker"
+	user_http "voting/user/interface/http"
+	votinghttp "voting/voting/interface/http"
+	voting_sse "voting/voting/interface/sse"
+	voting_ws "voting/voting/interface/ws"
+	voting_repositories "voting/voting/repositories"
 
 	_ "voting/docs"
 
@@ -22,10 +23,6 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
-
-var initQuestionService = func(broker broker.Broker, votingStorage votingstorage.VotingStorage) questionService.QuestionService {
-	return questionService.NewBrokered(broker, votingStorage)
-}
 
 var start = func(r *gin.Engine) {
 	r.Run(":3333")
@@ -48,22 +45,21 @@ func main() {
 	env.Init()
 	jwks.Init()
 
-	internalBroker := broker.New()
-	centrifugeBroker := notification.NewCentrifuge(internalBroker)
+	internalBroker := shared_infra.New()
+	centrifugeBroker := voting_ws.NewCentrifuge(internalBroker)
 
 	r = gin.Default()
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	var votingStorage votingstorage.VotingStorage
+	var votingStorage voting_repositories.VotingStorage
 	if env.Env.VotingStorageInMemory {
-		votingStorage = votingstorage.NewInMemory()
+		votingStorage = voting_repositories.NewInMemory()
 	} else {
 		logrus.Info("WE USE REDIS")
-		votingStorage = votingstorage.NewRedis()
+		votingStorage = voting_repositories.NewRedis()
 	}
 
-	questionService := initQuestionService(internalBroker, votingStorage)
-	userService := userService.NewTestUser()
+	voting_repositories.InitInstances(votingStorage)
 
 	config := cors.Config{
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
@@ -87,24 +83,24 @@ func main() {
 				return originHeader == env.Env.AllowedOrigin
 			},
 		}))))
-		v1.GET("/events", middleware.GinRequireAuth(), notification.SseStream(internalBroker))
+		v1.GET("/events", middleware.GinRequireAuth(), voting_sse.SseStream(internalBroker))
 		q := v1.Group("/question", middleware.GinRequireAuth())
-		q.PUT("/answer/:id", middleware.RequireRole(roles.SessionAdmin, roles.Admin), questionService.Answer)
-		q.POST("/new", questionService.Add)
-		q.PUT("/upvote/:id", questionService.Upvote)
-		q.PUT("/undovote/:id", questionService.UndoVote)
-		q.PUT("/update", questionService.Update)
-		q.DELETE("/delete/:id", questionService.Delete)
+		q.PUT("/answer/:id", middleware.RequireRole(auth.SessionAdmin, auth.Admin), votinghttp.Answer)
+		q.POST("/new", votinghttp.Create)
+		q.PUT("/upvote/:id", votinghttp.Upvote)
+		q.PUT("/undovote/:id", votinghttp.UndoVote)
+		q.PUT("/update", votinghttp.Update)
+		q.DELETE("/delete/:id", votinghttp.Delete)
 
 		s := q.Group("/session", middleware.GinRequireAuth())
-		s.POST("/start", middleware.RequireRole(roles.Admin), questionService.Start)
-		s.POST("/stop", middleware.RequireRole(roles.Admin), questionService.Stop)
-		s.GET("", questionService.GetSession)
+		s.POST("/start", middleware.RequireRole(auth.Admin), votinghttp.StartSession)
+		s.POST("/stop", middleware.RequireRole(auth.Admin), votinghttp.StopSession)
+		s.GET("", votinghttp.GetSession)
 
 		ut := v1.Group("/user/test")
-		ut.POST("/contributor", userService.GetContributor)
-		ut.POST("/admin", userService.GetAdmin)
-		ut.POST("/sessionadmin", userService.GetAdmin)
+		ut.POST("/contributor", user_http.GetContributor)
+		ut.POST("/admin", user_http.GetAdmin)
+		ut.POST("/sessionadmin", user_http.GetAdmin)
 	}
 
 	start(r)
