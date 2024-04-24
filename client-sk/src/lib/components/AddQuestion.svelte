@@ -15,7 +15,7 @@
 	import Separator from './ui/separator/separator.svelte';
 
 	let value = '';
-	let anonymous = true;
+	let anonymous = false;
 	const addNewQuestion = async () => {
 		await postQuestion(value, anonymous);
 		value = '';
@@ -52,7 +52,7 @@
 				<Rules></Rules>
 			</div>
 			{#if showMaxLengthHint}
-					<div>{`Die Frage muss kürzer als ${Constants.QuestionMaxLength} Zeichen sein`}</div>
+				<div>{`Die Frage muss kürzer als ${Constants.QuestionMaxLength} Zeichen sein`}</div>
 			{/if}
 			<Separator class="my-4" />
 			<div class="flex justify-end gap-4 items-center">
@@ -61,7 +61,7 @@
 					<Label for="anonymous">Frage anonym stellen?</Label>
 				</div>
 
-				<Button on:click={addNewQuestion}   disabled={value === ''}>
+				<Button on:click={addNewQuestion} disabled={value === ''}>
 					<Icon class="mr-2" src={MailAdd} size="16" />
 					<div>Posten</div>
 				</Button>
@@ -84,17 +84,16 @@
 					<Drawer.Title>Frage stellen</Drawer.Title>
 					<Drawer.Description>Stelle eine neue Frage zur Diskussion</Drawer.Description>
 				</Drawer.Header>
-				
 
 				<div class="flex flex-col space-y-4 items-center">
 					<Rules></Rules>
-				<Textarea
-					id="message"
-					rows={3}
-					maxlength={Constants.QuestionMaxLength}
-					bind:value
-					placeholder="Stelle eine Frage..."
-				/>
+					<Textarea
+						id="message"
+						rows={3}
+						maxlength={Constants.QuestionMaxLength}
+						bind:value
+						placeholder="Stelle eine Frage..."
+					/>
 					{#if showMaxLengthHint}
 						<p color="red">
 							<span>{`Die Frage muss kürzer als ${Constants.QuestionMaxLength} Zeichen sein`}</span>
