@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -102,7 +101,7 @@ func (suite *QuestionApiTestSuite) TearDownSuite() {
 	suite.centrifugeClientBar.client.Close()
 
 	if err := suite.redisContainer.Terminate(suite.redisContainerContext); err != nil {
-		log.Fatalf("failed to terminate container: %s", err)
+		logrus.Fatalf("failed to terminate container: %s", err)
 	}
 }
 
@@ -959,7 +958,7 @@ func initRedisTestContainer(suite *QuestionApiTestSuite) {
 	})
 
 	if err != nil {
-		log.Fatalf("Could not start redis: %s", err)
+		logrus.Fatalf("Could not start redis: %s", err)
 	}
 
 	suite.redisContainer = redisC
