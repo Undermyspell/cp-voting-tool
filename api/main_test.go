@@ -102,8 +102,10 @@ func (suite *QuestionApiTestSuite) TearDownSuite() {
 	suite.centrifugeClientFoo.client.Close()
 	suite.centrifugeClientBar.client.Close()
 
-	if err := suite.redisContainer.Terminate(suite.redisContainerContext); err != nil {
-		logrus.Fatalf("failed to terminate container: %s", err)
+	if os.Getenv("VOTING_STORAGE_IN_MEMORY") != "true" {
+		if err := suite.redisContainer.Terminate(suite.redisContainerContext); err != nil {
+			logrus.Fatalf("failed to terminate container: %s", err)
+		}
 	}
 }
 
