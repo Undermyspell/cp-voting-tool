@@ -48,7 +48,9 @@ type QuestionApiTestSuite struct {
 }
 
 func (suite *QuestionApiTestSuite) SetupSuite() {
-	initRedisTestContainer(suite)
+	if os.Getenv("VOTING_STORAGE_IN_MEMORY") != "true" {
+		initRedisTestContainer(suite)
+	}
 
 	os.Setenv("USE_MOCK_JWKS", "true")
 	os.Setenv("JWKS_URL", "https://test/discovery/v2.0/keys")
@@ -963,6 +965,8 @@ func initRedisTestContainer(suite *QuestionApiTestSuite) {
 
 	suite.redisContainer = redisC
 	suite.redisContainerContext = ctx
+
+	time.Sleep(time.Second * 2)
 
 	endpoint, erre := redisC.Endpoint(ctx, "")
 
