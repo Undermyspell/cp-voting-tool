@@ -968,12 +968,12 @@ func initRedisTestContainer(suite *QuestionApiTestSuite) {
 	suite.redisContainer = redisC
 	suite.redisContainerContext = ctx
 
-	time.Sleep(time.Second * 2)
+	time.Sleep(time.Second * 3)
 
 	endpoint, erre := redisC.Endpoint(ctx, "")
 
 	if erre != nil {
-		logrus.Fatal("Failed to obtain redis endpoint")
+		logrus.Fatal(erre)
 	}
 
 	os.Setenv("REDIS_ENDPOINT_SECRET", endpoint)
