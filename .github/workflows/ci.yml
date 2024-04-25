@@ -65,14 +65,14 @@ jobs:
               PUBLIC_API_BASE_URL_WS=${{ vars.PUBLIC_API_BASE_URL_WS }}
             tags: ${{ secrets.ACR_SERVER }}/cpvt-web:${{ github.event_name == 'workflow_dispatch' && inputs.build_tag || github.ref_type == 'tag' && github.ref_name || steps.short-sha.outputs.sha }}
   test_inmemory:
-    name: Run Tests - Go Api - In Menory
+    name: Run Tests - Go Api - In Memory
     runs-on: ubuntu-latest
     if: ${{ github.event_name != 'push' }}
     container: 
       image: golang:1.22-alpine
       options: --user root
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install dependencies
         working-directory: api
         run: go get .
@@ -89,7 +89,7 @@ jobs:
       image: golang:1.22-alpine
       options: --user root
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install dependencies
         working-directory: api
         run: go get .
@@ -98,5 +98,3 @@ jobs:
         run: go test -v ./...
         env:
           VOTING_STORAGE_IN_MEMORY: false
-          REDIS_ENDPOINT_SECRET: ${{ secrets.REDIS_ENDPOINT }}
-          REDIS_PASSWORD_SECRET: ${{ secrets.REDIS_PASSWORD }}

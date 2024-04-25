@@ -66,7 +66,7 @@ func (session *Redis) Start() {
 }
 
 func (session *Redis) Stop() {
-	session.redisClient.Del(context.Background(), session.redisRootKey)
+	session.redisHandler.JSONDel(session.redisRootKey, ".")
 	logrus.Info("Redis: cleared root key: " + session.redisRootKey)
 }
 
@@ -257,9 +257,7 @@ func (session *Redis) Vote(userHash, id string) {
 		return
 	}
 
-	_, err = session.executeWithRetryOnConnectionLimit(func() (res interface{}, err error) {
-		return session.redisHandler.JSONNumIncrBy(session.redisRootKey, fmt.Sprintf(".Questions.%s.Votes", id), 1)
-	})
+	_, err = session.redisClient.Do(context.Background(), "JSON.NUMINCRBY", session.redisRootKey, fmt.Sprintf(".Questions.%s.Votes", id), 1).Result()
 
 	if err != nil {
 		logrus.Error(err.Error())
@@ -285,9 +283,7 @@ func (session *Redis) UndoVote(userHash, id string) {
 		return
 	}
 
-	_, err = session.executeWithRetryOnConnectionLimit(func() (res interface{}, err error) {
-		return session.redisHandler.JSONNumIncrBy(session.redisRootKey, fmt.Sprintf(".Questions.%s.Votes", id), -1)
-	})
+	_, err = session.redisClient.Do(context.Background(), "JSON.NUMINCRBY", session.redisRootKey, fmt.Sprintf(".Questions.%s.Votes", id), -1).Result()
 
 	if err != nil {
 		logrus.Error(err.Error())

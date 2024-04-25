@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -23,6 +24,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/wait"
 )
 
 type CentrifugeTestClient struct {
@@ -40,20 +43,22 @@ type QuestionApiTestSuite struct {
 	tokenUser_SessionAdmin string
 	centrifugeClientFoo    CentrifugeTestClient
 	centrifugeClientBar    CentrifugeTestClient
+	redisContainer         testcontainers.Container
+	redisContainerContext  context.Context
 }
 
 func (suite *QuestionApiTestSuite) SetupSuite() {
+	if os.Getenv("VOTING_STORAGE_IN_MEMORY") != "true" {
+		initRedisTestContainer(suite)
+	}
+
 	os.Setenv("USE_MOCK_JWKS", "true")
-	os.Setenv("GENERATE_REDIS_STORAGE_ROOT_KEY", "true")
 	os.Setenv("JWKS_URL", "https://test/discovery/v2.0/keys")
-	os.Setenv("VOTING_STORAGE_IN_MEMORY", "true")
-	os.Setenv("VOTING_STORAGE_IN_MEMORY", "true")
 	os.Setenv("ALLOWED_ORIGIN", "http://localhost:5173")
 
 	start = func(r *gin.Engine) {
 		go func() {
 			r.Run(":3333")
-
 		}()
 	}
 
@@ -96,6 +101,12 @@ func (suite *QuestionApiTestSuite) SetupTest() {
 func (suite *QuestionApiTestSuite) TearDownSuite() {
 	suite.centrifugeClientFoo.client.Close()
 	suite.centrifugeClientBar.client.Close()
+
+	if os.Getenv("VOTING_STORAGE_IN_MEMORY") != "true" {
+		if err := suite.redisContainer.Terminate(suite.redisContainerContext); err != nil {
+			logrus.Fatalf("failed to terminate container: %s", err)
+		}
+	}
 }
 
 func (suite *QuestionApiTestSuite) TestApi_UNAUTHORIZED_401() {
@@ -934,4 +945,36 @@ func initCentrifuge(suite *QuestionApiTestSuite) {
 		client:           cBar,
 		receivedMessages: make([]shared.Event, 0),
 	}
+}
+
+func initRedisTestContainer(suite *QuestionApiTestSuite) {
+	ctx := context.Background()
+
+	req := testcontainers.ContainerRequest{
+		Image:        "redis/redis-stack:latest",
+		ExposedPorts: []string{"6379/tcp"},
+		WaitingFor:   wait.ForLog("Ready to accept connections"),
+	}
+
+	redisC, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+		ContainerRequest: req,
+		Started:          true,
+	})
+
+	if err != nil {
+		logrus.Fatalf("Could not start redis: %s", err)
+	}
+
+	suite.redisContainer = redisC
+	suite.redisContainerContext = ctx
+
+	time.Sleep(time.Second * 3)
+
+	endpoint, erre := redisC.Endpoint(ctx, "")
+
+	if erre != nil {
+		logrus.Fatal(erre)
+	}
+
+	os.Setenv("REDIS_ENDPOINT_SECRET", endpoint)
 }
