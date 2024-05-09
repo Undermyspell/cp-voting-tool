@@ -4,7 +4,7 @@ go 1.22
 
 require (
 	github.com/MicahParks/keyfunc/v3 v3.3.2
-	github.com/centrifugal/centrifuge v0.32.1
+	github.com/centrifugal/centrifuge v0.32.2
 	github.com/centrifugal/centrifuge-go v0.10.2
 	github.com/gin-contrib/cors v1.7.2
 	github.com/gin-gonic/gin v1.9.1
