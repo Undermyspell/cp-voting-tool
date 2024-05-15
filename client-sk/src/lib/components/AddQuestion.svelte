@@ -11,7 +11,6 @@
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Drawer from '$lib/components/ui/drawer';
 	import Rules from './Rules.svelte';
-	import { Divide } from 'lucide-svelte';
 	import Separator from './ui/separator/separator.svelte';
 
 	let value = '';
@@ -20,6 +19,7 @@
 		await postQuestion(value, anonymous);
 		value = '';
 		open = false;
+		anonymous = false;
 	};
 	let open = false;
 	const isDesktop = mediaQuery('(min-width: 768px)');

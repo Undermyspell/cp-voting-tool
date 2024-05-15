@@ -66,7 +66,7 @@
 		/>
 		<Label for="autosort">Fragen automatisch sortieren?</Label>
 	</div>
-	<div class="mt-4 space-y-4 max-h-full overflow-y-auto">
+	<div class="mt-4 pb-12 sm:pb-4 space-y-4 max-h-full overflow-y-auto">
 		{#each $questions as question (question.Id)}
 			<Question on:delete={handleDeleteQuestion} on:edit={handleEditMessage} {question} />
 		{/each}
