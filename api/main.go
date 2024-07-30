@@ -55,8 +55,8 @@ func main() {
 	if env.Env.VotingStorageInMemory {
 		votingStorage = voting_repositories.NewInMemory()
 	} else {
-		logrus.Info("WE USE REDIS")
-		votingStorage = voting_repositories.NewRedis()
+		logrus.Info("We use Postgresql")
+		votingStorage = voting_repositories.NewPostgresql()
 	}
 
 	voting_repositories.InitInstances(votingStorage)
