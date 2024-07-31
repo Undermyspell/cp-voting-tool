@@ -5,7 +5,7 @@ import (
 	"flag"
 	"voting/internal/env"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/nitishm/go-rejson/v4"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
@@ -41,7 +41,16 @@ func NewRedis() *Redis {
 func NewPostgresql() *Postgresql {
 	postgresqlConnectionString := env.Env.PostgresqlConnectionString
 
-	conn, err := pgx.Connect(context.Background(), postgresqlConnectionString)
+	poolConfig, err := pgxpool.ParseConfig(postgresqlConnectionString)
+
+	if err != nil {
+		logrus.Fatalf("Unable to create db pool config %v\n", err)
+	}
+
+	poolConfig.MaxConns = 10
+
+	pool, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
+
 	if err != nil {
 		logrus.Fatalf("Unable to connect to PostgreSQL database: %v\n", err)
 	}
@@ -49,7 +58,7 @@ func NewPostgresql() *Postgresql {
 	sessionKey := DefaultVotingSessionRootKey
 
 	return &Postgresql{
-		conn:      conn,
+		pool:      pool,
 		sessionId: sessionKey,
 	}
 }

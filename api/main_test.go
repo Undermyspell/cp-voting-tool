@@ -522,6 +522,9 @@ func (suite *QuestionApiTestSuite) TestUndovoteQuestion_SAME_QUESTION_PARALLEL_1
 		wg.Wait()
 	})
 
+	l := getSession(suite, w, suite.tokenUser_Bar)
+	logrus.Print(l[0].Votes)
+
 	suite.T().Run("Parallel_Question_Undoupvote", func(t *testing.T) {
 		var wg sync.WaitGroup
 		undoVoteQuestion(suite, w, questionId, suite.tokenUser_Bar)
@@ -1008,11 +1011,13 @@ func initPostgreSqlContainer(suite *QuestionApiTestSuite) {
 	suite.postgreSqlContainer = postgresContainer
 	suite.postgresSqlContainerContext = ctx
 
-	endpoint, erre := postgresContainer.ConnectionString(ctx, dbName)
+	endpoint, erre := postgresContainer.ConnectionString(ctx, "")
 
 	if erre != nil {
 		logrus.Fatal(erre)
 	}
+
+	logrus.Print(endpoint)
 
 	os.Setenv("POSTGRESQL_CONNECTION_STRING_SECRET", endpoint)
 }

@@ -5,18 +5,18 @@ import (
 	shared "voting/shared/helper"
 	voting_models "voting/voting/models"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/oklog/ulid/v2"
 	"github.com/sirupsen/logrus"
 )
 
 type Postgresql struct {
-	conn      *pgx.Conn
+	pool      *pgxpool.Pool
 	sessionId string
 }
 
 func (session *Postgresql) Start() {
-	_, err := session.conn.Exec(context.Background(), "INSERT INTO Sessions (id, sessionSecret) VALUES ($1, $2)", session.sessionId, shared.GetRandomId(30))
+	_, err := session.pool.Exec(context.Background(), "INSERT INTO Sessions (id, sessionSecret) VALUES ($1, $2)", session.sessionId, shared.GetRandomId(30))
 
 	if err != nil {
 		logrus.Error(err.Error())
@@ -25,7 +25,7 @@ func (session *Postgresql) Start() {
 }
 
 func (session *Postgresql) Stop() {
-	_, err := session.conn.Exec(context.Background(), "DELETE FROM Sessions WHERE id = $1", session.sessionId)
+	_, err := session.pool.Exec(context.Background(), "DELETE FROM Sessions WHERE id = $1", session.sessionId)
 
 	if err != nil {
 		logrus.Error(err.Error())
@@ -35,9 +35,11 @@ func (session *Postgresql) Stop() {
 
 func (session *Postgresql) GetQuestion(id string) (voting_models.Question, bool) {
 	var question voting_models.Question
-	err := session.conn.QueryRow(context.Background(),
-		"SELECT id,text,votes,answered,anonymous,creatorName,creatorHash"+
-			" FROM Questions WHERE id = $1", id).Scan(question.Id, question.Text, question.Votes, question.Answered, question.Anonymous, question.CreatorName, question.CreatorHash)
+	err := session.pool.QueryRow(context.Background(),
+		"SELECT q.id,q.text,q.answered,q.anonymous,q.creatorName,q.creatorHash,COUNT(uv.questionid) as votes "+
+			"FROM questions q LEFT JOIN uservotes uv on q.id = uv.questionid "+
+			"WHERE id = $1 "+
+			"GROUP BY q.id,q.text,q.answered,q.anonymous,q.creatorName,q.creatorHash ", id).Scan(&question.Id, &question.Text, &question.Answered, &question.Anonymous, &question.CreatorName, &question.CreatorHash, &question.Votes)
 
 	if err != nil {
 		logrus.Error(err.Error())
@@ -49,7 +51,7 @@ func (session *Postgresql) GetQuestion(id string) (voting_models.Question, bool)
 
 func (session *Postgresql) IsRunning() bool {
 	var count int
-	err := session.conn.QueryRow(context.Background(), "SELECT COUNT(*) FROM Sessions WHERE id = $1", session.sessionId).Scan(&count)
+	err := session.pool.QueryRow(context.Background(), "SELECT COUNT(*) FROM Sessions WHERE id = $1", session.sessionId).Scan(&count)
 
 	if err != nil {
 		logrus.Error(err.Error())
@@ -61,7 +63,7 @@ func (session *Postgresql) IsRunning() bool {
 
 func (session *Postgresql) GetSecret() string {
 	var secret string
-	err := session.conn.QueryRow(context.Background(), "SELECT sessionSecret FROM Sessions WHERE id = $1", session.sessionId).Scan(&secret)
+	err := session.pool.QueryRow(context.Background(), "SELECT sessionSecret FROM Sessions WHERE id = $1", session.sessionId).Scan(&secret)
 
 	if err != nil {
 		logrus.Error(err.Error())
@@ -72,9 +74,11 @@ func (session *Postgresql) GetSecret() string {
 }
 
 func (session *Postgresql) GetQuestions() map[string]voting_models.Question {
-	rows, err := session.conn.Query(context.Background(),
-		"SELECT id,text,votes,answered,anonymous,creatorName,creatorHash"+
-			" FROM Questions WHERE sessionId = $1", session.sessionId)
+	rows, err := session.pool.Query(context.Background(),
+		"SELECT q.id,q.text,q.answered,q.anonymous,q.creatorName,q.creatorHash,COUNT(uv.questionid) as votes "+
+			"FROM questions q LEFT JOIN uservotes uv on q.id = uv.questionid "+
+			"WHERE sessionId = $1 "+
+			"GROUP BY q.id,q.text,q.answered,q.anonymous,q.creatorName,q.creatorHash ", session.sessionId)
 
 	if err != nil {
 		logrus.Error(err.Error())
@@ -86,7 +90,7 @@ func (session *Postgresql) GetQuestions() map[string]voting_models.Question {
 	questions := make(map[string]voting_models.Question)
 	for rows.Next() {
 		var question voting_models.Question
-		if err = rows.Scan(&question.Id, &question.Text, &question.Votes, &question.Answered, &question.Anonymous, &question.CreatorName, &question.CreatorHash); err != nil {
+		if err = rows.Scan(&question.Id, &question.Text, &question.Answered, &question.Anonymous, &question.CreatorName, &question.CreatorHash, &question.Votes); err != nil {
 			logrus.Fatalf(err.Error())
 		}
 		questions[question.Id] = question
@@ -96,8 +100,8 @@ func (session *Postgresql) GetQuestions() map[string]voting_models.Question {
 }
 
 func (session *Postgresql) GetUserVotes() map[string]map[string]bool {
-	rows, err := session.conn.Query(context.Background(),
-		"SELECT questionId,userHash FROM UserVotes", session.sessionId)
+	rows, err := session.pool.Query(context.Background(),
+		"SELECT questionId,userHash FROM UserVotes")
 
 	if err != nil {
 		logrus.Error(err.Error())
@@ -113,6 +117,11 @@ func (session *Postgresql) GetUserVotes() map[string]map[string]bool {
 		if err = rows.Scan(&questionId, &userHash); err != nil {
 			logrus.Fatalf(err.Error())
 		}
+
+		if userVotes[userHash] == nil {
+			userVotes[userHash] = make(map[string]bool)
+		}
+
 		userVotes[userHash][questionId] = true
 	}
 
@@ -122,10 +131,12 @@ func (session *Postgresql) GetUserVotes() map[string]map[string]bool {
 func (session *Postgresql) AddQuestion(text string, anonymous bool, creatorName, creatorHash string) voting_models.Question {
 	questionId := ulid.Make().String()
 
-	_, err := session.conn.Exec(context.Background(),
+	question := createQuestion(questionId, text, 0, false, anonymous, creatorName, creatorHash)
+
+	_, err := session.pool.Exec(context.Background(),
 		"INSERT INTO Questions"+
-			"(id, sessionId,text,votes,answered,anonymous,creatorName,creatorHash)"+
-			"VALUES ($1,$2,$3,$4,$5,$6,$7,$8)", questionId, session.sessionId, text, 0, false, anonymous, creatorName, creatorHash)
+			"(id, sessionId,text,answered,anonymous,creatorName,creatorHash)"+
+			"VALUES ($1,$2,$3,$4,$5,$6,$7)", question.Id, session.sessionId, question.Text, question.Anonymous, question.Anonymous, question.CreatorName, question.CreatorHash)
 
 	if err != nil {
 		logrus.Error(err.Error())
@@ -133,8 +144,8 @@ func (session *Postgresql) AddQuestion(text string, anonymous bool, creatorName,
 	}
 
 	session.Vote(creatorHash, questionId)
-
-	return createQuestion(questionId, text, 1, false, anonymous, creatorName, creatorHash)
+	question.Voted = true
+	return question
 }
 
 func (session *Postgresql) UpdateQuestion(id, text, creatorName string, anonymous bool) voting_models.Question {
@@ -142,7 +153,7 @@ func (session *Postgresql) UpdateQuestion(id, text, creatorName string, anonymou
 		creatorName = ""
 	}
 
-	_, err := session.conn.Exec(context.Background(),
+	_, err := session.pool.Exec(context.Background(),
 		"UPDATE Questions SET text = $1, creatorName = $2, anonymous = $3 WHERE id = $4", text, creatorName, anonymous, id)
 
 	if err != nil {
@@ -156,7 +167,7 @@ func (session *Postgresql) UpdateQuestion(id, text, creatorName string, anonymou
 }
 
 func (session *Postgresql) AnswerQuestion(id string) {
-	_, err := session.conn.Exec(context.Background(),
+	_, err := session.pool.Exec(context.Background(),
 		"UPDATE Questions SET answered = true WHERE id = $1", id)
 
 	if err != nil {
@@ -165,7 +176,7 @@ func (session *Postgresql) AnswerQuestion(id string) {
 }
 
 func (session *Postgresql) DeleteQuestion(id string) {
-	_, err := session.conn.Exec(context.Background(), "DELETE FROM Questions WHERE id = $1", id)
+	_, err := session.pool.Exec(context.Background(), "DELETE FROM Questions WHERE id = $1", id)
 
 	if err != nil {
 		logrus.Error(err.Error())
@@ -174,72 +185,31 @@ func (session *Postgresql) DeleteQuestion(id string) {
 }
 
 func (session *Postgresql) Vote(userHash, id string) {
-	tx, err := session.conn.Begin(context.Background())
-
-	if err != nil {
-		logrus.Error(err.Error())
-		return
-	}
-
-	defer func() {
-		if err != nil {
-			if rollbackErr := tx.Rollback(context.Background()); rollbackErr != nil {
-				logrus.Fatalf("Unable to rollback transaction: %v\n", rollbackErr)
-			}
-			logrus.Fatalf("Transaction failed: %v\n", err)
-		} else {
-			if commitErr := tx.Commit(context.Background()); commitErr != nil {
-				logrus.Fatalf("Unable to commit transaction: %v\n", commitErr)
-			}
-		}
-	}()
-
-	_, err = session.conn.Exec(context.Background(),
+	_, err := session.pool.Exec(context.Background(),
 		"INSERT INTO UserVotes"+
 			"(questionId, userHash)"+
 			"VALUES ($1,$2)", id, userHash)
 
 	if err != nil {
+		logrus.Error(err.Error())
 		return
 	}
-
-	_, err = session.conn.Exec(context.Background(),
-		"UPDATE Questions SET votes = votes + 1 WHERE id = $1", id)
 }
 
 func (session *Postgresql) UndoVote(userHash, id string) {
-	tx, err := session.conn.Begin(context.Background())
+	_, err := session.pool.Exec(context.Background(),
+		"DELETE FROM UserVotes WHERE questionId = $1 AND userHash = $2", id, userHash)
 
 	if err != nil {
 		logrus.Error(err.Error())
 		return
 	}
-
-	defer func() {
-		if err != nil {
-			if rollbackErr := tx.Rollback(context.Background()); rollbackErr != nil {
-				logrus.Fatalf("Unable to rollback transaction: %v\n", rollbackErr)
-			}
-			logrus.Fatalf("Transaction failed: %v\n", err)
-		} else {
-			if commitErr := tx.Commit(context.Background()); commitErr != nil {
-				logrus.Fatalf("Unable to commit transaction: %v\n", commitErr)
-			}
-		}
-	}()
-
-	_, err = session.conn.Exec(context.Background(),
-		"DELETE FROM UserVotes WHERE questionId = $1 AND userHash = $2", id, userHash)
-
-	if err != nil {
-		return
-	}
-
-	_, err = session.conn.Exec(context.Background(),
-		"UPDATE Questions SET votes = votes - 1 WHERE id = $1", id)
 }
 
 func createQuestion(questionId string, text string, votes int, answered, anonymous bool, creatorName, creatorHash string) voting_models.Question {
+	if anonymous {
+		creatorName = ""
+	}
 	return voting_models.NewQuestion(
 		questionId,
 		text,

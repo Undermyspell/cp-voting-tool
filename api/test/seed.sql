@@ -7,7 +7,6 @@ CREATE TABLE Questions (
     id VARCHAR(26) PRIMARY KEY,
     sessionId VARCHAR(20) NOT NULL,
     text VARCHAR(500) NOT NULL,
-    votes INTEGER NOT NULL,
     answered BOOLEAN NOT NULL,
     anonymous BOOLEAN NOT NULL,
     creatorName VARCHAR(50),
