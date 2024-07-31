@@ -34,7 +34,17 @@ func (session *Postgresql) Stop() {
 }
 
 func (session *Postgresql) GetQuestion(id string) (voting_models.Question, bool) {
-	return voting_models.Question{}, false
+	var question voting_models.Question
+	err := session.conn.QueryRow(context.Background(),
+		"SELECT id,text,votes,answered,anonymous,creatorName,creatorHash"+
+			" FROM Questions WHERE id = $1", id).Scan(question.Id, question.Text, question.Votes, question.Answered, question.Anonymous, question.CreatorName, question.CreatorHash)
+
+	if err != nil {
+		logrus.Error(err.Error())
+		return voting_models.Question{}, false
+	}
+
+	return question, true
 }
 
 func (session *Postgresql) IsRunning() bool {
@@ -62,7 +72,6 @@ func (session *Postgresql) GetSecret() string {
 }
 
 func (session *Postgresql) GetQuestions() map[string]voting_models.Question {
-
 	rows, err := session.conn.Query(context.Background(),
 		"SELECT id,text,votes,answered,anonymous,creatorName,creatorHash"+
 			" FROM Questions WHERE sessionId = $1", session.sessionId)
@@ -87,7 +96,27 @@ func (session *Postgresql) GetQuestions() map[string]voting_models.Question {
 }
 
 func (session *Postgresql) GetUserVotes() map[string]map[string]bool {
-	return make(map[string]map[string]bool)
+	rows, err := session.conn.Query(context.Background(),
+		"SELECT questionId,userHash FROM UserVotes", session.sessionId)
+
+	if err != nil {
+		logrus.Error(err.Error())
+		return make(map[string]map[string]bool)
+	}
+
+	defer rows.Close()
+
+	userVotes := make(map[string]map[string]bool)
+	for rows.Next() {
+		var userHash string
+		var questionId string
+		if err = rows.Scan(&questionId, &userHash); err != nil {
+			logrus.Fatalf(err.Error())
+		}
+		userVotes[userHash][questionId] = true
+	}
+
+	return userVotes
 }
 
 func (session *Postgresql) AddQuestion(text string, anonymous bool, creatorName, creatorHash string) voting_models.Question {
@@ -109,13 +138,39 @@ func (session *Postgresql) AddQuestion(text string, anonymous bool, creatorName,
 }
 
 func (session *Postgresql) UpdateQuestion(id, text, creatorName string, anonymous bool) voting_models.Question {
-	return voting_models.Question{}
+	if anonymous {
+		creatorName = ""
+	}
+
+	_, err := session.conn.Exec(context.Background(),
+		"UPDATE Questions SET text = $1, creatorName = $2, anonymous = $3 WHERE id = $4", text, creatorName, anonymous, id)
+
+	if err != nil {
+		logrus.Error(err.Error())
+	}
+
+	question, _ := session.GetQuestion(id)
+
+	return question
+
 }
 
 func (session *Postgresql) AnswerQuestion(id string) {
+	_, err := session.conn.Exec(context.Background(),
+		"UPDATE Questions SET answered = true WHERE id = $1", id)
+
+	if err != nil {
+		logrus.Error(err.Error())
+	}
 }
 
 func (session *Postgresql) DeleteQuestion(id string) {
+	_, err := session.conn.Exec(context.Background(), "DELETE FROM Questions WHERE id = $1", id)
+
+	if err != nil {
+		logrus.Error(err.Error())
+		return
+	}
 }
 
 func (session *Postgresql) Vote(userHash, id string) {
@@ -145,19 +200,43 @@ func (session *Postgresql) Vote(userHash, id string) {
 			"VALUES ($1,$2)", id, userHash)
 
 	if err != nil {
-		logrus.Error(err.Error())
 		return
 	}
 
 	_, err = session.conn.Exec(context.Background(),
 		"UPDATE Questions SET votes = votes + 1 WHERE id = $1", id)
-
-	if err != nil {
-		logrus.Error(err.Error())
-	}
 }
 
 func (session *Postgresql) UndoVote(userHash, id string) {
+	tx, err := session.conn.Begin(context.Background())
+
+	if err != nil {
+		logrus.Error(err.Error())
+		return
+	}
+
+	defer func() {
+		if err != nil {
+			if rollbackErr := tx.Rollback(context.Background()); rollbackErr != nil {
+				logrus.Fatalf("Unable to rollback transaction: %v\n", rollbackErr)
+			}
+			logrus.Fatalf("Transaction failed: %v\n", err)
+		} else {
+			if commitErr := tx.Commit(context.Background()); commitErr != nil {
+				logrus.Fatalf("Unable to commit transaction: %v\n", commitErr)
+			}
+		}
+	}()
+
+	_, err = session.conn.Exec(context.Background(),
+		"DELETE FROM UserVotes WHERE questionId = $1 AND userHash = $2", id, userHash)
+
+	if err != nil {
+		return
+	}
+
+	_, err = session.conn.Exec(context.Background(),
+		"UPDATE Questions SET votes = votes - 1 WHERE id = $1", id)
 }
 
 func createQuestion(questionId string, text string, votes int, answered, anonymous bool, creatorName, creatorHash string) voting_models.Question {
