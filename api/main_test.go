@@ -189,7 +189,7 @@ func (suite *QuestionApiTestSuite) TestNewQuestion_OK_200() {
 	w := httptest.NewRecorder()
 
 	token := suite.tokenUser_Foo
-	newQuestion := usecases.NewQuestionDto{Text: "Foo Question", Anonymous: false}
+	newQuestion := usecases.NewQuestionDto{Text: "Foo Question", Anonymous: true}
 
 	postNewQuestion(suite, w, newQuestion, token)
 
@@ -198,6 +198,11 @@ func (suite *QuestionApiTestSuite) TestNewQuestion_OK_200() {
 	assert.Equal(suite.T(), http.StatusOK, w.Code)
 	assert.Equal(suite.T(), 1, questionList[0].Votes)
 	assert.Equal(suite.T(), true, questionList[0].Voted)
+	assert.Equal(suite.T(), true, questionList[0].Anonymous)
+	assert.Equal(suite.T(), false, questionList[0].Answered)
+	assert.Equal(suite.T(), true, questionList[0].Owned)
+	assert.Equal(suite.T(), "Foo Question", questionList[0].Text)
+	assert.Equal(suite.T(), "", questionList[0].Creator)
 }
 
 func (suite *QuestionApiTestSuite) TestNewQuestion_EVENTS_RECEIVED_NEW_QUESTION() {

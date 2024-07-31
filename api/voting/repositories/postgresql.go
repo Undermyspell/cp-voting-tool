@@ -136,7 +136,7 @@ func (session *Postgresql) AddQuestion(text string, anonymous bool, creatorName,
 	_, err := session.pool.Exec(context.Background(),
 		"INSERT INTO Questions"+
 			"(id, sessionId,text,answered,anonymous,creatorName,creatorHash)"+
-			"VALUES ($1,$2,$3,$4,$5,$6,$7)", question.Id, session.sessionId, question.Text, question.Anonymous, question.Anonymous, question.CreatorName, question.CreatorHash)
+			"VALUES ($1,$2,$3,$4,$5,$6,$7)", question.Id, session.sessionId, question.Text, false, question.Anonymous, question.CreatorName, question.CreatorHash)
 
 	if err != nil {
 		logrus.Error(err.Error())
