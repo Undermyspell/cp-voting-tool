@@ -80,7 +80,7 @@ jobs:
         working-directory: api
         run: go test -v ./...
         env:
-          VOTING_STORAGE_IN_MEMORY: true
+          STORAGE: "inmemory"
   test_redis:
     name: Run Tests - Go Api - Redis
     runs-on: ubuntu-latest
@@ -97,4 +97,21 @@ jobs:
         working-directory: api
         run: go test -v ./...
         env:
-          VOTING_STORAGE_IN_MEMORY: false
+          STORAGE: "redis"
+  test_postgres:
+    name: Run Tests - Go Api - PostgreSQL
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'push' }}
+    container: 
+      image: golang:1.22-alpine
+      options: --user root
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        working-directory: api
+        run: go get .
+      - name: Test
+        working-directory: api
+        run: go test -v ./...
+        env:
+          STORAGE: "postgres"

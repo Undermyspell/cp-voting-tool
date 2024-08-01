@@ -16,6 +16,7 @@ import (
 	"sync"
 	"testing"
 	"time"
+	"voting/internal/env"
 	"voting/shared"
 	user_usecases "voting/user/usecases"
 	usecases "voting/voting/usecases"
@@ -38,23 +39,26 @@ type CentrifugeTestClient struct {
 
 type QuestionApiTestSuite struct {
 	suite.Suite
-	router                 *gin.Engine
-	apiPrefix              string
-	tokenUser_Foo          string
-	tokenUser_Bar          string
-	tokenUser_Admin        string
-	tokenUser_SessionAdmin string
-	centrifugeClientFoo    CentrifugeTestClient
-	centrifugeClientBar    CentrifugeTestClient
-	// redisContainer              testcontainers.Container
-	// redisContainerContext       context.Context
+	router                      *gin.Engine
+	apiPrefix                   string
+	tokenUser_Foo               string
+	tokenUser_Bar               string
+	tokenUser_Admin             string
+	tokenUser_SessionAdmin      string
+	centrifugeClientFoo         CentrifugeTestClient
+	centrifugeClientBar         CentrifugeTestClient
+	redisContainer              testcontainers.Container
+	redisContainerContext       context.Context
 	postgreSqlContainer         testcontainers.Container
 	postgresSqlContainerContext context.Context
 }
 
 func (suite *QuestionApiTestSuite) SetupSuite() {
-	if os.Getenv("VOTING_STORAGE_IN_MEMORY") != "true" {
+	switch env.Storage(os.Getenv("STORAGE")) {
+	case env.Postgres:
 		initPostgreSqlContainer(suite)
+	case env.Redis:
+		initRedisTestContainer(suite)
 	}
 
 	os.Setenv("USE_MOCK_JWKS", "true")
@@ -107,8 +111,13 @@ func (suite *QuestionApiTestSuite) TearDownSuite() {
 	suite.centrifugeClientFoo.client.Close()
 	suite.centrifugeClientBar.client.Close()
 
-	if os.Getenv("VOTING_STORAGE_IN_MEMORY") != "true" {
+	switch env.Storage(os.Getenv("STORAGE")) {
+	case env.Postgres:
 		if err := suite.postgreSqlContainer.Terminate(suite.postgresSqlContainerContext); err != nil {
+			logrus.Fatalf("failed to terminate container: %s", err)
+		}
+	case env.Redis:
+		if err := suite.redisContainer.Terminate(suite.redisContainerContext); err != nil {
 			logrus.Fatalf("failed to terminate container: %s", err)
 		}
 	}
@@ -960,37 +969,37 @@ func initCentrifuge(suite *QuestionApiTestSuite) {
 	}
 }
 
-// func initRedisTestContainer(suite *QuestionApiTestSuite) {
-// 	ctx := context.Background()
+func initRedisTestContainer(suite *QuestionApiTestSuite) {
+	ctx := context.Background()
 
-// 	req := testcontainers.ContainerRequest{
-// 		Image:        "redis/redis-stack:latest",
-// 		ExposedPorts: []string{"6379/tcp"},
-// 		WaitingFor:   wait.ForLog("Ready to accept connections"),
-// 	}
+	req := testcontainers.ContainerRequest{
+		Image:        "redis/redis-stack:latest",
+		ExposedPorts: []string{"6379/tcp"},
+		WaitingFor:   wait.ForLog("Ready to accept connections"),
+	}
 
-// 	redisC, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-// 		ContainerRequest: req,
-// 		Started:          true,
-// 	})
+	redisC, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+		ContainerRequest: req,
+		Started:          true,
+	})
 
-// 	if err != nil {
-// 		logrus.Fatalf("Could not start redis: %s", err)
-// 	}
+	if err != nil {
+		logrus.Fatalf("Could not start redis: %s", err)
+	}
 
-// 	suite.redisContainer = redisC
-// 	suite.redisContainerContext = ctx
+	suite.redisContainer = redisC
+	suite.redisContainerContext = ctx
 
-// 	time.Sleep(time.Second * 3)
+	time.Sleep(time.Second * 3)
 
-// 	endpoint, erre := redisC.Endpoint(ctx, "")
+	endpoint, erre := redisC.Endpoint(ctx, "")
 
-// 	if erre != nil {
-// 		logrus.Fatal(erre)
-// 	}
+	if erre != nil {
+		logrus.Fatal(erre)
+	}
 
-// 	os.Setenv("REDIS_ENDPOINT_SECRET", endpoint)
-// }
+	os.Setenv("REDIS_ENDPOINT_SECRET", endpoint)
+}
 
 func initPostgreSqlContainer(suite *QuestionApiTestSuite) {
 	ctx := context.Background()

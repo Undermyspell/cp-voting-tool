@@ -52,12 +52,17 @@ func main() {
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	var votingStorage voting_repositories.VotingStorage
-	if env.Env.VotingStorageInMemory {
+
+	switch env.Env.Storage {
+	case env.InMemory:
 		votingStorage = voting_repositories.NewInMemory()
-	} else {
-		logrus.Info("We use Postgresql")
+	case env.Postgres:
 		votingStorage = voting_repositories.NewPostgresql()
+	case env.Redis:
+		votingStorage = voting_repositories.NewRedis()
 	}
+
+	logrus.Infof("Using storage: %s", env.Env.Storage)
 
 	voting_repositories.InitInstances(votingStorage)
 

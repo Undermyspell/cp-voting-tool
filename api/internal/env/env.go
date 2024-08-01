@@ -4,10 +4,18 @@ import (
 	"github.com/spf13/viper"
 )
 
+type Storage string
+
+const (
+	Redis    Storage = "redis"
+	Postgres Storage = "postgres"
+	InMemory  Storage = "inmemory"
+)
+
 const (
 	USE_MOCK_JWKS                string = "USE_MOCK_JWKS"
 	JWKS_URL                     string = "JWKS_URL"
-	VOTING_STORAGE_IN_MEMORY     string = "VOTING_STORAGE_IN_MEMORY"
+	STORAGE                      string = "STORAGE"
 	REDIS_ENPOINT                string = "REDIS_ENDPOINT_SECRET"
 	REDIS_PASSWORD               string = "REDIS_PASSWORD_SECRET"
 	POSTGRESQL_CONNECTION_STRING string = "POSTGRESQL_CONNECTION_STRING_SECRET"
@@ -16,7 +24,7 @@ const (
 
 type EnvConfig struct {
 	UseMockJwks                bool
-	VotingStorageInMemory      bool
+	Storage                    Storage
 	JwksUrl                    string
 	RedisEndpoint              string
 	RedisPassword              string
@@ -34,7 +42,7 @@ func Init() {
 	Env = EnvConfig{
 		UseMockJwks:                viper.GetBool(USE_MOCK_JWKS),
 		JwksUrl:                    viper.GetString(JWKS_URL),
-		VotingStorageInMemory:      viper.GetBool(VOTING_STORAGE_IN_MEMORY),
+		Storage:                    Storage(viper.GetString(STORAGE)),
 		RedisEndpoint:              viper.GetString(REDIS_ENPOINT),
 		RedisPassword:              viper.GetString(REDIS_PASSWORD),
 		AllowedOrigin:              viper.GetString(ALLOWED_ORIGIN),
