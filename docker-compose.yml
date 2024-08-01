@@ -16,3 +16,15 @@ services:
       - 3333:3333
     env_file:
       - ./api/env.yaml
+    depends_on:
+      - postgres  
+  postgres:
+    image: postgres
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: pgcomposeusr
+      POSTGRES_PASSWORD: pgcomposepw
+    volumes:
+      - ./api/test/seed.sql:/docker-entrypoint-initdb.d/seed.sql

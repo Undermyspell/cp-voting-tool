@@ -7,13 +7,16 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"slices"
 	"sync"
 	"testing"
 	"time"
+	"voting/internal/env"
 	"voting/shared"
 	user_usecases "voting/user/usecases"
 	usecases "voting/voting/usecases"
@@ -25,6 +28,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
@@ -35,20 +39,25 @@ type CentrifugeTestClient struct {
 
 type QuestionApiTestSuite struct {
 	suite.Suite
-	router                 *gin.Engine
-	apiPrefix              string
-	tokenUser_Foo          string
-	tokenUser_Bar          string
-	tokenUser_Admin        string
-	tokenUser_SessionAdmin string
-	centrifugeClientFoo    CentrifugeTestClient
-	centrifugeClientBar    CentrifugeTestClient
-	redisContainer         testcontainers.Container
-	redisContainerContext  context.Context
+	router                      *gin.Engine
+	apiPrefix                   string
+	tokenUser_Foo               string
+	tokenUser_Bar               string
+	tokenUser_Admin             string
+	tokenUser_SessionAdmin      string
+	centrifugeClientFoo         CentrifugeTestClient
+	centrifugeClientBar         CentrifugeTestClient
+	redisContainer              testcontainers.Container
+	redisContainerContext       context.Context
+	postgreSqlContainer         testcontainers.Container
+	postgresSqlContainerContext context.Context
 }
 
 func (suite *QuestionApiTestSuite) SetupSuite() {
-	if os.Getenv("VOTING_STORAGE_IN_MEMORY") != "true" {
+	switch env.Storage(os.Getenv("STORAGE")) {
+	case env.Postgres:
+		initPostgreSqlContainer(suite)
+	case env.Redis:
 		initRedisTestContainer(suite)
 	}
 
@@ -102,7 +111,12 @@ func (suite *QuestionApiTestSuite) TearDownSuite() {
 	suite.centrifugeClientFoo.client.Close()
 	suite.centrifugeClientBar.client.Close()
 
-	if os.Getenv("VOTING_STORAGE_IN_MEMORY") != "true" {
+	switch env.Storage(os.Getenv("STORAGE")) {
+	case env.Postgres:
+		if err := suite.postgreSqlContainer.Terminate(suite.postgresSqlContainerContext); err != nil {
+			logrus.Fatalf("failed to terminate container: %s", err)
+		}
+	case env.Redis:
 		if err := suite.redisContainer.Terminate(suite.redisContainerContext); err != nil {
 			logrus.Fatalf("failed to terminate container: %s", err)
 		}
@@ -184,7 +198,7 @@ func (suite *QuestionApiTestSuite) TestNewQuestion_OK_200() {
 	w := httptest.NewRecorder()
 
 	token := suite.tokenUser_Foo
-	newQuestion := usecases.NewQuestionDto{Text: "Foo Question", Anonymous: false}
+	newQuestion := usecases.NewQuestionDto{Text: "Foo Question", Anonymous: true}
 
 	postNewQuestion(suite, w, newQuestion, token)
 
@@ -193,6 +207,11 @@ func (suite *QuestionApiTestSuite) TestNewQuestion_OK_200() {
 	assert.Equal(suite.T(), http.StatusOK, w.Code)
 	assert.Equal(suite.T(), 1, questionList[0].Votes)
 	assert.Equal(suite.T(), true, questionList[0].Voted)
+	assert.Equal(suite.T(), true, questionList[0].Anonymous)
+	assert.Equal(suite.T(), false, questionList[0].Answered)
+	assert.Equal(suite.T(), true, questionList[0].Owned)
+	assert.Equal(suite.T(), "Foo Question", questionList[0].Text)
+	assert.Equal(suite.T(), "", questionList[0].Creator)
 }
 
 func (suite *QuestionApiTestSuite) TestNewQuestion_EVENTS_RECEIVED_NEW_QUESTION() {
@@ -516,6 +535,9 @@ func (suite *QuestionApiTestSuite) TestUndovoteQuestion_SAME_QUESTION_PARALLEL_1
 		}
 		wg.Wait()
 	})
+
+	l := getSession(suite, w, suite.tokenUser_Bar)
+	logrus.Print(l[0].Votes)
 
 	suite.T().Run("Parallel_Question_Undoupvote", func(t *testing.T) {
 		var wg sync.WaitGroup
@@ -977,4 +999,39 @@ func initRedisTestContainer(suite *QuestionApiTestSuite) {
 	}
 
 	os.Setenv("REDIS_ENDPOINT_SECRET", endpoint)
+}
+
+func initPostgreSqlContainer(suite *QuestionApiTestSuite) {
+	ctx := context.Background()
+	dbName := "voting"
+	dbUser := "postgres"
+	dbPassword := "postgrestest"
+
+	postgresContainer, err := postgres.Run(ctx,
+		"docker.io/postgres:16-alpine",
+		postgres.WithInitScripts(filepath.Join("test", "seed.sql")),
+		postgres.WithDatabase(dbName),
+		postgres.WithUsername(dbUser),
+		postgres.WithPassword(dbPassword),
+		testcontainers.WithWaitStrategy(
+			wait.ForLog("database system is ready to accept connections").
+				WithOccurrence(2).
+				WithStartupTimeout(5*time.Second)),
+	)
+	if err != nil {
+		log.Fatalf("failed to start container: %s", err)
+	}
+
+	suite.postgreSqlContainer = postgresContainer
+	suite.postgresSqlContainerContext = ctx
+
+	endpoint, erre := postgresContainer.ConnectionString(ctx, "")
+
+	if erre != nil {
+		logrus.Fatal(erre)
+	}
+
+	logrus.Print(endpoint)
+
+	os.Setenv("POSTGRESQL_CONNECTION_STRING_SECRET", endpoint)
 }
