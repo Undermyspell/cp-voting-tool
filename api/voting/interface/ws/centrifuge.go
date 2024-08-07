@@ -99,3 +99,7 @@ func initHandlers(internalBroker shared_infra_broker.Broker) {
 		})
 	})
 }
+
+func GetHandler() *centrifuge.Node {
+	return node
+}

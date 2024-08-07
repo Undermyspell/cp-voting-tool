@@ -1,0 +1,109 @@
+package templates
+
+import voting_usecases "voting/voting/usecases"
+
+templ Hello(questions []voting_usecases.QuestionDto) {
+	<ul>
+		for _, item := range questions {
+			<li>{ item.Text } - { item.Creator }</li>
+		}
+	</ul>
+}
+
+templ Main(title string, message string, questions []voting_usecases.QuestionDto) {
+	@templ.JSONScript("questions", questions)
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>{ title }</title>
+			<link href="/static/css/tailwind.css" rel="stylesheet"/>
+			<style>
+			body {
+				font-family: Arial, sans-serif;
+				margin: 0;
+				padding: 0;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				height: 100vh;
+				background-color: #f0f0f0;
+			}
+			.container {
+				text-align: center;
+				padding: 20px;
+				border-radius: 8px;
+				box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+			}
+		</style>
+			<script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/focus@3.x.x/dist/cdn.min.js"></script>
+			<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+			<script src="https://unpkg.com/centrifuge@5.0.1/dist/centrifuge.js"></script>
+			<script src="https://unpkg.com/htmx.org@2.0.1" integrity="sha384-QWGpdj554B4ETpJJC9z+ZHJcA/i59TyjxEPXiiUgN2WmTyV5OEZWCD6gQhgkdpB/" crossorigin="anonymous"></script>
+			<script>
+				document.addEventListener('alpine:init', () => {
+						Alpine.data("userData", () =>({
+							async init() {
+								this.user = await (await fetch('/user')).json()
+								initCentrifugo(this.user)
+							},
+							questions: JSON.parse(document.getElementById('questions').textContent),
+							user:  null,
+							addQuestion() {
+								this.questions.push({
+									Id: "asdasdaasasd1123" + this.questions.length+1,
+									Text: "This is an added question " + this.questions.length+1,
+									Creator: "John Doe"
+								})
+							}
+						}))
+				})
+
+				const initCentrifugo = async(user) => {
+					console.log("init centrifugo")
+
+					const centrifuge = new Centrifuge("ws://localhost:3333/api/v1/connection/websocket", {
+						token: user.Token
+					});
+					centrifuge.on('connecting', function (ctx) {
+						console.log(`connecting: ${ctx.code}, ${ctx.reason}`);
+					}).on('connected', function (ctx) {
+						console.log(`connected over ${ctx.transport}`);
+					}).on('disconnected', function (ctx) {
+						console.log(`disconnected: ${ctx.code}, ${ctx.reason}`);
+					}).on('message', function (msg) {
+						console.log(`message: ${JSON.stringify(msg)}`);
+					}).connect();
+				}
+
+				
+				</script>
+		</head>
+		<body>
+			<div class="container rounded-md bg-lime-400">
+				<h1>{ title }</h1>
+				<p>{ message }</p>
+				<p>You are successfully authenticated and this page is served from a Go server!</p>
+				<div x-data="userData">
+					<template x-for="question in questions" :key="question.Id">
+						<div>
+							<h3 x-text="question.Text"></h3>
+							<p x-text="question.Creator"></p>
+						</div>
+					</template>
+					<button class="bg-pink-600 p-4 border-4 border-blue-700" type="button" @click="addQuestion()">Add new question</button>
+					<button
+						hx-get="/q/new"
+						hx-target="body"
+						hx-trigger="click"
+						hx-swap="beforeend"
+						class="bg-pink-600 p-4 border-4 border-blue-700"
+						type="button"
+					>Add new Question Modal</button>
+				</div>
+				<div id="modals-host"></div>
+			</div>
+		</body>
+	</html>
+}

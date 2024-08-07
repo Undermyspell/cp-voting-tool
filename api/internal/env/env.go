@@ -9,7 +9,7 @@ type Storage string
 const (
 	Redis    Storage = "redis"
 	Postgres Storage = "postgres"
-	InMemory  Storage = "inmemory"
+	InMemory Storage = "inmemory"
 )
 
 const (
@@ -20,6 +20,11 @@ const (
 	REDIS_PASSWORD               string = "REDIS_PASSWORD_SECRET"
 	POSTGRESQL_CONNECTION_STRING string = "POSTGRESQL_CONNECTION_STRING_SECRET"
 	ALLOWED_ORIGIN               string = "ALLOWED_ORIGIN"
+	SESSION_SECRET               string = "SESSION_SECRET"
+	AUTH_AZURE_CLIENT_ID         string = "AUTH_AZURE_CLIENT_ID"
+	AUTH_AZURE_CLIENT_SECRET     string = "AUTH_AZURE_CLIENT_SECRET"
+	AUTH_AZURE_TENANT_ID         string = "AUTH_AZURE_TENANT_ID"
+	AUTH_REDIRECT_URL            string = "AUTH_REDIRECT_URL"
 )
 
 type EnvConfig struct {
@@ -30,6 +35,11 @@ type EnvConfig struct {
 	RedisPassword              string
 	AllowedOrigin              string
 	PostgresqlConnectionString string
+	SessionSecret              string
+	AuthAzureClientId          string
+	AuthAzureClientSecret      string
+	AuthAzureTenantId          string
+	AuthRedirectUrl            string
 }
 
 var Env EnvConfig
@@ -47,5 +57,10 @@ func Init() {
 		RedisPassword:              viper.GetString(REDIS_PASSWORD),
 		AllowedOrigin:              viper.GetString(ALLOWED_ORIGIN),
 		PostgresqlConnectionString: viper.GetString(POSTGRESQL_CONNECTION_STRING),
+		SessionSecret:              viper.GetString(SESSION_SECRET),
+		AuthAzureClientId:          viper.GetString(AUTH_AZURE_CLIENT_ID),
+		AuthAzureClientSecret:      viper.GetString(AUTH_AZURE_CLIENT_SECRET),
+		AuthAzureTenantId:          viper.GetString(AUTH_AZURE_TENANT_ID),
+		AuthRedirectUrl:            viper.GetString(AUTH_REDIRECT_URL),
 	}
 }
