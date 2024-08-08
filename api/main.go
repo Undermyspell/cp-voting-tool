@@ -99,7 +99,6 @@ func main() {
 	fsys, _ := fs.Sub(static, "static")
 	r.StaticFS("/static", http.FS(fsys))
 	r.NoRoute(NoRouteHanlder)
-
 	app := r.Group("/", middleware.GinRequireCookieAuth())
 	{
 		app.GET("/", homeHandler)

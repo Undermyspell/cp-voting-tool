@@ -1,7 +1,7 @@
 package components
 
 templ NewQuestionForm() {
-	<form id="myForm" hx-post="/q/save" hx-indicator="#indicator" class="mx-auto m-0 gap-4 flex flex-col">
+	<form id="myForm" hx-post="/q/save" hx-swap="outerHTML" class="mx-auto m-0 gap-4 flex flex-col">
 		<div class="text-gray-900 dark:text-white">
 			<h2>Frage stellen</h2>
 			<span class="dark:text-gray-400 text-sm">Stelle eine neue Frage zur Diskussion</span>
