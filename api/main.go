@@ -107,6 +107,10 @@ func main() {
 		app.GET("/oauth2/callback", authhandler.LoginCallback)
 		app.GET("/user", user_http.GetAuthenticatedUser)
 		app.GET("/q/new", newQuestionHandler)
+		app.POST("/q/save", func(c *gin.Context) {
+			c.Header("HX-Redirect", "/")
+			c.Status(http.StatusCreated)
+		})
 	}
 
 	api := r.Group("/api/v1")
