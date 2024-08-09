@@ -3,7 +3,7 @@ package components
 import voting_usecases "voting/voting/usecases"
 
 templ QuestionList(questions []voting_usecases.QuestionDto) {
-	<div class="flex flex-col gap-4">
+	<div class="flex flex-col gap-4 max-h-full p-4 overflow-y-auto">
 		for _, question := range questions {
 			@QuestionListElement(question)
 		}

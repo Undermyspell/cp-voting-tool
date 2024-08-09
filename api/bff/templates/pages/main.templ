@@ -1,6 +1,9 @@
 package pages
 
-import voting_usecases "voting/voting/usecases"
+import (
+	"voting/bff/templates/components"
+	voting_usecases "voting/voting/usecases"
+)
 
 templ Hello(questions []voting_usecases.QuestionDto) {
 	<ul>
@@ -88,10 +91,15 @@ templ Main(title string, message string, questions []voting_usecases.QuestionDto
 			<div class="header bg-[#CA8787] flex items-center px-10">
 				<h3>Voting Tool with templ, htmx, alpine.js and golang</h3>
 			</div>
-			<div class="content rounded-md bg-[#606676] max-h-full p-4 overflow-y-auto">
-				<h1>{ title }</h1>
-				<p>{ message }</p>
-				<p>You are successfully authenticated and this page is served from a Go server!</p>
+			<div class="content rounded-md bg-[#606676] overflow-hidden">
+				<button
+					hx-get="/q/new"
+					hx-target="body"
+					hx-trigger="click"
+					hx-swap="beforeend"
+					class="bg-pink-600 p-4 border-4 border-blue-700"
+					type="button"
+				>Add new Question Modal</button>
 				// <div x-data="userData">
 				// <template x-for="question in questions" :key="question.Id">
 				// 	<div>
@@ -106,15 +114,8 @@ templ Main(title string, message string, questions []voting_usecases.QuestionDto
 				// 	hx-swap="outerHTML"
 				// 	hx-indicator="#indicator"
 				// ></div>
-				<img id="indicator" class="htmx-indicator" src="/static/spinner.gif"/>
-				<button
-					hx-get="/q/new"
-					hx-target="body"
-					hx-trigger="click"
-					hx-swap="beforeend"
-					class="bg-pink-600 p-4 border-4 border-blue-700"
-					type="button"
-				>Add new Question Modal</button>
+				// <img id="indicator" class="htmx-indicator" src="/static/spinner.gif"/>
+				@components.QuestionList(questions)
 				// </div>
 			</div>
 		</body>
