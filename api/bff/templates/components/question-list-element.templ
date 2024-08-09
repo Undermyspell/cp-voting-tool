@@ -1,6 +1,8 @@
 package components
 
-templ QuestionListElement(text string, creator string) {
+import voting_usecases "voting/voting/usecases"
+
+templ QuestionListElement(question voting_usecases.QuestionDto) {
 	<div class="m-6 flex items-start gap-6 rounded-lg text-gray-700 dark:text-white">
 		<div class="flex-0 flex flex-col items-center rounded-md bg-white px-4 py-2 shadow duration-100 hover:scale-105 dark:bg-gray-700">
 			<button>
@@ -9,7 +11,10 @@ templ QuestionListElement(text string, creator string) {
 			<span class="text-md">5</span>
 		</div>
 		<div class="flex flex-1 items-center justify-between self-stretch rounded-md bg-white p-4 shadow dark:bg-gray-700">
-			<span>This is a very long text<br/>asdasd<br/>sddsfsfd </span>
+			<div class="flex flex-col gap-2">
+				<span>{ question.Text }</span>
+				<span class="italic">{ question.Creator }</span>
+			</div>
 			<div class="flex gap-2">
 				<button type="button" class="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">Editieren</button>
 				<button type="button" tabindex="0" class="ring-offset-background focus-visible:ring-ring inline-flex h-10 w-10 items-center justify-center whitespace-nowrap rounded-md border border-green-500/50 bg-green-500/20 text-sm font-medium text-green-600 transition-colors hover:bg-green-600 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50" data-button-root="">

@@ -1,0 +1,11 @@
+package components
+
+import voting_usecases "voting/voting/usecases"
+
+templ QuestionList(questions []voting_usecases.QuestionDto) {
+	<div class="flex flex-col gap-4">
+		for _, question := range questions {
+			@QuestionListElement(question)
+		}
+	</div>
+}
