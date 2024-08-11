@@ -91,7 +91,7 @@ templ Main(title string, message string, questions []voting_usecases.QuestionDto
 			<div class="header bg-[#CA8787] flex items-center px-10">
 				<h3>Voting Tool with templ, htmx, alpine.js and golang</h3>
 			</div>
-			<div class="content rounded-md bg-[#606676]">
+			<div class="content rounded-md bg-[#606676] overflow-hidden">
 				<button
 					hx-get="/q/new"
 					hx-target="body"
@@ -116,7 +116,7 @@ templ Main(title string, message string, questions []voting_usecases.QuestionDto
 				// 	hx-indicator="#indicator"
 				// ></div>
 				// <img id="indicator" class="htmx-indicator" src="/static/spinner.gif"/>
-				@components.QuestionList(questions)
+				@components.QuestionListAlpine()
 				// </div>
 			</div>
 		</body>
