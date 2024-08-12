@@ -102,8 +102,9 @@ func main() {
 		app.GET("/user", user_http.GetAuthenticatedUser)
 		app.GET("/q/new", bff.NewQuestion)
 		app.POST("/q/save", func(c *gin.Context) {
-			c.Header("HX-Redirect", "/")
-			c.Status(http.StatusCreated)
+			// c.Header("HX-Redirect", "/")
+			time.Sleep(3 * time.Second)
+			c.Status(http.StatusOK)
 		})
 	}
 
