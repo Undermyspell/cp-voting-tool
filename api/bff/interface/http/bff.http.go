@@ -1,6 +1,7 @@
 package bff
 
 import (
+	"time"
 	"voting/bff/templates/components"
 	"voting/bff/templates/pages"
 	"voting/shared/helper/httputils"
@@ -12,6 +13,12 @@ import (
 
 func NewQuestion(c *gin.Context) {
 	component := components.NewQuestionModal()
+	component.Render(c.Request.Context(), c.Writer)
+}
+
+func SaveQuestion(c *gin.Context) {
+	time.Sleep(2 * time.Second)
+	component := components.SuccessToast()
 	component.Render(c.Request.Context(), c.Writer)
 }
 
