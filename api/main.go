@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 	bff "voting/bff/interface/http"
+	"voting/bff/templates/components"
 	"voting/internal/env"
 	"voting/shared/auth"
 	authhandler "voting/shared/auth/handler"
@@ -104,7 +105,9 @@ func main() {
 		app.POST("/q/save", func(c *gin.Context) {
 			// c.Header("HX-Redirect", "/")
 			time.Sleep(3 * time.Second)
-			c.Status(http.StatusOK)
+			// c.Status(http.StatusOK)
+			component := components.Success()
+			component.Render(c.Request.Context(), c.Writer)
 		})
 	}
 
