@@ -1,6 +1,7 @@
 package bff
 
 import (
+	"fmt"
 	"time"
 	"voting/bff/templates/components"
 	"voting/bff/templates/pages"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 func NewQuestion(c *gin.Context) {
@@ -17,6 +19,11 @@ func NewQuestion(c *gin.Context) {
 }
 
 func SaveQuestion(c *gin.Context) {
+	question := c.PostForm("question")
+	anonymous := c.DefaultPostForm("anonymous", "false")
+
+	logrus.Info(fmt.Sprintf("%s:%s", question, anonymous))
+
 	time.Sleep(2 * time.Second)
 	component := components.SuccessToast()
 	component.Render(c.Request.Context(), c.Writer)
