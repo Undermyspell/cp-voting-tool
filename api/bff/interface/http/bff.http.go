@@ -2,6 +2,7 @@ package bff
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 	"voting/bff/templates/components"
 	"voting/bff/templates/pages"
@@ -20,9 +21,20 @@ func NewQuestion(c *gin.Context) {
 
 func SaveQuestion(c *gin.Context) {
 	question := c.PostForm("question")
-	anonymous := c.DefaultPostForm("anonymous", "false")
+	anonymous, _ := strconv.ParseBool(c.DefaultPostForm("anonymous", "false"))
 
-	logrus.Info(fmt.Sprintf("%s:%s", question, anonymous))
+	dto := voting_usecases.NewQuestionDto{
+		Text:      question,
+		Anonymous: anonymous,
+	}
+
+	logrus.Info(fmt.Sprintf("%s:%v", question, anonymous))
+
+	sessions := sessions.Default(c)
+	token := sessions.Get("token").(string)
+	httputils.Post("http://:3333/api/v1/question/new", map[string]string{
+		"Authorization": "Bearer " + token,
+	}, dto)
 
 	time.Sleep(2 * time.Second)
 	component := components.SuccessToast()
