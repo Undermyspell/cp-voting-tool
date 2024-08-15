@@ -48,23 +48,22 @@ templ Main(title string, message string, questions []voting_usecases.QuestionDto
 			<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 			<script src="https://unpkg.com/centrifuge@5.0.1/dist/centrifuge.js"></script>
 			<script src="https://unpkg.com/htmx.org@2.0.1" integrity="sha384-QWGpdj554B4ETpJJC9z+ZHJcA/i59TyjxEPXiiUgN2WmTyV5OEZWCD6gQhgkdpB/" crossorigin="anonymous"></script>
-			<script>
+			<script type="text/javascript">
 				document.addEventListener('alpine:init', () => {
-						Alpine.data("userData", () =>({
+						Alpine.store("questionData", {
 							async init() {
 								this.user = await (await fetch('/user')).json()
 								initCentrifugo(this.user)
 							},
 							questions: JSON.parse(document.getElementById('questions').textContent),
+							get sortedQuestions() {
+								return this.questions.sort((a, b) => b.Votes - a.Votes)
+							},
 							user:  null,
-							addQuestion() {
-								this.questions.push({
-									Id: "asdasdaasasd1123" + this.questions.length+1,
-									Text: "This is an added question " + this.questions.length+1,
-									Creator: "John Doe"
-								})
+							addQuestion(question) {
+								this.questions.push(question)
 							}
-						}))
+						})
 				})
 
 				const initCentrifugo = async(user) => {
@@ -81,6 +80,36 @@ templ Main(title string, message string, questions []voting_usecases.QuestionDto
 						console.log(`disconnected: ${ctx.code}, ${ctx.reason}`);
 					}).on('message', function (msg) {
 						console.log(`message: ${JSON.stringify(msg)}`);
+
+						const data = JSON.parse(msg.data.Payload)
+						const eventType = msg.data.EventType
+
+						switch(eventType){
+							case "start_session":
+								
+								break
+							case "stop_session":
+								
+								break
+							case "user_connected":
+							case "user_disconnected":
+								
+								break
+							case "new_question":
+								Alpine.store('questionData').addQuestion(data)
+							case "undo_upvote_question":
+								
+								break
+							case "update_question":
+								
+								break
+							case "delete_question":
+								
+								break
+							case "answer_question":
+								
+								break
+						}
 					}).connect();
 				}
 
@@ -100,24 +129,7 @@ templ Main(title string, message string, questions []voting_usecases.QuestionDto
 					class="bg-pink-600 p-4 border-4 border-blue-700"
 					type="button"
 				>Add new Question Modal</button>
-				// <button class="bg-pink-600 p-4 border-4 border-blue-700" type="button" @click="addQuestion()">Add new alpine state</button>
-				// <div x-data="userData">
-				// <template x-for="question in questions" :key="question.Id">
-				// 	<div>
-				// 		<h3 x-text="question.Text"></h3>
-				// 		<p x-text="question.Creator"></p>
-				// 	</div>
-				// </template>
-				// <button class="bg-pink-600 p-4 border-4 border-blue-700" type="button" @click="addQuestion()">Add new question</button>
-				// <div
-				// 	hx-get="/q/list"
-				// 	hx-trigger="load"
-				// 	hx-swap="outerHTML"
-				// 	hx-indicator="#indicator"
-				// ></div>
-				// <img id="indicator" class="htmx-indicator" src="/static/spinner.gif"/>
 				@components.QuestionListAlpine()
-				// </div>
 			</div>
 		</body>
 	</html>

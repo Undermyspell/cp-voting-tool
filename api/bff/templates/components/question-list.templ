@@ -11,9 +11,8 @@ templ QuestionList(questions []voting_usecases.QuestionDto) {
 }
 
 templ QuestionListAlpine() {
-	<div x-data="userData" class="flex flex-col gap-4 max-h-[95%] p-4 overflow-y-auto">
-		<button class="bg-pink-600 p-4 border-4 dark:border-green-700" type="button" @click="addQuestion()">Add new alpine state</button>
-		<template x-for="question in questions" :key="question.Id">
+	<div x-data class="flex flex-col gap-4 max-h-[95%] p-4 overflow-y-auto">
+		<template x-for="question in $store.questionData.sortedQuestions" :key="question.Id">
 			@QuestionListElementAlpine()
 		</template>
 	</div>
