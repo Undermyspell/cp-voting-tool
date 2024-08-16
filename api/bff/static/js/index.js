@@ -6710,7 +6710,7 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
   Centrifuge.State = State;
   Centrifuge.UnauthorizedError = UnauthorizedError;
 
-  // bff/client/centrifugo.ts
+  // bff/client/index.ts
   (function() {
     window.Alpine = module_default;
     module_default.store("questionData", {

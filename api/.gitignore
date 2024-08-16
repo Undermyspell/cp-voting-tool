@@ -2,3 +2,4 @@ env.yaml
 .dccache
 tmp/*
 bff/templates/**/*.go
+node_modules

@@ -39,9 +39,6 @@ func GinRequireCookieAuth() gin.HandlerFunc {
 		token, _ := session.Get("token").(string)
 		tokenExpiry, _ := session.Get("tokenExpiry").(int64)
 
-		logrus.Info(time.Now().Unix())
-		logrus.Info(tokenExpiry)
-
 		logrus.Printf("Session 'authenticated': %v, ok: %v", auth, ok)
 		if !ok || !auth || token == "" || time.Now().Unix() > tokenExpiry {
 			logrus.Warn("User is not authenticated, redirecting to login")
