@@ -19,6 +19,13 @@ import { Centrifuge } from 'centrifuge';
         user: null,
         addQuestion(question) {
             this.questions.push(question)
+            setTimeout(() => {
+                //@ts-ignore
+                htmx.process(document.getElementById('question-list'));
+            }, 0);
+        },
+        updateQuestion(question) {
+            this.questions = this.questions.map((q) => (q.Id === question.Id ? Object.assign({}, q, { ...question }) : q))
         }
     })
 
@@ -59,7 +66,7 @@ import { Centrifuge } from 'centrifuge';
                 
                 break
             case "update_question":
-                
+                Alpine.store('questionData').updateQuestion(data)
                 break
             case "delete_question":
                 

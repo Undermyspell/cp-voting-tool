@@ -2,6 +2,7 @@ package bff
 
 import (
 	"fmt"
+	"net/http"
 	"strconv"
 	"time"
 	"voting/bff/templates/components"
@@ -59,15 +60,23 @@ func SaveNewQuestion(c *gin.Context) {
 	}, dto)
 
 	time.Sleep(2 * time.Second)
-	component := components.SuccessToast()
+	component := components.SuccessToast("Frage erfolgreich erstellt")
 	component.Render(c.Request.Context(), c.Writer)
 }
 
 func SaveUpdatedQuestion(c *gin.Context) {
+
+	// Parse the form data (needed for PUT requests)
+	if err := c.Request.ParseForm(); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse form"})
+		return
+	}
+	id := c.PostForm("id")
 	question := c.PostForm("question")
 	anonymous, _ := strconv.ParseBool(c.DefaultPostForm("anonymous", "false"))
 
-	dto := voting_usecases.NewQuestionDto{
+	dto := voting_usecases.UpdateQuestionDto{
+		Id:        id,
 		Text:      question,
 		Anonymous: anonymous,
 	}
@@ -76,12 +85,12 @@ func SaveUpdatedQuestion(c *gin.Context) {
 
 	sessions := sessions.Default(c)
 	token := sessions.Get("token").(string)
-	httputils.Post("http://:3333/api/v1/question/new", map[string]string{
+	httputils.Put("http://:3333/api/v1/question/update", map[string]string{
 		"Authorization": "Bearer " + token,
 	}, dto)
 
 	time.Sleep(2 * time.Second)
-	component := components.SuccessToast()
+	component := components.SuccessToast("Frage erfolgreich aktualisiert")
 	component.Render(c.Request.Context(), c.Writer)
 }
 

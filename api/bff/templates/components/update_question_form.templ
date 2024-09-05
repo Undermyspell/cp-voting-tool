@@ -5,15 +5,16 @@ import voting_usecases "voting/voting/usecases"
 templ UpdateQuestionForm(question voting_usecases.QuestionDto) {
 	<form
 		id="myForm"
-		hx-post="/q/save"
+		hx-put="/q/save"
 		hx-indicator="#indicator"
 		hx-swap="outerHTML swap:0.3s"
 		hx-target="#modal"
 		class="mx-auto m-0 gap-4 flex flex-col"
 	>
+		<input type="hidden" name="id" value={ question.Id }/>
 		<div class="text-gray-900 dark:text-white">
 			<h2>Frage stellen</h2>
-			<span class="dark:text-gray-400 text-sm">Stelle eine neue Frage zur Diskussion</span>
+			<span class="dark:text-gray-400 text-sm">Aktualisiere deine Frage</span>
 		</div>
 		<div class="flex gap-16 mb-5">
 			<textarea id="question" name="question" rows="3" maxlength="500" class="min-h-[80px] flex p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Stelle eine Frage...">

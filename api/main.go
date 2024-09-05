@@ -103,7 +103,7 @@ func main() {
 		app.GET("/q/new", bff.NewQuestion)
 		app.GET("/q/update/:id", bff.UpdateQuestion)
 		app.POST("/q/save", bff.SaveNewQuestion)
-		app.PUT("/q/saveUpdate", bff.SaveUpdatedQuestion)
+		app.PUT("/q/save", bff.SaveUpdatedQuestion)
 	}
 
 	api := r.Group("/api/v1")

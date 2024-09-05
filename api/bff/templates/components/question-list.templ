@@ -11,7 +11,7 @@ templ QuestionList(questions []voting_usecases.QuestionDto) {
 }
 
 templ QuestionListAlpine() {
-	<div x-data class="flex flex-col gap-4 max-h-[95%] p-4 overflow-y-auto">
+	<div id="question-list" x-data class="flex flex-col gap-4 max-h-[95%] p-4 overflow-y-auto">
 		<template x-for="question in $store.questionData.sortedQuestions" :key="question.Id">
 			@QuestionListElementAlpine()
 		</template>
