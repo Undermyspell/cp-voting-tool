@@ -26,6 +26,9 @@ import { Centrifuge } from 'centrifuge';
         },
         updateQuestion(question) {
             this.questions = this.questions.map((q) => (q.Id === question.Id ? Object.assign({}, q, { ...question }) : q))
+        },
+        deleteQuestion(question: any): void {
+            this.questions = this.questions.filter(q => q.Id !== question.Id);
         }
     })
 
@@ -69,7 +72,7 @@ import { Centrifuge } from 'centrifuge';
                 Alpine.store('questionData').updateQuestion(data)
                 break
             case "delete_question":
-                
+                Alpine.store('questionData').deleteQuestion(data)
                 break
             case "answer_question":
                 

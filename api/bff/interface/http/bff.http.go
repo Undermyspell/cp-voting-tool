@@ -53,13 +53,13 @@ func SaveNewQuestion(c *gin.Context) {
 
 	logrus.Info(fmt.Sprintf("%s:%v", question, anonymous))
 
+	time.Sleep(2 * time.Second)
 	sessions := sessions.Default(c)
 	token := sessions.Get("token").(string)
 	httputils.Post("http://:3333/api/v1/question/new", map[string]string{
 		"Authorization": "Bearer " + token,
 	}, dto)
 
-	time.Sleep(2 * time.Second)
 	component := components.SuccessToast("Frage erfolgreich erstellt")
 	component.Render(c.Request.Context(), c.Writer)
 }
@@ -85,11 +85,13 @@ func SaveUpdatedQuestion(c *gin.Context) {
 
 	sessions := sessions.Default(c)
 	token := sessions.Get("token").(string)
+
+	time.Sleep(2 * time.Second)
+
 	httputils.Put("http://:3333/api/v1/question/update", map[string]string{
 		"Authorization": "Bearer " + token,
 	}, dto)
 
-	time.Sleep(2 * time.Second)
 	component := components.SuccessToast("Frage erfolgreich aktualisiert")
 	component.Render(c.Request.Context(), c.Writer)
 }
@@ -103,7 +105,6 @@ func DeleteQuestion(c *gin.Context) {
 		"Authorization": "Bearer " + token,
 	})
 
-	time.Sleep(2 * time.Second)
 	component := components.SuccessToast("Frage erfolgreich gelöscht")
 	component.Render(c.Request.Context(), c.Writer)
 }

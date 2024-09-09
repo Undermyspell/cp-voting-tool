@@ -15,7 +15,6 @@ import (
 	shared_infra "voting/shared/infra/broker"
 	user_http "voting/user/interface/http"
 	votinghttp "voting/voting/interface/http"
-	voting_sse "voting/voting/interface/sse"
 	voting_ws "voting/voting/interface/ws"
 	voting_repositories "voting/voting/repositories"
 
@@ -110,7 +109,6 @@ func main() {
 	api := r.Group("/api/v1")
 	{
 		api.GET("/connection/websocket", votinghttp.CentrifugoHandler())
-		api.GET("/events", middleware.GinRequireJwtAuth(), voting_sse.SseStream(internalBroker))
 		q := api.Group("/question", middleware.GinRequireJwtAuth())
 		q.PUT("/answer/:id", middleware.RequireRole(auth.SessionAdmin, auth.Admin), votinghttp.Answer)
 		q.POST("/new", votinghttp.Create)
