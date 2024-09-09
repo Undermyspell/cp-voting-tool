@@ -104,6 +104,7 @@ func main() {
 		app.GET("/q/update/:id", bff.UpdateQuestion)
 		app.POST("/q/save", bff.SaveNewQuestion)
 		app.PUT("/q/save", bff.SaveUpdatedQuestion)
+		app.DELETE("/q/delete/:id", bff.DeleteQuestion)
 	}
 
 	api := r.Group("/api/v1")

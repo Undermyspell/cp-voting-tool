@@ -94,6 +94,20 @@ func SaveUpdatedQuestion(c *gin.Context) {
 	component.Render(c.Request.Context(), c.Writer)
 }
 
+func DeleteQuestion(c *gin.Context) {
+	questionId := c.Param("id")
+
+	sessions := sessions.Default(c)
+	token := sessions.Get("token").(string)
+	httputils.Delete("http://:3333/api/v1/question/delete/"+questionId, map[string]string{
+		"Authorization": "Bearer " + token,
+	})
+
+	time.Sleep(2 * time.Second)
+	component := components.SuccessToast("Frage erfolgreich gelöscht")
+	component.Render(c.Request.Context(), c.Writer)
+}
+
 func Home(c *gin.Context) {
 	sessions := sessions.Default(c)
 	token := sessions.Get("token").(string)
