@@ -17,7 +17,7 @@ type NewQuestionDto struct {
 	Anonymous bool   `json:"anonymous"`
 }
 
-func Create(newQuestionDto NewQuestionDto, userContext shared_models.UserContext) errors.VotingError {
+func Create(newQuestionDto NewQuestionDto, userContext shared_models.UserContext) error {
 	broker := shared_infra_broker.GetInstance()
 
 	question, err := create(newQuestionDto.Text, newQuestionDto.Anonymous, userContext)
@@ -57,11 +57,7 @@ func Create(newQuestionDto NewQuestionDto, userContext shared_models.UserContext
 	newQuestionForAllButUserByteString, errj := json.Marshal(newQuestionForAllButUserSseMessage)
 
 	if errj != nil || errf != nil {
-		return &errors.UnexpectedError{
-			UseCaseError: shared.UseCaseError{
-				ErrMessage: "cant marshal question",
-			},
-		}
+		return fmt.Errorf("%w", errors.ErrUnexpected)
 	}
 
 	eventForUser := shared.Event{
@@ -79,23 +75,15 @@ func Create(newQuestionDto NewQuestionDto, userContext shared_models.UserContext
 	return nil
 }
 
-func create(text string, anonymous bool, creator shared_models.UserContext) (*voting_models.Question, errors.VotingError) {
+func create(text string, anonymous bool, creator shared_models.UserContext) (*voting_models.Question, error) {
 	votingStorage := voting_repositories.GetInstance()
 
 	if !votingStorage.IsRunning() {
-		return nil, &errors.QuestionSessionNotRunningError{
-			UseCaseError: shared.UseCaseError{
-				ErrMessage: "no questions session currently running",
-			},
-		}
+		return nil, fmt.Errorf("%w", errors.ErrQuestionSessionNotRunning)
 	}
 
 	if len(text) > voting_models.MaxLength {
-		return nil, &errors.QuestionMaxLengthExceededError{
-			UseCaseError: shared.UseCaseError{
-				ErrMessage: fmt.Sprintf("Question text must have a max length of %d", voting_models.MaxLength),
-			},
-		}
+		return nil, fmt.Errorf("%w", errors.ErrQuestionMaxLengthExceeded)
 	}
 
 	question := votingStorage.AddQuestion(text, anonymous, creator.Name, creator.GetHash(votingStorage.GetSecret()))

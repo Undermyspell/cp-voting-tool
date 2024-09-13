@@ -1,6 +1,7 @@
 package voting_http
 
 import (
+	"errors"
 	"net/http"
 	shared_models "voting/shared/models"
 	usecases "voting/voting/usecases"
@@ -18,10 +19,10 @@ func GetSession(c *gin.Context) {
 
 	httpStatus := http.StatusOK
 	if err != nil {
-		switch err.(type) {
-		case *usecaseErrors.QuestionSessionNotRunningError:
+		if errors.Is(err, usecaseErrors.ErrQuestionSessionNotRunning) {
 			httpStatus = http.StatusNotAcceptable
-		case *usecaseErrors.UnexpectedError:
+		}
+		if errors.Is(err, usecaseErrors.ErrUnexpected) {
 			httpStatus = http.StatusBadRequest
 		}
 
@@ -59,12 +60,13 @@ func Create(c *gin.Context) {
 
 	httpStatus := http.StatusOK
 	if err != nil {
-		switch err.(type) {
-		case *usecaseErrors.QuestionMaxLengthExceededError:
+		if errors.Is(err, usecaseErrors.ErrQuestionMaxLengthExceeded) {
 			httpStatus = http.StatusBadRequest
-		case *usecaseErrors.QuestionSessionNotRunningError:
+		}
+		if errors.Is(err, usecaseErrors.ErrQuestionSessionNotRunning) {
 			httpStatus = http.StatusNotAcceptable
-		case *usecaseErrors.UnexpectedError:
+		}
+		if errors.Is(err, usecaseErrors.ErrUnexpected) {
 			httpStatus = http.StatusBadRequest
 		}
 	}
@@ -93,16 +95,19 @@ func Update(c *gin.Context) {
 
 	httpStatus := http.StatusOK
 	if err != nil {
-		switch err.(type) {
-		case *usecaseErrors.QuestionNotFoundError:
+		if errors.Is(err, usecaseErrors.ErrQuestionNotFound) {
 			httpStatus = http.StatusNotFound
-		case *usecaseErrors.QuestionAlreadyAnsweredError:
+		}
+		if errors.Is(err, usecaseErrors.ErrQuestionAlreadyAnswered) {
 			httpStatus = http.StatusNotAcceptable
-		case *usecaseErrors.QuestionSessionNotRunningError:
+		}
+		if errors.Is(err, usecaseErrors.ErrQuestionSessionNotRunning) {
 			httpStatus = http.StatusNotAcceptable
-		case *usecaseErrors.QuestionNotOwnedError:
+		}
+		if errors.Is(err, usecaseErrors.ErrQuestionNotOwned) {
 			httpStatus = http.StatusForbidden
-		case *usecaseErrors.UnexpectedError:
+		}
+		if errors.Is(err, usecaseErrors.ErrUnexpected) {
 			httpStatus = http.StatusBadRequest
 		}
 	}
@@ -123,16 +128,19 @@ func Delete(c *gin.Context) {
 
 	httpStatus := http.StatusOK
 	if err != nil {
-		switch err.(type) {
-		case *usecaseErrors.QuestionNotFoundError:
+		if errors.Is(err, usecaseErrors.ErrQuestionNotFound) {
 			httpStatus = http.StatusNotFound
-		case *usecaseErrors.QuestionAlreadyAnsweredError:
+		}
+		if errors.Is(err, usecaseErrors.ErrQuestionAlreadyAnswered) {
 			httpStatus = http.StatusNotAcceptable
-		case *usecaseErrors.QuestionSessionNotRunningError:
+		}
+		if errors.Is(err, usecaseErrors.ErrQuestionSessionNotRunning) {
 			httpStatus = http.StatusNotAcceptable
-		case *usecaseErrors.QuestionNotOwnedError:
+		}
+		if errors.Is(err, usecaseErrors.ErrQuestionNotOwned) {
 			httpStatus = http.StatusForbidden
-		case *usecaseErrors.UnexpectedError:
+		}
+		if errors.Is(err, usecaseErrors.ErrUnexpected) {
 			httpStatus = http.StatusBadRequest
 		}
 	}
@@ -153,16 +161,19 @@ func Upvote(c *gin.Context) {
 
 	httpStatus := http.StatusOK
 	if err != nil {
-		switch err.(type) {
-		case *usecaseErrors.QuestionNotFoundError:
+		if errors.Is(err, usecaseErrors.ErrQuestionNotFound) {
 			httpStatus = http.StatusNotFound
-		case *usecaseErrors.QuestionAlreadyAnsweredError:
+		}
+		if errors.Is(err, usecaseErrors.ErrQuestionAlreadyAnswered) {
 			httpStatus = http.StatusNotAcceptable
-		case *usecaseErrors.UserAlreadyVotedError:
+		}
+		if errors.Is(err, usecaseErrors.ErrUserAlreadyVoted) {
 			httpStatus = http.StatusNotAcceptable
-		case *usecaseErrors.QuestionSessionNotRunningError:
+		}
+		if errors.Is(err, usecaseErrors.ErrQuestionSessionNotRunning) {
 			httpStatus = http.StatusNotAcceptable
-		case *usecaseErrors.UnexpectedError:
+		}
+		if errors.Is(err, usecaseErrors.ErrUnexpected) {
 			httpStatus = http.StatusBadRequest
 		}
 	}
@@ -183,16 +194,19 @@ func UndoVote(c *gin.Context) {
 
 	httpStatus := http.StatusOK
 	if err != nil {
-		switch err.(type) {
-		case *usecaseErrors.QuestionNotFoundError:
+		if errors.Is(err, usecaseErrors.ErrQuestionNotFound) {
 			httpStatus = http.StatusNotFound
-		case *usecaseErrors.QuestionAlreadyAnsweredError:
+		}
+		if errors.Is(err, usecaseErrors.ErrQuestionAlreadyAnswered) {
 			httpStatus = http.StatusNotAcceptable
-		case *usecaseErrors.UserHasNotVotedError:
+		}
+		if errors.Is(err, usecaseErrors.ErrUserHasNotVoted) {
 			httpStatus = http.StatusNotAcceptable
-		case *usecaseErrors.QuestionSessionNotRunningError:
+		}
+		if errors.Is(err, usecaseErrors.ErrQuestionSessionNotRunning) {
 			httpStatus = http.StatusNotAcceptable
-		case *usecaseErrors.UnexpectedError:
+		}
+		if errors.Is(err, usecaseErrors.ErrUnexpected) {
 			httpStatus = http.StatusBadRequest
 		}
 	}
@@ -211,14 +225,16 @@ func Answer(c *gin.Context) {
 
 	httpStatus := http.StatusOK
 	if err != nil {
-		switch err.(type) {
-		case *usecaseErrors.QuestionNotFoundError:
+		if errors.Is(err, usecaseErrors.ErrQuestionNotFound) {
 			httpStatus = http.StatusNotFound
-		case *usecaseErrors.QuestionAlreadyAnsweredError:
+		}
+		if errors.Is(err, usecaseErrors.ErrQuestionAlreadyAnswered) {
 			httpStatus = http.StatusNotAcceptable
-		case *usecaseErrors.QuestionSessionNotRunningError:
+		}
+		if errors.Is(err, usecaseErrors.ErrQuestionSessionNotRunning) {
 			httpStatus = http.StatusNotAcceptable
-		case *usecaseErrors.UnexpectedError:
+		}
+		if errors.Is(err, usecaseErrors.ErrUnexpected) {
 			httpStatus = http.StatusBadRequest
 		}
 	}

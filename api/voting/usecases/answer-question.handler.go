@@ -2,6 +2,7 @@ package voting_usecases
 
 import (
 	"encoding/json"
+	"fmt"
 	"voting/shared"
 	shared_infra_broker "voting/shared/infra/broker"
 	voting_repositories "voting/voting/repositories"
@@ -9,7 +10,7 @@ import (
 	usecases_events "voting/voting/usecases/_events"
 )
 
-func Answer(questionId string) errors.VotingError {
+func Answer(questionId string) error {
 	broker := shared_infra_broker.GetInstance()
 
 	err := answer(questionId)
@@ -24,11 +25,7 @@ func Answer(questionId string) errors.VotingError {
 	questionPayload, errj := json.Marshal(questionMessage)
 
 	if errj != nil {
-		return &errors.UnexpectedError{
-			UseCaseError: shared.UseCaseError{
-				ErrMessage: "cant marshal question",
-			},
-		}
+		return fmt.Errorf("%w", errors.ErrUnexpected)
 	}
 
 	event := shared.Event{
@@ -41,25 +38,17 @@ func Answer(questionId string) errors.VotingError {
 	return nil
 }
 
-func answer(questionId string) errors.VotingError {
+func answer(questionId string) error {
 	votingStorage := voting_repositories.GetInstance()
 
 	if !votingStorage.IsRunning() {
-		return &errors.QuestionSessionNotRunningError{
-			UseCaseError: shared.UseCaseError{
-				ErrMessage: "no questions session currently running",
-			},
-		}
+		return fmt.Errorf("%w", errors.ErrQuestionSessionNotRunning)
 	}
 
 	_, ok := votingStorage.GetQuestion(questionId)
 
 	if !ok {
-		return &errors.QuestionNotFoundError{
-			UseCaseError: shared.UseCaseError{
-				ErrMessage: "question not found",
-			},
-		}
+		return fmt.Errorf("%w", errors.ErrQuestionNotFound)
 	}
 
 	votingStorage.AnswerQuestion(questionId)

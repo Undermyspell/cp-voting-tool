@@ -4,11 +4,10 @@ import (
 	"voting/shared"
 	shared_infra_broker "voting/shared/infra/broker"
 	voting_repositories "voting/voting/repositories"
-	errors "voting/voting/usecases/_errors"
 	usecases_events "voting/voting/usecases/_events"
 )
 
-func StartSession() errors.VotingError {
+func StartSession() error {
 	broker := shared_infra_broker.GetInstance()
 	votingStorage := voting_repositories.GetInstance()
 	votingStorage.Start()
