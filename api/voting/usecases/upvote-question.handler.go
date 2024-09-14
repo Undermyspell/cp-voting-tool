@@ -2,6 +2,7 @@ package voting_usecases
 
 import (
 	"encoding/json"
+	"fmt"
 	shared "voting/shared"
 	shared_infra_broker "voting/shared/infra/broker"
 	shared_models "voting/shared/models"
@@ -10,7 +11,7 @@ import (
 	usecases_events "voting/voting/usecases/_events"
 )
 
-func Upvote(questionId string, userContext shared_models.UserContext) errors.VotingError {
+func Upvote(questionId string, userContext shared_models.UserContext) error {
 	broker := shared_infra_broker.GetInstance()
 
 	votes, err := upVote(questionId, userContext)
@@ -34,11 +35,7 @@ func Upvote(questionId string, userContext shared_models.UserContext) errors.Vot
 	questionPayload, errj := json.Marshal(questionUpvoteMessage)
 
 	if errj != nil || errf != nil {
-		return &errors.UnexpectedError{
-			UseCaseError: shared.UseCaseError{
-				ErrMessage: "cant marshal question",
-			},
-		}
+		return fmt.Errorf("%w", errors.ErrUnexpected)
 	}
 
 	event := shared.Event{
@@ -57,46 +54,29 @@ func Upvote(questionId string, userContext shared_models.UserContext) errors.Vot
 	return nil
 }
 
-func upVote(id string, user shared_models.UserContext) (int, errors.VotingError) {
+func upVote(id string, user shared_models.UserContext) (int, error) {
 	votingStorage := voting_repositories.GetInstance()
 
 	if !votingStorage.IsRunning() {
-		return 0, &errors.QuestionSessionNotRunningError{
-			UseCaseError: shared.UseCaseError{
-				ErrMessage: "no questions session currently running",
-			},
-		}
+		return 0, fmt.Errorf("%w", errors.ErrQuestionSessionNotRunning)
 	}
 
 	question, ok := votingStorage.GetQuestion(id)
 
 	if !ok {
-		return 0, &errors.QuestionNotFoundError{
-			UseCaseError: shared.UseCaseError{
-				ErrMessage: "question not found",
-			},
-		}
+		return 0, fmt.Errorf("%w", errors.ErrQuestionNotFound)
 	}
 
 	answered := question.Answered
 	if answered {
-		return 0, &errors.QuestionAlreadyAnsweredError{
-			UseCaseError: shared.UseCaseError{
-				ErrMessage: "question already answered",
-			},
-		}
+		return 0, fmt.Errorf("%w", errors.ErrQuestionAlreadyAnswered)
 	}
 
 	hash := user.GetHash(votingStorage.GetSecret())
 	_, ok = votingStorage.GetUserVotes()[hash][id]
 
 	if ok {
-		return 0,
-			&errors.UserAlreadyVotedError{
-				UseCaseError: shared.UseCaseError{
-					ErrMessage: "user already voted",
-				},
-			}
+		return 0, fmt.Errorf("%w", errors.ErrUserAlreadyVoted)
 	}
 
 	votingStorage.Vote(hash, id)
