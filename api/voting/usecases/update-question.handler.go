@@ -2,6 +2,7 @@ package voting_usecases
 
 import (
 	"encoding/json"
+	"fmt"
 	"voting/shared"
 	shared_infra_broker "voting/shared/infra/broker"
 	shared_models "voting/shared/models"
@@ -17,7 +18,7 @@ type UpdateQuestionDto struct {
 	Anonymous bool   `json:"anonymous"`
 }
 
-func UpdateQuestion(updateQuestionDto UpdateQuestionDto, creator shared_models.UserContext) errors.VotingError {
+func UpdateQuestion(updateQuestionDto UpdateQuestionDto, creator shared_models.UserContext) error {
 
 	broker := shared_infra_broker.GetInstance()
 
@@ -46,40 +47,24 @@ func UpdateQuestion(updateQuestionDto UpdateQuestionDto, creator shared_models.U
 	return nil
 }
 
-func update(question UpdateQuestionDto, creator shared_models.UserContext) (*voting_models.Question, errors.VotingError) {
+func update(question UpdateQuestionDto, creator shared_models.UserContext) (*voting_models.Question, error) {
 	votingStorage := voting_repositories.GetInstance()
 
 	if !votingStorage.IsRunning() {
-		return nil, &errors.QuestionSessionNotRunningError{
-			UseCaseError: shared.UseCaseError{
-				ErrMessage: "no questions session currently running",
-			},
-		}
+		return nil, fmt.Errorf("%w", errors.ErrQuestionSessionNotRunning)
 	}
 
 	updatedQuestion, ok := votingStorage.GetQuestion(question.Id)
 	if !ok {
-		return nil, &errors.QuestionNotFoundError{
-			UseCaseError: shared.UseCaseError{
-				ErrMessage: "question not found",
-			},
-		}
+		return nil, fmt.Errorf("%w", errors.ErrQuestionNotFound)
 	}
 
 	if updatedQuestion.CreatorHash != creator.GetHash(votingStorage.GetSecret()) {
-		return nil, &errors.QuestionNotOwnedError{
-			UseCaseError: shared.UseCaseError{
-				ErrMessage: "you do not own this question",
-			},
-		}
+		return nil, fmt.Errorf("%w", errors.ErrQuestionNotOwned)
 	}
 
 	if updatedQuestion.Answered {
-		return nil, &errors.QuestionAlreadyAnsweredError{
-			UseCaseError: shared.UseCaseError{
-				ErrMessage: "question has already been answered",
-			},
-		}
+		return nil, fmt.Errorf("%w", errors.ErrQuestionAlreadyAnswered)
 	}
 
 	updatedQuestion = votingStorage.UpdateQuestion(question.Id, question.Text, creator.Name, question.Anonymous)

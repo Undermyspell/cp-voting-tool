@@ -2,6 +2,7 @@ package voting_usecases
 
 import (
 	"encoding/json"
+	"fmt"
 	"voting/shared"
 	shared_infra_broker "voting/shared/infra/broker"
 	shared_models "voting/shared/models"
@@ -10,7 +11,7 @@ import (
 	usecases_events "voting/voting/usecases/_events"
 )
 
-func Delete(questionId string, creator shared_models.UserContext) errors.VotingError {
+func Delete(questionId string, creator shared_models.UserContext) error {
 	broker := shared_infra_broker.GetInstance()
 
 	err := delete(questionId, creator)
@@ -34,40 +35,24 @@ func Delete(questionId string, creator shared_models.UserContext) errors.VotingE
 	return nil
 }
 
-func delete(id string, creator shared_models.UserContext) errors.VotingError {
+func delete(id string, creator shared_models.UserContext) error {
 	votingStorage := voting_repositories.GetInstance()
 
 	if !votingStorage.IsRunning() {
-		return &errors.QuestionSessionNotRunningError{
-			UseCaseError: shared.UseCaseError{
-				ErrMessage: "no questions session currently running",
-			},
-		}
+		return fmt.Errorf("%w", errors.ErrQuestionSessionNotRunning)
 	}
 
 	questionToDelete, ok := votingStorage.GetQuestion(id)
 	if !ok {
-		return &errors.QuestionNotFoundError{
-			UseCaseError: shared.UseCaseError{
-				ErrMessage: "question not found",
-			},
-		}
+		return fmt.Errorf("%w", errors.ErrQuestionNotFound)
 	}
 
 	if questionToDelete.CreatorHash != creator.GetHash(votingStorage.GetSecret()) {
-		return &errors.QuestionNotOwnedError{
-			UseCaseError: shared.UseCaseError{
-				ErrMessage: "you do not own this question",
-			},
-		}
+		return fmt.Errorf("%w", errors.ErrQuestionNotOwned)
 	}
 
 	if questionToDelete.Answered {
-		return &errors.QuestionAlreadyAnsweredError{
-			UseCaseError: shared.UseCaseError{
-				ErrMessage: "question has already been answered",
-			},
-		}
+		return fmt.Errorf("%w", errors.ErrQuestionAlreadyAnswered)
 	}
 
 	votingStorage.DeleteQuestion(questionToDelete.Id)

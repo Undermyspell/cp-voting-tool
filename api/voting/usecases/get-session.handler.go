@@ -1,7 +1,7 @@
 package voting_usecases
 
 import (
-	"voting/shared"
+	"fmt"
 	shared_models "voting/shared/models"
 	voting_repositories "voting/voting/repositories"
 	errors "voting/voting/usecases/_errors"
@@ -18,15 +18,11 @@ type QuestionDto struct {
 	Owned     bool
 }
 
-func GetSession(userContext *shared_models.UserContext) ([]QuestionDto, errors.VotingError) {
+func GetSession(userContext *shared_models.UserContext) ([]QuestionDto, error) {
 	votingStorage := voting_repositories.GetInstance()
 
 	if !votingStorage.IsRunning() {
-		return []QuestionDto{}, &errors.QuestionSessionNotRunningError{
-			UseCaseError: shared.UseCaseError{
-				ErrMessage: "no questions session currently running",
-			},
-		}
+		return []QuestionDto{}, fmt.Errorf("%w", errors.ErrQuestionSessionNotRunning)
 	}
 
 	hash := userContext.GetHash(votingStorage.GetSecret())
