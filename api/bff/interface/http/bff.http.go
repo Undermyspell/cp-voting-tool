@@ -131,14 +131,47 @@ func UndoVoteQuestion(c *gin.Context) {
 	}, dto)
 }
 
+func StartSession(c *gin.Context) {
+	sessions := sessions.Default(c)
+	token := sessions.Get("token").(string)
+	dto := "{}"
+	httputils.Post("http://:3333/api/v1/question/session/start", map[string]string{
+		"Authorization": "Bearer " + token,
+	}, dto)
+
+	component := components.MainContent(true)
+	component.Render(c.Request.Context(), c.Writer)
+}
+
+func StopSession(c *gin.Context) {
+	sessions := sessions.Default(c)
+	token := sessions.Get("token").(string)
+	dto := "{}"
+	httputils.Post("http://:3333/api/v1/question/session/stop", map[string]string{
+		"Authorization": "Bearer " + token,
+	}, dto)
+
+	component := components.MainContent(false)
+	component.Render(c.Request.Context(), c.Writer)
+}
+
 func Home(c *gin.Context) {
 	sessions := sessions.Default(c)
 	token := sessions.Get("token").(string)
 
-	questions, _ := httputils.Get[[]voting_usecases.QuestionDto]("http://:3333/api/v1/question/session", map[string]string{
+	questions, statusCode := httputils.Get[[]voting_usecases.QuestionDto]("http://:3333/api/v1/question/session", map[string]string{
 		"Authorization": "Bearer " + token,
 	})
 
-	component := pages.Main("Home Page :)", "Welcome to the Home Page :)!", *questions)
+	activeSession := true
+	if statusCode > 299 {
+		activeSession = false
+	}
+
+	if questions == nil {
+		questions = &[]voting_usecases.QuestionDto{}
+	}
+
+	component := pages.Main("Home Page :)", "Welcome to the Home Page :)!", activeSession, *questions)
 	component.Render(c.Request.Context(), c.Writer)
 }

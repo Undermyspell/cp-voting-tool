@@ -1,0 +1,51 @@
+package components
+
+templ NoActiveSession() {
+	<span>Keine aktive Q/A Session</span>
+}
+
+templ StartSessionButton() {
+	<button
+		hx-post="/q/s/start"
+		hx-target="body"
+		hx-trigger="click"
+		hx-swap="innerHTML"
+		class="text-white
+		 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none
+		focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700
+		 dark:focus:ring-blue-800"
+		type="button"
+	>Fragerunde starten</button>
+}
+
+templ StopSessionButton() {
+	<button
+		hx-post="/q/s/stop"
+		hx-target="body"
+		hx-trigger="click"
+		hx-swap="innerHTML"
+		class="text-white
+		 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none
+		focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700
+		 dark:focus:ring-blue-800"
+		type="button"
+	>Fragerunde beenden</button>
+}
+
+templ MainContent(activeSession bool) {
+	<div class="header bg-white dark:bg-gray-700  flex items-center px-10 dark:text-white">
+		<h3>Voting Tool with templ, htmx, alpine.js and golang</h3>
+		if activeSession {
+			@StopSessionButton()
+		} else {
+			@StartSessionButton()
+		}
+	</div>
+	<div class="content rounded-md overflow-hidden">
+		if activeSession {
+			@QuestionListAlpine()
+		} else {
+			@NoActiveSession()
+		}
+	</div>
+}

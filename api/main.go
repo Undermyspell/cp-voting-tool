@@ -106,6 +106,8 @@ func main() {
 		app.DELETE("/q/delete/:id", bff.DeleteQuestion)
 		app.PUT("/q/upvote/:id", bff.UpvoteQuestion)
 		app.PUT("/q/undovote/:id", bff.UndoVoteQuestion)
+		app.POST("/q/s/start", bff.StartSession)
+		app.POST("/q/s/stop", bff.StopSession)
 	}
 
 	api := r.Group("/api/v1")
