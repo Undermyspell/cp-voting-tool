@@ -17,6 +17,7 @@ import { Centrifuge } from 'centrifuge';
             return this.questions.sort((a, b) => b.Votes - a.Votes)
         },
         user: null,
+        usersOnlineCount: 0,
         addQuestion(question) {
             this.questions.push(question)
             setTimeout(() => {
@@ -33,7 +34,10 @@ import { Centrifuge } from 'centrifuge';
         },
         deleteQuestion(question: any): void {
             this.questions = this.questions.filter(q => q.Id !== question.Id);
-        }
+        },
+        updateUserOnlineCount(usersOnlineCount: number) {
+            this.usersOnlineCount = usersOnlineCount
+        },
     })
 
     Alpine.start() 
@@ -58,14 +62,13 @@ import { Centrifuge } from 'centrifuge';
 
         switch(eventType){
             case "start_session":
-                
-                break
             case "stop_session":
-                
+                //@ts-ignore
+                htmx.ajax('GET', '/c/main', {target:'body', swap:'innerHTML'})
                 break
             case "user_connected":
             case "user_disconnected":
-                
+                Alpine.store('questionData').updateUserOnlineCount(data.UserCount)
                 break
             case "new_question":
                 Alpine.store('questionData').addQuestion(data)

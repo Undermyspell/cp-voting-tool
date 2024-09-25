@@ -8,6 +8,7 @@ import (
 	"voting/bff/templates/components"
 	"voting/bff/templates/pages"
 	"voting/shared/helper/httputils"
+	shared_models "voting/shared/models"
 	voting_usecases "voting/voting/usecases"
 
 	"github.com/gin-contrib/sessions"
@@ -134,13 +135,11 @@ func UndoVoteQuestion(c *gin.Context) {
 func StartSession(c *gin.Context) {
 	sessions := sessions.Default(c)
 	token := sessions.Get("token").(string)
+
 	dto := "{}"
 	httputils.Post("http://:3333/api/v1/question/session/start", map[string]string{
 		"Authorization": "Bearer " + token,
 	}, dto)
-
-	component := components.MainContent(true)
-	component.Render(c.Request.Context(), c.Writer)
 }
 
 func StopSession(c *gin.Context) {
@@ -150,8 +149,19 @@ func StopSession(c *gin.Context) {
 	httputils.Post("http://:3333/api/v1/question/session/stop", map[string]string{
 		"Authorization": "Bearer " + token,
 	}, dto)
+}
 
-	component := components.MainContent(false)
+func MainContent(c *gin.Context) {
+	sessions := sessions.Default(c)
+	token := sessions.Get("token").(string)
+
+	userContext, err := shared_models.GetUserContextFromToken(token)
+
+	if err != nil {
+		c.AbortWithStatus(http.StatusUnauthorized)
+	}
+
+	component := components.MainContent(false, *userContext)
 	component.Render(c.Request.Context(), c.Writer)
 }
 
@@ -172,6 +182,12 @@ func Home(c *gin.Context) {
 		questions = &[]voting_usecases.QuestionDto{}
 	}
 
-	component := pages.Main("Home Page :)", "Welcome to the Home Page :)!", activeSession, *questions)
+	userContext, err := shared_models.GetUserContextFromToken(token)
+
+	if err != nil {
+		c.AbortWithStatus(http.StatusUnauthorized)
+	}
+
+	component := pages.Main("Home Page :)", "Welcome to the Home Page :)!", activeSession, *questions, *userContext)
 	component.Render(c.Request.Context(), c.Writer)
 }

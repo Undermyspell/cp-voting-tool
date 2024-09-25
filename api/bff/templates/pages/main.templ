@@ -2,6 +2,7 @@ package pages
 
 import (
 	"voting/bff/templates/components"
+	shared_models "voting/shared/models"
 	voting_usecases "voting/voting/usecases"
 )
 
@@ -13,7 +14,12 @@ templ Hello(questions []voting_usecases.QuestionDto) {
 	</ul>
 }
 
-templ Main(title string, message string, activeSession bool, questions []voting_usecases.QuestionDto) {
+templ Main(
+	title string,
+	message string,
+	activeSession bool,
+	questions []voting_usecases.QuestionDto,
+	userContext shared_models.UserContext) {
 	@templ.JSONScript("questions", questions)
 	<!DOCTYPE html>
 	<html lang="en">
@@ -49,7 +55,7 @@ templ Main(title string, message string, activeSession bool, questions []voting_
 			<script defer src="/static/js/index.js"></script>
 		</head>
 		<body class="bg-[#606676]">
-			@components.MainContent(activeSession)
+			@components.MainContent(activeSession, userContext)
 		</body>
 	</html>
 }

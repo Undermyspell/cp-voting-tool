@@ -92,7 +92,7 @@ func main() {
 
 	fsys, _ := fs.Sub(static, "bff/static")
 	r.StaticFS("/static", http.FS(fsys))
-	r.NoRoute(NoRouteHanlder)
+	r.NoRoute(NoRouteHandler)
 	app := r.Group("/", middleware.GinRequireCookieAuth())
 	{
 		app.GET("/", bff.Home)
@@ -108,6 +108,7 @@ func main() {
 		app.PUT("/q/undovote/:id", bff.UndoVoteQuestion)
 		app.POST("/q/s/start", bff.StartSession)
 		app.POST("/q/s/stop", bff.StopSession)
+		app.GET("/c/main", bff.MainContent)
 	}
 
 	api := r.Group("/api/v1")
@@ -135,7 +136,6 @@ func main() {
 	start(r)
 }
 
-func NoRouteHanlder(c *gin.Context) {
-	logrus.Info("NO ROUTE")
+func NoRouteHandler(c *gin.Context) {
 	c.Redirect(http.StatusMovedPermanently, "/")
 }
