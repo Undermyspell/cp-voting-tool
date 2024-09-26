@@ -1,19 +1,17 @@
 package components
 
-import voting_usecases "voting/voting/usecases"
-
-templ QuestionList(questions []voting_usecases.QuestionDto) {
-	<div class="flex flex-col gap-4 max-h-[95%] p-4 overflow-y-auto">
-		for _, question := range questions {
-			@QuestionListElement(question)
-		}
+templ QuestionUnansweredList() {
+	<div id="question-list" x-data class="flex flex-col gap-4 max-h-[95%] p-4 overflow-y-auto">
+		<template x-for="question in $store.questionData.sortedQuestions" :key="question.Id">
+			@QuestionUnansweredListElement()
+		</template>
 	</div>
 }
 
-templ QuestionUnansweredListAlpine() {
+templ QuestionAnsweredList() {
 	<div id="question-list" x-data class="flex flex-col gap-4 max-h-[95%] p-4 overflow-y-auto">
 		<template x-for="question in $store.questionData.sortedQuestions" :key="question.Id">
-			@QuestionUnansweredListElementAlpine()
+			@QuestionAnsweredListElement()
 		</template>
 	</div>
 }

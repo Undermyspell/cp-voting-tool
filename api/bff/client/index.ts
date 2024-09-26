@@ -62,9 +62,12 @@ import { Centrifuge } from 'centrifuge';
 
         switch(eventType){
             case "start_session":
+                //@ts-ignore
+                htmx.ajax('GET', '/q/s/page/true', {target:'body', swap:'innerHTML'})
+                break
             case "stop_session":
                 //@ts-ignore
-                htmx.ajax('GET', '/q/s/list', {target:'body', swap:'innerHTML'})
+                htmx.ajax('GET', '/q/s/page/false', {target:'body', swap:'innerHTML'})
                 break
             case "user_connected":
             case "user_disconnected":
