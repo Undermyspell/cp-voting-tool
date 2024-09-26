@@ -4,53 +4,39 @@ templ NoActiveSession() {
 	<span>Keine aktive Q/A Session</span>
 }
 
+var classNameSelected = "inline-block p-4 text-blue-600 bg-gray-100 rounded-t-lg active dark:bg-gray-800 dark:text-blue-500"
+var classNameDefault = "inline-block p-4 rounded-t-lg hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+
+func getClassName(selected bool) string {
+	if selected {
+		return classNameSelected
+	}
+	return classNameDefault
+}
+
 templ QuestionKindTabs(onlyUnansweredQuestions bool) {
 	<ul class="flex flex-wrap ml-auto mr-auto text-sm font-medium text-center text-gray-500 border-b border-gray-200 dark:border-gray-700 dark:text-gray-400">
-		if onlyUnansweredQuestions {
-			<li class="me-2">
-				<a
-					hx-get="/q/s/content/true/true"
-					hx-target="#question-session-content"
-					hx-trigger="click"
-					hx-swap="outerHTML"
-					href="#"
-					aria-current="page"
-					class="inline-block p-4 text-blue-600 bg-gray-100 rounded-t-lg active dark:bg-gray-800 dark:text-blue-500"
-				>Unbeantwortet</a>
-			</li>
-			<li class="me-2">
-				<a
-					hx-get="/q/s/content/true/false"
-					hx-target="#question-session-content"
-					hx-trigger="click"
-					hx-swap="outerHTML"
-					href="#"
-					class="inline-block p-4 rounded-t-lg hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 dark:hover:text-gray-300"
-				>Beantwortet</a>
-			</li>
-		} else {
-			<li class="me-2">
-				<a
-					hx-get="/q/s/content/true/true"
-					hx-target="#question-session-content"
-					hx-trigger="click"
-					hx-swap="outerHTML"
-					href="#"
-					class="inline-block p-4 rounded-t-lg hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 dark:hover:text-gray-300"
-				>Unbeantwortet</a>
-			</li>
-			<li class="me-2">
-				<a
-					hx-get="/q/s/content/true/false"
-					hx-target="#question-session-content"
-					hx-trigger="click"
-					hx-swap="outerHTML"
-					href="#"
-					aria-current="page"
-					class="inline-block p-4 text-blue-600 bg-gray-100 rounded-t-lg active dark:bg-gray-800 dark:text-blue-500"
-				>Beantwortet</a>
-			</li>
-		}
+		<li class="me-2">
+			<a
+				hx-get="/q/s/content/true/true"
+				hx-target="#question-session-content"
+				hx-trigger="click"
+				hx-swap="outerHTML"
+				href="#"
+				aria-current="page"
+				class={ getClassName(onlyUnansweredQuestions) }
+			>Unbeantwortet</a>
+		</li>
+		<li class="me-2">
+			<a
+				hx-get="/q/s/content/true/false"
+				hx-target="#question-session-content"
+				hx-trigger="click"
+				hx-swap="outerHTML"
+				href="#"
+				class={ getClassName(!onlyUnansweredQuestions) }
+			>Beantwortet</a>
+		</li>
 	</ul>
 }
 
