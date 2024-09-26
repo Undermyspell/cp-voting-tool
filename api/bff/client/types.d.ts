@@ -19,5 +19,6 @@ export type QuestionDataStore = {
 	addQuestion(this: QuestionDataStore, question: Question): () => void,
 	updateQuestion(this: QuestionDataStore, question: Question): () => void,
 	deleteQuestion(this: QuestionDataStore, question: Question): () => void,
+	answerQuestion(this: QuestionDataStore, question: Question): () => void,
 	updateUserOnlineCount(this: QuestionDataStore, usersOnlineCount: number): () => void,
 }

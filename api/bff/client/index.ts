@@ -23,20 +23,15 @@ import type { Question, QuestionDataStore } from './types';
         usersOnlineCount: 0,
         addQuestion(this: QuestionDataStore, question: Question) {
             this.questions.push(question)
-            setTimeout(() => {
-                //@ts-ignore
-                htmx.process(document.getElementById('question-list'));
-            }, 0);
         },
         updateQuestion(this: QuestionDataStore, question: Question) {
             this.questions = this.questions.map((q) => (q.Id === question.Id ? Object.assign({}, q, { ...question }) : q))
-            setTimeout(() => {
-                //@ts-ignore
-                htmx.process(document.getElementById('question-list'));
-            }, 0);
         },
         deleteQuestion(this: QuestionDataStore, question: Question): void {
             this.questions = this.questions.filter(q => q.Id !== question.Id);
+        },
+        answerQuestion(this: QuestionDataStore, question: Question): void {
+            this.questions = this.questions.map((q) => (q.Id === question.Id ? Object.assign({}, q, { Answered: true }) : q))
         },
         updateUserOnlineCount(this: QuestionDataStore, usersOnlineCount: number) {
             this.usersOnlineCount = usersOnlineCount
@@ -74,21 +69,21 @@ import type { Question, QuestionDataStore } from './types';
                 break
             case "user_connected":
             case "user_disconnected":
-                Alpine.store('questionData').updateUserOnlineCount(data.UserCount)
+                (Alpine.store('questionData') as QuestionDataStore).updateUserOnlineCount(data.UserCount)
                 break
             case "new_question":
-                Alpine.store('questionData').addQuestion(data)
+                (Alpine.store('questionData') as QuestionDataStore).addQuestion(data)
                 break
             case "upvote_question":
             case "undo_upvote_question":
             case "update_question":
-                Alpine.store('questionData').updateQuestion(data)
+                (Alpine.store('questionData') as QuestionDataStore).updateQuestion(data)
                 break
             case "delete_question":
-                Alpine.store('questionData').deleteQuestion(data)
+                (Alpine.store('questionData') as QuestionDataStore).deleteQuestion(data)
                 break
             case "answer_question":
-                
+                (Alpine.store('questionData') as QuestionDataStore).answerQuestion(data)
                 break
         }
     }).connect();

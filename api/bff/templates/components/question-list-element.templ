@@ -21,24 +21,33 @@ templ QuestionUnansweredListElement() {
 				<span class="italic" x-text="question.Anonymous ? 'Anonym' : question.Creator"></span>
 			</div>
 			<div class="flex gap-2">
+				<template x-if="question.Owned">
+					<button
+						:hx-get="`/q/update/${question.Id}`"
+						hx-target="body"
+						hx-trigger="click"
+						hx-swap="beforeend"
+						type="button"
+						class="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700"
+					>Editieren</button>
+				</template>
 				<button
-					:hx-get="`/q/update/${question.Id}`"
-					hx-target="body"
-					hx-trigger="click"
-					hx-swap="beforeend"
+					:hx-put="`/q/answer/${question.Id}`"
 					type="button"
-					class="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700"
-				>Editieren</button>
-				<button type="button" tabindex="0" class="ring-offset-background focus-visible:ring-ring inline-flex h-10 w-10 items-center justify-center whitespace-nowrap rounded-md border border-green-500/50 bg-green-500/20 text-sm font-medium text-green-600 transition-colors hover:bg-green-600 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50" data-button-root="">
+					tabindex="0"
+					class="ring-offset-background focus-visible:ring-ring inline-flex h-10 w-10 items-center justify-center whitespace-nowrap rounded-md border border-green-500/50 bg-green-500/20 text-sm font-medium text-green-600 transition-colors hover:bg-green-600 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+					data-button-root=""
+				>
 					<svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" width="20px" height="20px"><path d="M11.602 13.7599L13.014 15.1719L21.4795 6.7063L22.8938 8.12051L13.014 18.0003L6.65 11.6363L8.06421 10.2221L10.189 12.3469L11.6025 13.7594L11.602 13.7599ZM11.6037 10.9322L16.5563 5.97949L17.9666 7.38977L13.014 12.3424L11.6037 10.9322ZM8.77698 16.5873L7.36396 18.0003L1 11.6363L2.41421 10.2221L3.82723 11.6352L3.82604 11.6363L8.77698 16.5873Z"></path></svg>
 				</button>
-				<button
-					type="button"
-					:hx-delete="`/q/delete/${question.Id}`"
-					hx-target="body"
-					hx-swap="beforeend"
-					hx-trigger="confirmed"
-					onClick="Swal.fire({
+				<template x-if="question.Owned">
+					<button
+						type="button"
+						:hx-delete="`/q/delete/${question.Id}`"
+						hx-target="body"
+						hx-swap="beforeend"
+						hx-trigger="confirmed"
+						onClick="Swal.fire({
 						text:'Frage wirklich löschen?',
 						icon: 'warning',
 						iconColor: '#d33',
@@ -56,10 +65,13 @@ templ QuestionUnansweredListElement() {
 						htmx.trigger(this, 'confirmed');  
 						} 
 					})"
-					tabindex="0"
-					class="inline-flex items-center justify-center rounded-md text-sm font-medium whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border h-10 w-10 bg-red-500/20 text-red-600 border-red-500/50 hover:text-white hover:bg-red-600"
-					data-button-root=""
-				><svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" width="20px" height="20px"><path d="M17 6H22V8H20V21C20 21.5523 19.5523 22 19 22H5C4.44772 22 4 21.5523 4 21V8H2V6H7V3C7 2.44772 7.44772 2 8 2H16C16.5523 2 17 2.44772 17 3V6ZM18 8H6V20H18V8ZM9 11H11V17H9V11ZM13 11H15V17H13V11ZM9 4V6H15V4H9Z"></path></svg></button>
+						tabindex="0"
+						class="inline-flex items-center justify-center rounded-md text-sm font-medium whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border h-10 w-10 bg-red-500/20 text-red-600 border-red-500/50 hover:text-white hover:bg-red-600"
+						data-button-root=""
+					>
+						<svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" width="20px" height="20px"><path d="M17 6H22V8H20V21C20 21.5523 19.5523 22 19 22H5C4.44772 22 4 21.5523 4 21V8H2V6H7V3C7 2.44772 7.44772 2 8 2H16C16.5523 2 17 2.44772 17 3V6ZM18 8H6V20H18V8ZM9 11H11V17H9V11ZM13 11H15V17H13V11ZM9 4V6H15V4H9Z"></path></svg>
+					</button>
+				</template>
 			</div>
 		</div>
 	</div>

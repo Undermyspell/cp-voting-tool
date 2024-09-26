@@ -132,6 +132,17 @@ func UndoVoteQuestion(c *gin.Context) {
 	}, dto)
 }
 
+func AnswerQuestion(c *gin.Context) {
+	questionId := c.Param("id")
+
+	sessions := sessions.Default(c)
+	token := sessions.Get("token").(string)
+	dto := "{}"
+	httputils.Put("http://:3333/api/v1/question/answer/"+questionId, map[string]string{
+		"Authorization": "Bearer " + token,
+	}, dto)
+}
+
 func StartSession(c *gin.Context) {
 	sessions := sessions.Default(c)
 	token := sessions.Get("token").(string)

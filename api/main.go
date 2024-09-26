@@ -106,6 +106,7 @@ func main() {
 		app.DELETE("/q/delete/:id", bff.DeleteQuestion)
 		app.PUT("/q/upvote/:id", bff.UpvoteQuestion)
 		app.PUT("/q/undovote/:id", bff.UndoVoteQuestion)
+		app.PUT("/q/answer/:id", bff.AnswerQuestion)
 		app.POST("/q/s/start", bff.StartSession)
 		app.POST("/q/s/stop", bff.StopSession)
 		app.GET("/q/s/page/:activeSession", bff.QuestionSessionPage)
