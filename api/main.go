@@ -95,7 +95,7 @@ func main() {
 	r.NoRoute(NoRouteHandler)
 	app := r.Group("/", middleware.GinRequireCookieAuth())
 	{
-		app.GET("/", bff.Home)
+		app.GET("/", bff.Main)
 		app.GET("/login", authhandler.Login)
 		app.GET("/oauth2/callback", authhandler.LoginCallback)
 		app.GET("/user", user_http.GetAuthenticatedUser)

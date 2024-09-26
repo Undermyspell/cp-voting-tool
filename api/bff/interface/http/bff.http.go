@@ -174,7 +174,7 @@ func QuestionSessionContent(c *gin.Context) {
 	component.Render(c.Request.Context(), c.Writer)
 }
 
-func Home(c *gin.Context) {
+func Main(c *gin.Context) {
 	sessions := sessions.Default(c)
 	token := sessions.Get("token").(string)
 
@@ -197,6 +197,6 @@ func Home(c *gin.Context) {
 		c.AbortWithStatus(http.StatusUnauthorized)
 	}
 
-	component := pages.Main("Home Page :)", "Welcome to the Home Page :)!", activeSession, *questions, *userContext)
+	component := pages.Main("cp voting tool", "Conplement voting tool", activeSession, *questions, *userContext)
 	component.Render(c.Request.Context(), c.Writer)
 }

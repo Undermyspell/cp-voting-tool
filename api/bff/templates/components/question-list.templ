@@ -2,7 +2,7 @@ package components
 
 templ QuestionUnansweredList() {
 	<div id="question-list" x-data class="flex flex-col gap-4 max-h-[95%] p-4 overflow-y-auto">
-		<template x-for="question in $store.questionData.sortedQuestions" :key="question.Id">
+		<template x-for="question in $store.questionData.sortedUnansweredQuestions" :key="question.Id">
 			@QuestionUnansweredListElement()
 		</template>
 	</div>
@@ -10,7 +10,7 @@ templ QuestionUnansweredList() {
 
 templ QuestionAnsweredList() {
 	<div id="question-list" x-data class="flex flex-col gap-4 max-h-[95%] p-4 overflow-y-auto">
-		<template x-for="question in $store.questionData.sortedQuestions" :key="question.Id">
+		<template x-for="question in $store.questionData.sortedAnsweredQuestions" :key="question.Id">
 			@QuestionAnsweredListElement()
 		</template>
 	</div>

@@ -5,14 +5,6 @@ import (
 	voting_usecases "voting/voting/usecases"
 )
 
-templ Hello(questions []voting_usecases.QuestionDto) {
-	<ul>
-		for _, item := range questions {
-			<li>{ item.Text } - { item.Creator }</li>
-		}
-	</ul>
-}
-
 templ Main(
 	title string,
 	message string,

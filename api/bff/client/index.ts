@@ -1,7 +1,7 @@
 
 import Alpine from "alpinejs"
 import { Centrifuge } from 'centrifuge';
-
+import type { Question, QuestionDataStore } from './types';
 
 (function(){
     //@ts-ignore
@@ -13,32 +13,35 @@ import { Centrifuge } from 'centrifuge';
             initCentrifugo(this.user) 
         },
         questions: JSON.parse(document.getElementById('questions')!.textContent!),
-        get sortedQuestions() {
-            return this.questions.sort((a, b) => b.Votes - a.Votes)
+        get sortedAnsweredQuestions(): Question[] {
+            return (this as QuestionDataStore).questions.filter(q => q.Answered).sort((a, b) => b.Votes - a.Votes)
+        },
+        get sortedUnansweredQuestions(): Question[]  {
+            return (this as QuestionDataStore).questions.filter(q => !q.Answered).sort((a, b) => b.Votes - a.Votes)
         },
         user: null,
         usersOnlineCount: 0,
-        addQuestion(question) {
+        addQuestion(this: QuestionDataStore, question: Question) {
             this.questions.push(question)
             setTimeout(() => {
                 //@ts-ignore
                 htmx.process(document.getElementById('question-list'));
             }, 0);
         },
-        updateQuestion(question) {
+        updateQuestion(this: QuestionDataStore, question: Question) {
             this.questions = this.questions.map((q) => (q.Id === question.Id ? Object.assign({}, q, { ...question }) : q))
             setTimeout(() => {
                 //@ts-ignore
                 htmx.process(document.getElementById('question-list'));
             }, 0);
         },
-        deleteQuestion(question: any): void {
+        deleteQuestion(this: QuestionDataStore, question: Question): void {
             this.questions = this.questions.filter(q => q.Id !== question.Id);
         },
-        updateUserOnlineCount(usersOnlineCount: number) {
+        updateUserOnlineCount(this: QuestionDataStore, usersOnlineCount: number) {
             this.usersOnlineCount = usersOnlineCount
         },
-    })
+    } as QuestionDataStore)
 
     Alpine.start() 
 
