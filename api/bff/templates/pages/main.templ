@@ -1,7 +1,6 @@
 package pages
 
 import (
-	"voting/bff/templates/components"
 	shared_models "voting/shared/models"
 	voting_usecases "voting/voting/usecases"
 )
@@ -55,7 +54,7 @@ templ Main(
 			<script defer src="/static/js/index.js"></script>
 		</head>
 		<body class="bg-[#606676]">
-			@components.MainContent(activeSession, userContext)
+			@QuestionsSession(activeSession, userContext)
 		</body>
 	</html>
 }

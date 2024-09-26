@@ -151,7 +151,7 @@ func StopSession(c *gin.Context) {
 	}, dto)
 }
 
-func MainContent(c *gin.Context) {
+func QuestionSessionPage(c *gin.Context) {
 	sessions := sessions.Default(c)
 	token := sessions.Get("token").(string)
 
@@ -161,7 +161,7 @@ func MainContent(c *gin.Context) {
 		c.AbortWithStatus(http.StatusUnauthorized)
 	}
 
-	component := components.MainContent(false, *userContext)
+	component := pages.QuestionsSession(false, *userContext)
 	component.Render(c.Request.Context(), c.Writer)
 }
 

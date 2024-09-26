@@ -108,7 +108,7 @@ func main() {
 		app.PUT("/q/undovote/:id", bff.UndoVoteQuestion)
 		app.POST("/q/s/start", bff.StartSession)
 		app.POST("/q/s/stop", bff.StopSession)
-		app.GET("/c/main", bff.MainContent)
+		app.GET("/q/s/page", bff.QuestionSessionPage)
 	}
 
 	api := r.Group("/api/v1")

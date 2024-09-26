@@ -35,7 +35,7 @@ templ QuestionListElement(question voting_usecases.QuestionDto) {
 	</div>
 }
 
-templ QuestionListElementAlpine() {
+templ QuestionUnansweredListElementAlpine() {
 	<div class="m-6 flex items-start gap-6 rounded-lg text-gray-700 dark:text-white">
 		<div class="flex-0 flex flex-col items-center rounded-md bg-white px-4 py-2 shadow duration-100 hover:scale-105 dark:bg-gray-700">
 			<template x-if="question.Voted">
@@ -95,6 +95,18 @@ templ QuestionListElementAlpine() {
 					class="inline-flex items-center justify-center rounded-md text-sm font-medium whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border h-10 w-10 bg-red-500/20 text-red-600 border-red-500/50 hover:text-white hover:bg-red-600"
 					data-button-root=""
 				><svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" width="20px" height="20px"><path d="M17 6H22V8H20V21C20 21.5523 19.5523 22 19 22H5C4.44772 22 4 21.5523 4 21V8H2V6H7V3C7 2.44772 7.44772 2 8 2H16C16.5523 2 17 2.44772 17 3V6ZM18 8H6V20H18V8ZM9 11H11V17H9V11ZM13 11H15V17H13V11ZM9 4V6H15V4H9Z"></path></svg></button>
+			</div>
+		</div>
+	</div>
+}
+
+templ QuestionAnsweredListElementAlpine() {
+	<div class="m-6 flex items-start gap-6 rounded-lg text-gray-700 dark:text-white">
+		<div class="flex flex-1 items-center justify-between self-stretch rounded-md bg-white p-4 shadow dark:bg-gray-700">
+			<div class="flex flex-col gap-2 items-start">
+				<span x-text="question.Text"></span>
+				<span x-text="question.Anonymous ? 'Anonym' : question.Creator"></span>
+				<span>Votes: </span><span x-text="question.Votes"></span>
 			</div>
 		</div>
 	</div>

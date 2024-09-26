@@ -64,7 +64,7 @@ import { Centrifuge } from 'centrifuge';
             case "start_session":
             case "stop_session":
                 //@ts-ignore
-                htmx.ajax('GET', '/c/main', {target:'body', swap:'innerHTML'})
+                htmx.ajax('GET', '/q/s/list', {target:'body', swap:'innerHTML'})
                 break
             case "user_connected":
             case "user_disconnected":
