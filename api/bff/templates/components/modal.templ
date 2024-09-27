@@ -20,7 +20,8 @@ templ Modal(title string) {
 		x-transition:leave-end="opacity-0"
 		@close="$el.remove()"
 		tabindex="-1"
-		class="dark:bg-black/5 flex flex-col overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full z-[1000]"
+		class="dark:bg-black/50 flex flex-col overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] 
+		max-h-full z-[1000] backdrop-blur-sm"
 	>
 		<div class="relative p-4 w-full max-w-5xl max-h-full">
 			<!-- Modal content -->

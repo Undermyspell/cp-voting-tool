@@ -11,6 +11,7 @@ templ StartSessionButton() {
 		hx-post="/q/s/start"
 		hx-trigger="click"
 		hx-swap="none"
+		hx-indicator="#indicator-header"
 		class="text-white
 		 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none
 		focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700
@@ -25,6 +26,7 @@ templ StopSessionButton() {
 		hx-target="body"
 		hx-trigger="click"
 		hx-swap="innerHTML"
+		hx-indicator="#indicator-header"
 		class="text-white
 		 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none
 		focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700
@@ -34,7 +36,7 @@ templ StopSessionButton() {
 }
 
 templ QuestionsSession(activeSession bool, userContext shared_models.UserContext) {
-	<div class="header bg-white dark:bg-gray-700 flex items-center px-10 dark:text-white">
+	<div class="relative header bg-white dark:bg-gray-700 flex items-center px-10 dark:text-white">
 		<h3>Voting Tool with templ, htmx, alpine.js and golang</h3>
 		if userContext.Role == auth.Admin {
 			if activeSession {
@@ -46,6 +48,12 @@ templ QuestionsSession(activeSession bool, userContext shared_models.UserContext
 		<div class="flex ml-auto gap-2">
 			<span>online</span>
 			<span x-data x-text="$store.questionData.usersOnlineCount"></span>
+			<a class="cursor-pointer flex items-center" href="https://github.com/Undermyspell/cp-voting-tool" target="_blank">
+				<i class="fa-brands fa-github"></i>
+			</a>
+		</div>
+		<div id="indicator-header" class="htmx-indicator absolute w-full h-full top-0 left-0 flex items-center justify-center backdrop-blur-[1px]">
+			@components.Spinner()
 		</div>
 	</div>
 	<div class="content rounded-md overflow-hidden">

@@ -98,6 +98,7 @@ func SaveUpdatedQuestion(c *gin.Context) {
 }
 
 func DeleteQuestion(c *gin.Context) {
+	time.Sleep(time.Second * 2)
 	questionId := c.Param("id")
 
 	sessions := sessions.Default(c)
@@ -180,6 +181,8 @@ func QuestionSessionPage(c *gin.Context) {
 func QuestionSessionContent(c *gin.Context) {
 	onlyUnanswered, _ := strconv.ParseBool(c.Param("onlyUnanswered"))
 	activeSession, _ := strconv.ParseBool(c.Param("activeSession"))
+
+	time.Sleep(time.Second * 2)
 
 	component := components.QuestionsSessionContent(activeSession, onlyUnanswered)
 	component.Render(c.Request.Context(), c.Writer)
