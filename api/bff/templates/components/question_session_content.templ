@@ -22,6 +22,7 @@ templ QuestionKindTabs(onlyUnansweredQuestions bool) {
 				hx-target="#question-session-content"
 				hx-trigger="click"
 				hx-swap="outerHTML"
+				hx-indicator="#indicator-content"
 				href="#"
 				aria-current="page"
 				class={ getClassName(onlyUnansweredQuestions) }
@@ -33,6 +34,7 @@ templ QuestionKindTabs(onlyUnansweredQuestions bool) {
 				hx-target="#question-session-content"
 				hx-trigger="click"
 				hx-swap="outerHTML"
+				hx-indicator="#indicator-content"
 				href="#"
 				class={ getClassName(!onlyUnansweredQuestions) }
 			>Beantwortet</a>
@@ -56,7 +58,7 @@ templ NewQuestionButton() {
 
 templ QuestionsSessionContent(activeSession, onlyUnansweredQuestions bool) {
 	<div id="question-session-content" class="content rounded-md overflow-hidden">
-		<div class="max-w-[1400px] ml-auto mr-auto">
+		<div class="max-w-[1400px] ml-auto mr-auto relative">
 			@QuestionKindTabs(onlyUnansweredQuestions)
 			if activeSession {
 				@NewQuestionButton()
@@ -68,6 +70,9 @@ templ QuestionsSessionContent(activeSession, onlyUnansweredQuestions bool) {
 			} else {
 				@NoActiveSession()
 			}
+			<div id="indicator-content" class="htmx-indicator absolute w-full h-full top-0 left-0 flex items-center justify-center backdrop-blur-[1px]">
+				@Spinner()
+			</div>
 		</div>
 	</div>
 }

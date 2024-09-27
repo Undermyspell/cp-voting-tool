@@ -4,7 +4,7 @@ templ NewQuestionForm() {
 	<form
 		id="myForm"
 		hx-post="/q/save"
-		hx-indicator="#indicator"
+		hx-indicator="#indicator-new-question"
 		hx-swap="outerHTML swap:0.3s"
 		hx-target="#modal"
 		class="mx-auto m-0 gap-4 flex flex-col"
@@ -30,6 +30,8 @@ templ NewQuestionForm() {
 			<label for="anonymous" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Frage anonym stellen </label>
 		</div>
 		<button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 ml-auto">Posten</button>
-		<img id="indicator" class="htmx-indicator" src="https://cdn.dribbble.com/users/172519/screenshots/3520576/dribbble-spinner-800x600.gif"/>
+		<div id="indicator-new-question" class="htmx-indicator absolute w-full h-full top-0 left-0 flex items-center justify-center backdrop-blur-[1px]">
+			@Spinner()
+		</div>
 	</form>
 }

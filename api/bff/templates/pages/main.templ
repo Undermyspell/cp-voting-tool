@@ -21,6 +21,18 @@ templ Main(
 			<link href="/static/css/tailwind.css" rel="stylesheet"/>
 			<link href="/static/test.css" rel="stylesheet"/>
 			<style>
+				.htmx-indicator{
+					opacity:0;
+					z-index: -1000;
+				}
+				.htmx-request .htmx-indicator{
+					opacity: 1;
+					z-index: 1000;
+				}
+				.htmx-request.htmx-indicator{
+					opacity:1;
+					z-index: 1000;
+				}
 				body {
 					font-family: Arial, sans-serif;
 					margin: 0;
