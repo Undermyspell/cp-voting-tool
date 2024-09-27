@@ -65,7 +65,7 @@ templ DeleteButton() {
 
 templ QuestionUnansweredListElement() {
 	<div class="relative m-6 flex items-start gap-6 rounded-lg text-gray-700 dark:text-white">
-		<div class="flex-0 flex flex-col items-center rounded-md bg-white px-4 py-2 shadow duration-100 hover:scale-105 dark:bg-gray-700">
+		<div class="flex-0 flex flex-col items-center rounded-md bg-white px-4 py-2 shadow duration-100 hover:scale-105 dark:bg-gray-900">
 			<template x-if="question.Voted">
 				<button :hx-put="`/q/undovote/${question.Id}`">
 					<svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" width="32px" height="32px" color="red"><path d="M12.001 4.52853C14.35 2.42 17.98 2.49 20.2426 4.75736C22.5053 7.02472 22.583 10.637 20.4786 12.993L11.9999 21.485L3.52138 12.993C1.41705 10.637 1.49571 7.01901 3.75736 4.75736C6.02157 2.49315 9.64519 2.41687 12.001 4.52853Z"></path></svg>
@@ -78,7 +78,7 @@ templ QuestionUnansweredListElement() {
 			</template>
 			<span class="text-md" x-text="question.Votes"></span>
 		</div>
-		<div class="flex flex-1 items-center justify-between self-stretch rounded-md bg-white p-4 shadow dark:bg-gray-700">
+		<div class="flex flex-1 items-center justify-between self-stretch rounded-md bg-white p-4 shadow dark:bg-gray-900">
 			<div class="flex flex-col gap-2 items-start">
 				<span x-text="question.Text"></span>
 				<span class="italic" x-text="question.Anonymous ? 'Anonym' : question.Creator"></span>
@@ -88,7 +88,7 @@ templ QuestionUnansweredListElement() {
 				@AnswerButton()
 				@DeleteButton()
 			</div>
-			<div :id="`indicator-question-${question.Id}`" class="htmx-indicator absolute w-full h-full top-0 left-0 flex items-center justify-center backdrop-blur-[1px]">
+			<div :id="`indicator-question-${question.Id}`" class="htmx-indicator absolute w-full h-full top-0 left-0 flex items-center justify-center backdrop-blur-[2px]">
 				@Spinner()
 			</div>
 		</div>
@@ -97,7 +97,7 @@ templ QuestionUnansweredListElement() {
 
 templ QuestionAnsweredListElement() {
 	<div class="m-6 flex items-start gap-6 rounded-lg text-gray-700 dark:text-white">
-		<div class="flex flex-1 items-center justify-between self-stretch rounded-md bg-white p-4 shadow dark:bg-gray-700">
+		<div class="flex flex-1 items-center justify-between self-stretch rounded-md bg-white p-4 shadow dark:bg-gray-900">
 			<div class="flex flex-col gap-2 items-start">
 				<span x-text="question.Text"></span>
 				<span x-text="question.Anonymous ? 'Anonym' : question.Creator"></span>

@@ -12,10 +12,8 @@ templ StartSessionButton() {
 		hx-trigger="click"
 		hx-swap="none"
 		hx-indicator="#indicator-header"
-		class="text-white
-		 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none
-		focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700
-		 dark:focus:ring-blue-800"
+		class="dark:text-white dark:bg-gray-600 text-black bg-gray-900 shadow-sm dark:hover:bg-gray-500 hover:gray-700
+		font-medium rounded-lg px-4 py-2 text-center flex items-center gap-4"
 		type="button"
 	>Fragerunde starten</button>
 }
@@ -27,16 +25,16 @@ templ StopSessionButton() {
 		hx-trigger="click"
 		hx-swap="innerHTML"
 		hx-indicator="#indicator-header"
-		class="text-white
-		 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none
-		focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700
-		 dark:focus:ring-blue-800"
+		class="dark:text-white dark:bg-gray-600 text-black bg-gray-900 shadow-sm dark:hover:bg-gray-500 hover:gray-700
+		font-medium rounded-lg px-4 py-2 text-center flex items-center gap-4"
 		type="button"
-	>Fragerunde beenden</button>
+	>
+		<span>Fragerunde beenden</span>
+	</button>
 }
 
 templ QuestionsSession(activeSession bool, userContext shared_models.UserContext) {
-	<div class="relative header bg-white dark:bg-gray-700 flex items-center px-10 dark:text-white">
+	<div class="relative header bg-white dark:bg-stone-950 flex items-center px-10 dark:text-white gap-4">
 		<h3>Voting Tool with templ, htmx, alpine.js and golang</h3>
 		if userContext.Role == auth.Admin {
 			if activeSession {
@@ -52,7 +50,7 @@ templ QuestionsSession(activeSession bool, userContext shared_models.UserContext
 				<i class="fa-brands fa-github"></i>
 			</a>
 		</div>
-		<div id="indicator-header" class="htmx-indicator absolute w-full h-full top-0 left-0 flex items-center justify-center backdrop-blur-[1px]">
+		<div id="indicator-header" class="htmx-indicator absolute w-full h-full top-0 left-0 flex items-center justify-center backdrop-blur-[2px]">
 			@components.Spinner()
 		</div>
 	</div>
