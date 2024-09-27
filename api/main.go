@@ -32,6 +32,7 @@ import (
 var static embed.FS
 
 //go:generate npx tailwindcss build -i bff/static/css/style.css -o bff/static/css/tailwind.css -m
+//go:generate npx esbuild --bundle --outfile=bff/static/js/index.js bff/client/index.ts
 
 var start = func(r *gin.Engine) {
 	r.Run(":3333")
