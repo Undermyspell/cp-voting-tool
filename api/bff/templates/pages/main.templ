@@ -36,11 +36,6 @@ templ Main(
 					z-index: 1000;
 				}
 				body {
-					font-family: Arial, sans-serif;
-					margin: 0;
-					padding: 0;
-					height: 100vh;
-					display: grid;
 					grid-template-rows: 3rem 1fr;
 					grid-template-areas: "header" "content"
 				}
@@ -51,11 +46,14 @@ templ Main(
 					grid-area: header
 				}
 			</style>
+			<script>
+				localStorage.theme = 'light'
+			</script>
 			<script src="https://unpkg.com/htmx.org@2.0.2" integrity="sha384-Y7hw+L/jvKeWIRRkqWYfPcvVxHzVzn5REgzbawhxAuQGwX1XWe70vji+VSeHOThJ" crossorigin="anonymous"></script>
 			<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 			<script defer src="/static/js/index.js"></script>
 		</head>
-		<body class="dark:bg-gray-800 bg-gray-100">
+		<body class="dark:bg-gray-800 bg-gray-100 h-screen grid m-0 p-0">
 			@QuestionsSession(activeSession, userContext)
 		</body>
 	</html>
