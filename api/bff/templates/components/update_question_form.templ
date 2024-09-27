@@ -21,11 +21,11 @@ templ UpdateQuestionForm(question voting_usecases.QuestionDto) {
 				{ question.Text }
 			</textarea>
 		</div>
-		<div class="flex items-start mb-5">
+		<div class="flex items-center 	 mb-5">
 			if question.Anonymous {
-				<input checked id="anonymous" name="anonymous" type="checkbox" value="true" class="w-4 h-4 bg-gray-100 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600"/>
+				<input checked id="anonymous" name="anonymous" type="checkbox" value="true" class="dark:accent-gray-500 accent-gray-800 w-4 h-4 bg-gray-100 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600"/>
 			} else {
-				<input id="anonymous" name="anonymous" type="checkbox" value="true" class="w-4 h-4 bg-gray-100 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600"/>
+				<input id="anonymous" name="anonymous" type="checkbox" value="true" class="dark:accent-gray-500 accent-gray-800 w-4 h-4 bg-gray-100 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600"/>
 			}
 			<label for="anonymous" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Frage anonym stellen </label>
 		</div>

@@ -12,8 +12,9 @@ templ StartSessionButton() {
 		hx-trigger="click"
 		hx-swap="none"
 		hx-indicator="#indicator-header"
-		class="dark:text-white dark:bg-gray-600 text-black bg-gray-900 shadow-sm dark:hover:bg-gray-500 hover:gray-700
-		font-medium rounded-lg px-4 py-2 text-center flex items-center gap-4"
+		class="shadow-sm hover:gray-700
+		font-medium rounded-lg px-4 py-2 text-center flex items-center gap-4
+		text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 text-sm dark:bg-gray-700 dark:text-white dark:border-gray-500 dark:hover:bg-gray-600 dark:hover:border-gray-600 dark:focus:ring-gray-700"
 		type="button"
 	>Fragerunde starten</button>
 }
@@ -25,8 +26,9 @@ templ StopSessionButton() {
 		hx-trigger="click"
 		hx-swap="innerHTML"
 		hx-indicator="#indicator-header"
-		class="dark:text-white dark:bg-gray-600 text-black bg-gray-900 shadow-sm dark:hover:bg-gray-500 hover:gray-700
-		font-medium rounded-lg px-4 py-2 text-center flex items-center gap-4"
+		class="shadow-sm hover:gray-700
+		font-medium rounded-lg px-4 py-2 text-center flex items-center gap-4
+		text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 text-sm dark:bg-gray-700 dark:text-white dark:border-gray-500 dark:hover:bg-gray-600 dark:hover:border-gray-600 dark:focus:ring-gray-700"
 		type="button"
 	>
 		<span>Fragerunde beenden</span>
@@ -54,8 +56,8 @@ templ QuestionsSession(activeSession bool, userContext shared_models.UserContext
 			@components.Spinner()
 		</div>
 	</div>
-	<div class="content rounded-md overflow-hidden">
-		<div class="max-w-[1400px] ml-auto mr-auto">
+	<div class="content rounded-md overflow-hidden text-center">
+		<div class="max-w-[1400px] ml-auto mr-auto pt-4">
 			@components.QuestionsSessionContent(activeSession, true)
 		</div>
 	</div>

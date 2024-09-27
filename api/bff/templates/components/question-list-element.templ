@@ -9,7 +9,7 @@ templ EditButton() {
 			hx-trigger="click"
 			hx-swap="beforeend"
 			type="button"
-			class="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700"
+			class="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700"
 		>Editieren</button>
 	</template>
 }
@@ -42,11 +42,12 @@ templ DeleteButton() {
 						iconColor: '#d33',
 						showCancelButton: true,
 						confirmButtonColor: '#d33',
-						cancelButtonColor: '#b2babb',
+						cancelButtonColor: '#4b5563',
 						confirmButtonText: 'Löschen',
 						cancelButtonText: 'Abbrechen',
 						customClass: {
-							popup: 'dark:bg-gray-700 text-white',	
+							popup: 'dark:bg-gray-900 dark:text-white',
+							container: 'rounded-lg backdrop-blur-sm',
 							icon: 'text-xs',				
 						}
 					}).then((result)=>{
@@ -64,7 +65,7 @@ templ DeleteButton() {
 }
 
 templ QuestionUnansweredListElement() {
-	<div class="relative m-6 flex items-start gap-6 rounded-lg text-gray-700 dark:text-white">
+	<div class="relative mx-6 flex items-start gap-6 rounded-lg text-gray-700 dark:text-white">
 		<div class="flex-0 flex flex-col items-center rounded-md bg-white px-4 py-2 shadow duration-100 hover:scale-105 dark:bg-gray-900">
 			<template x-if="question.Voted">
 				<button :hx-put="`/q/undovote/${question.Id}`">
@@ -78,8 +79,8 @@ templ QuestionUnansweredListElement() {
 			</template>
 			<span class="text-md" x-text="question.Votes"></span>
 		</div>
-		<div class="flex flex-1 items-center justify-between self-stretch rounded-md bg-white p-4 shadow dark:bg-gray-900">
-			<div class="flex flex-col gap-2 items-start">
+		<div class="flex flex-1 gap-4 items-center justify-between self-stretch rounded-md bg-white p-4 shadow dark:bg-gray-900">
+			<div class="flex flex-col gap-2 items-start text-left">
 				<span x-text="question.Text"></span>
 				<span class="italic" x-text="question.Anonymous ? 'Anonym' : question.Creator"></span>
 			</div>
@@ -96,13 +97,11 @@ templ QuestionUnansweredListElement() {
 }
 
 templ QuestionAnsweredListElement() {
-	<div class="m-6 flex items-start gap-6 rounded-lg text-gray-700 dark:text-white">
-		<div class="flex flex-1 items-center justify-between self-stretch rounded-md bg-white p-4 shadow dark:bg-gray-900">
-			<div class="flex flex-col gap-2 items-start">
-				<span x-text="question.Text"></span>
-				<span x-text="question.Anonymous ? 'Anonym' : question.Creator"></span>
-				<span>Votes: </span><span x-text="question.Votes"></span>
-			</div>
+	<div class="flex flex-col gap-2 rounded-lg text-gray-700 dark:text-white bg-white px-3 py-2 shadow dark:bg-gray-900 text-left">
+		<span x-text="question.Text"></span>
+		<div class="flex gap-2 justify-end">
+			<span x-text="'Votes: ' + question.Votes"></span>
+			<span x-text="question.Anonymous ? 'Anonym' : question.Creator"></span>
 		</div>
 	</div>
 }

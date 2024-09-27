@@ -13,7 +13,10 @@ templ SuccessToast(message string) {
 		x-transition:leave-start="opacity-100"
 		x-transition:leave-end="opacity-0"
 		x-cloak
-		class="flex fixed bottom-4 left-[50%] -translate-x-[50%] items-center w-full max-w-xs p-4 space-x-4 rtl:space-x-reverse text-gray-500 bg-white divide-x rtl:divide-x-reverse divide-gray-200 rounded-lg shadow dark:text-gray-400 dark:divide-gray-700 dark:bg-gray-800"
+		class="flex fixed top-[3.5rem] right-4 items-center w-full max-w-xs p-4 space-x-4 rtl:space-x-reverse
+		 text-gray-500
+		 bg-white divide-x rtl:divide-x-reverse divide-gray-200 rounded-lg shadow-lg dark:text-gray-500 dark:divide-gray-700 dark:bg-gray-900
+		 dark:border-gray-500 border"
 		role="alert"
 	>
 		<svg class="w-5 h-5 text-green-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
