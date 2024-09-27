@@ -4,6 +4,7 @@ go 1.23
 
 require (
 	github.com/MicahParks/keyfunc/v3 v3.3.5
+	github.com/a-h/templ v0.2.778
 	github.com/centrifugal/centrifuge v0.33.3
 	github.com/centrifugal/centrifuge-go v0.10.2
 	github.com/gin-contrib/cors v1.7.2
