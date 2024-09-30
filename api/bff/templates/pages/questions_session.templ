@@ -53,10 +53,10 @@ templ QuestionsSession(activeSession, onlyUnanswered bool, userContext shared_mo
 		if userContext.Role == auth.Admin {
 			if activeSession {
 				@StopSessionButton()
+				@DownloadSessionAsFile()
 			} else {
 				@StartSessionButton()
 			}
-			@DownloadSessionAsFile()
 		}
 		<div class="flex ml-auto gap-2">
 			<span>online</span>

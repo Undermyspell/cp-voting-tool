@@ -43,7 +43,8 @@ import type { Question, QuestionDataStore } from './types';
     const initCentrifugo = async(user) => {
     console.log("init centrifugo")
 
-    const centrifuge = new Centrifuge("ws://localhost:3333/api/v1/connection/websocket", {
+    const protocol = window.location.protocol === "https:" ? "wss" : "ws"
+    const centrifuge = new Centrifuge(`${protocol}://${window.location.host}/api/v1/connection/websocket`, {
         token: user.Token
     });
     centrifuge.on('connecting', function (ctx) {
