@@ -6,7 +6,6 @@ COPY . .
 
 RUN apk add npm
 RUN go install github.com/a-h/templ/cmd/templ@latest && \
-    # npm run build && \
     templ generate && \
     go generate
 

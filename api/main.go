@@ -111,6 +111,7 @@ func main() {
 		app.POST("/q/s/start", bff.StartSession)
 		app.POST("/q/s/stop", bff.StopSession)
 		app.GET("/q/s/page/:activeSession/:onlyUnanswered", bff.QuestionSessionPage)
+		app.GET("/q/s/download", bff.DownloadSessionAsCsv)
 	}
 
 	api := r.Group("/api/v1")

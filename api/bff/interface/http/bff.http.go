@@ -1,6 +1,7 @@
 package bff
 
 import (
+	"encoding/csv"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -177,6 +178,46 @@ func QuestionSessionPage(c *gin.Context) {
 
 	component := pages.QuestionsSession(activeSession, onlyUnanswered, *userContext)
 	component.Render(c.Request.Context(), c.Writer)
+}
+
+func DownloadSessionAsCsv(c *gin.Context) {
+	sessions := sessions.Default(c)
+	token := sessions.Get("token").(string)
+
+	questions, statusCode := httputils.Get[[]voting_usecases.QuestionDto]("http://:3333/api/v1/question/session", map[string]string{
+		"Authorization": "Bearer " + token,
+	})
+
+	if statusCode > 299 {
+		c.Status(statusCode)
+		return
+	}
+
+	c.Header("Content-Disposition", "attachment; filename=questions.csv")
+	c.Header("Content-Type", "text/csv; charset=utf-8")
+	c.Writer.Write([]byte{0xEF, 0xBB, 0xBF})
+
+	writer := csv.NewWriter(c.Writer)
+
+	headers := []string{"Text", "Votes"}
+	if err := writer.Write(headers); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to write CSV header"})
+		return
+	}
+
+	for _, question := range *questions {
+		row := []string{question.Text, strconv.Itoa(question.Votes)}
+		if err := writer.Write(row); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to write CSV file rows"})
+			return
+		}
+	}
+
+	writer.Flush()
+	if err := writer.Error(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to flush CSV data"})
+		return
+	}
 }
 
 func Main(c *gin.Context) {
