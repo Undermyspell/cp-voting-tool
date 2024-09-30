@@ -167,6 +167,7 @@ func QuestionSessionPage(c *gin.Context) {
 	sessions := sessions.Default(c)
 	token := sessions.Get("token").(string)
 	activeSession, _ := strconv.ParseBool(c.Param("activeSession"))
+	onlyUnanswered, _ := strconv.ParseBool(c.Param("onlyUnanswered"))
 
 	userContext, err := shared_models.GetUserContextFromToken(token)
 
@@ -174,17 +175,7 @@ func QuestionSessionPage(c *gin.Context) {
 		c.AbortWithStatus(http.StatusUnauthorized)
 	}
 
-	component := pages.QuestionsSession(activeSession, *userContext)
-	component.Render(c.Request.Context(), c.Writer)
-}
-
-func QuestionSessionContent(c *gin.Context) {
-	onlyUnanswered, _ := strconv.ParseBool(c.Param("onlyUnanswered"))
-	activeSession, _ := strconv.ParseBool(c.Param("activeSession"))
-
-	time.Sleep(time.Second * 2)
-
-	component := components.QuestionsSessionContent(activeSession, onlyUnanswered)
+	component := pages.QuestionsSession(activeSession, onlyUnanswered, *userContext)
 	component.Render(c.Request.Context(), c.Writer)
 }
 

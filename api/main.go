@@ -110,8 +110,7 @@ func main() {
 		app.PUT("/q/answer/:id", bff.AnswerQuestion)
 		app.POST("/q/s/start", bff.StartSession)
 		app.POST("/q/s/stop", bff.StopSession)
-		app.GET("/q/s/page/:activeSession", bff.QuestionSessionPage)
-		app.GET("/q/s/content/:activeSession/:onlyUnanswered", bff.QuestionSessionContent)
+		app.GET("/q/s/page/:activeSession/:onlyUnanswered", bff.QuestionSessionPage)
 	}
 
 	api := r.Group("/api/v1")

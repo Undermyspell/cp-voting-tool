@@ -35,7 +35,7 @@ templ StopSessionButton() {
 	</button>
 }
 
-templ QuestionsSession(activeSession bool, userContext shared_models.UserContext) {
+templ QuestionsSession(activeSession, onlyUnanswered bool, userContext shared_models.UserContext) {
 	<div class="relative header bg-white dark:bg-stone-950 flex items-center px-10 dark:text-white gap-4">
 		<h3>Voting Tool with templ, htmx, alpine.js and golang</h3>
 		if userContext.Role == auth.Admin {
@@ -58,7 +58,7 @@ templ QuestionsSession(activeSession bool, userContext shared_models.UserContext
 	</div>
 	<div class="content rounded-md overflow-hidden text-center">
 		<div class="max-w-[1400px] ml-auto mr-auto pt-4">
-			@components.QuestionsSessionContent(activeSession, true)
+			@components.QuestionsSessionContent(activeSession, onlyUnanswered)
 		</div>
 	</div>
 }
