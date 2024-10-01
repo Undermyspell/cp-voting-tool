@@ -47,6 +47,12 @@ templ DownloadSessionAsFile() {
 	</button>
 }
 
+templ ToggleTheme() {
+	<button x-data @click="$store.theme.toggleTheme()">
+		Theme
+	</button>
+}
+
 templ QuestionsSession(activeSession, onlyUnanswered bool, userContext shared_models.UserContext) {
 	<div class="relative header bg-white dark:bg-stone-950 flex items-center px-10 dark:text-white gap-4">
 		<h3>Voting Tool with templ, htmx, alpine.js and golang</h3>
@@ -60,6 +66,7 @@ templ QuestionsSession(activeSession, onlyUnanswered bool, userContext shared_mo
 		}
 		<div class="flex ml-auto gap-2">
 			<span>online</span>
+			@ToggleTheme()
 			<span x-data x-text="$store.questionData.usersOnlineCount"></span>
 			<a class="cursor-pointer flex items-center" href="https://github.com/Undermyspell/cp-voting-tool" target="_blank">
 				<i class="fa-brands fa-github"></i>

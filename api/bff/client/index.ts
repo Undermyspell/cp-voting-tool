@@ -1,15 +1,15 @@
 
 import Alpine from "alpinejs"
 import { Centrifuge } from 'centrifuge';
-import type { Question, QuestionDataStore } from './types';
+import type { Question, QuestionDataStore, ThemeData, User } from './types';
 
 (function(){
     //@ts-ignore
     window.Alpine = Alpine
 
     Alpine.store("questionData", {
-        async init() {
-            this.user = await (await fetch('/user')).json()
+        async init(this: QuestionDataStore) {
+            this.user = await (await fetch('/user')).json() as User
             initCentrifugo(this.user) 
         },
         questions: JSON.parse(document.getElementById('questions')!.textContent!),
@@ -37,6 +37,49 @@ import type { Question, QuestionDataStore } from './types';
             this.usersOnlineCount = usersOnlineCount
         },
     } as QuestionDataStore)
+
+
+    Alpine.store("theme",{
+        isDarkMode: false,
+        init() {
+            console.log("INIT")
+            const savedTheme = localStorage.getItem('theme') || 'system';
+            if (savedTheme === 'dark') {
+              this.isDarkMode = true;
+            } else if (savedTheme === 'light') {
+              this.isDarkMode = false;
+            } else {
+              this.isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            }
+  
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (event) => {
+                if (localStorage.getItem('theme') === 'system') {
+                  this.isDarkMode = event.matches;
+                }
+            });
+        },
+        toggleTheme() {
+            if (localStorage.getItem('theme') === 'light') {
+              this.setTheme('dark');
+            } else if (localStorage.getItem('theme') === 'dark') {
+              this.setTheme('system');
+            } else {
+              this.setTheme('light');
+            }
+          },
+        setTheme(theme) {
+            if (theme === 'dark') {
+              this.isDarkMode = true;
+              localStorage.setItem('theme', 'dark');
+            } else if (theme === 'light') {
+              this.isDarkMode = false;
+              localStorage.setItem('theme', 'light');
+            } else {
+              this.isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+              localStorage.setItem('theme', 'system');
+            }
+          }
+    } as ThemeData)
 
     Alpine.start() 
 
