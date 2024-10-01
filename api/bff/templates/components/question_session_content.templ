@@ -69,21 +69,23 @@ templ NewQuestionButton() {
 }
 
 templ QuestionsSessionContent(activeSession, onlyUnansweredQuestions bool) {
-	<div id="question-session-content" class="content rounded-md overflow-hidden">
-		<div class="max-w-[1400px] ml-auto mr-auto relative">
-			@QuestionKindTabs(onlyUnansweredQuestions)
-			if activeSession {
-				@NewQuestionButton()
-				if onlyUnansweredQuestions {
-					@QuestionUnansweredList()
+	<div class="max-w-[1400px] ml-auto mr-auto pt-4">
+		<div id="question-session-content" class="content rounded-md overflow-hidden">
+			<div class="max-w-[1400px] ml-auto mr-auto relative">
+				@QuestionKindTabs(onlyUnansweredQuestions)
+				if activeSession {
+					@NewQuestionButton()
+					if onlyUnansweredQuestions {
+						@QuestionUnansweredList()
+					} else {
+						@QuestionAnsweredList()
+					}
 				} else {
-					@QuestionAnsweredList()
+					@NoActiveSession()
 				}
-			} else {
-				@NoActiveSession()
-			}
-			<div id="indicator-content" class="htmx-indicator absolute w-full h-full top-0 left-0 flex items-center justify-center backdrop-blur-[2px]">
-				@Spinner()
+				<div id="indicator-content" class="htmx-indicator absolute w-full h-full top-0 left-0 flex items-center justify-center backdrop-blur-[2px]">
+					@Spinner()
+				</div>
 			</div>
 		</div>
 	</div>
