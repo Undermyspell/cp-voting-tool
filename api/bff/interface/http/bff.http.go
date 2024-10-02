@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 	"voting/bff/templates/components"
+	"voting/bff/templates/layouts"
 	"voting/bff/templates/pages"
 	"voting/shared/helper/httputils"
 	shared_models "voting/shared/models"
@@ -175,8 +176,8 @@ func QuestionSessionPage(c *gin.Context) {
 	if err != nil {
 		c.AbortWithStatus(http.StatusUnauthorized)
 	}
-
-	component := pages.QuestionsSession(activeSession, onlyUnanswered, *userContext)
+	questions := []voting_usecases.QuestionDto{}
+	component := pages.QuestionsSession(questions, activeSession, onlyUnanswered, *userContext)
 	component.Render(c.Request.Context(), c.Writer)
 }
 
@@ -242,7 +243,7 @@ func Main(c *gin.Context) {
 	if err != nil {
 		c.AbortWithStatus(http.StatusUnauthorized)
 	}
+	component := pages.QuestionsSession(*questions, activeSession, true, *userContext)
 
-	component := pages.Main("cp voting tool", "Conplement voting tool", activeSession, *questions, *userContext)
-	component.Render(c.Request.Context(), c.Writer)
+	layouts.Default(component, "cp voting tool").Render(c.Request.Context(), c.Writer)
 }

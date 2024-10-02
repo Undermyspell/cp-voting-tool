@@ -1,23 +1,13 @@
-package pages
+package layouts
 
-import (
-	shared_models "voting/shared/models"
-	voting_usecases "voting/voting/usecases"
-)
-
-templ Main(
-	title string,
-	message string,
-	activeSession bool,
-	questions []voting_usecases.QuestionDto,
-	userContext shared_models.UserContext) {
-	@templ.JSONScript("questions", questions)
+templ Default(contents templ.Component, title string) {
 	<!DOCTYPE html>
 	<html lang="en" x-data :class="{ 'dark': $store.theme.isDarkMode }">
 		<head>
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>{ title }</title>
+			<link rel="icon" type="image/x-icon" href="/static/img/logo.svg"/>
 			<link href="/static/css/tailwind.css" rel="stylesheet"/>
 			<link href="/static/fontawesome/css/fontawesome.min.css" rel="stylesheet"/>
 			<link href="/static/fontawesome/css/brands.min.css" rel="stylesheet"/>
@@ -51,7 +41,7 @@ templ Main(
 			</style>
 		</head>
 		<body class="dark:bg-gray-800 bg-gray-100 h-screen grid m-0 p-0">
-			@QuestionsSession(activeSession, true, userContext)
+			@contents
 		</body>
 	</html>
 }

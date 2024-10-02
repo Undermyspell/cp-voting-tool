@@ -3,9 +3,11 @@ package pages
 import (
 	"voting/bff/templates/components"
 	shared_models "voting/shared/models"
+	voting_usecases "voting/voting/usecases"
 )
 
-templ QuestionsSession(activeSession, onlyUnanswered bool, userContext shared_models.UserContext) {
+templ QuestionsSession(questions []voting_usecases.QuestionDto, activeSession, onlyUnanswered bool, userContext shared_models.UserContext) {
+	@templ.JSONScript("questions", questions)
 	<div class="relative header bg-white dark:bg-stone-950 flex items-center px-10 dark:text-white gap-4">
 		@components.QuestionSessionHeader(activeSession, userContext)
 	</div>
