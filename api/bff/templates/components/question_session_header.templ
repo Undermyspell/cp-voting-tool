@@ -12,8 +12,9 @@ templ StartSessionButton() {
 		hx-swap="none"
 		hx-indicator="#indicator-header"
 		class="shadow-sm hover:gray-700
+		bg-white dark:bg-stone-950
 		font-medium rounded-lg px-4 py-2 text-center flex items-center gap-4
-		text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 text-sm dark:bg-gray-700 dark:text-white dark:border-gray-500 dark:hover:bg-gray-600 dark:hover:border-gray-600 dark:focus:ring-gray-700"
+		text-gray-900 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 text-sm dark:text-white dark:hover:bg-gray-800 dark:focus:ring-gray-700 "
 		type="button"
 	>Fragerunde starten</button>
 }
@@ -25,8 +26,9 @@ templ StopSessionButton() {
 		hx-swap="none"
 		hx-indicator="#indicator-header"
 		class="shadow-sm hover:gray-700
+		bg-white dark:bg-stone-950
 		font-medium rounded-lg px-4 py-2 text-center flex items-center gap-4
-		text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 text-sm dark:bg-gray-700 dark:text-white dark:border-gray-500 dark:hover:bg-gray-600 dark:hover:border-gray-600 dark:focus:ring-gray-700"
+		text-gray-900 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 text-sm dark:text-white dark:hover:bg-gray-800 dark:focus:ring-gray-700"
 		type="button"
 	>
 		<span>Fragerunde beenden</span>
@@ -36,8 +38,9 @@ templ StopSessionButton() {
 templ DownloadSessionAsFile() {
 	<button
 		class="shadow-sm hover:gray-700
+		bg-white dark:bg-stone-950
 		font-medium rounded-lg px-4 py-2 text-center flex items-center gap-4
-		text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 text-sm dark:bg-gray-700 dark:text-white dark:border-gray-500 dark:hover:bg-gray-600 dark:hover:border-gray-600 dark:focus:ring-gray-700"
+		text-gray-900 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 text-sm dark:text-white dark:hover:bg-gray-800 dark:focus:ring-gray-700"
 		type="button"
 	>
 		<a href="/q/s/download" target="_blank">
@@ -79,7 +82,7 @@ templ ToggleThemeDropDown() {
 			x-transition.origin.top.left
 			x-on:click.outside="close()"
 			id="dropdown-button"
-			class="absolute flex flex-col p-1 left-0 mt-2 w-40 bg-white shadow-md rounded-lg z-10 min-w-20 text-gray-900 border border-gray-300 focus:outline-none text-sm dark:bg-gray-700 dark:text-white"
+			class="absolute flex flex-col p-1 left-0 mt-2 w-40 bg-white shadow-md rounded-lg z-10 min-w-20 text-gray-900 border border-gray-300 focus:outline-none text-sm dark:bg-gray-800 dark:text-white"
 			@click="$store.theme.setTheme($event.target.dataset.theme);close()"
 		>
 			<a class="dark:text-white text-gray-900 p-2 dark:border-gray-500 dark:hover:bg-gray-600 dark:hover:border-gray-600 hover:bg-gray-100" data-theme="light" href="#">Light</a>
