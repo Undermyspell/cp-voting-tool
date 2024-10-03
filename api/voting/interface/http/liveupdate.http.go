@@ -17,7 +17,12 @@ func CentrifugoHandler() gin.HandlerFunc {
 			if originHeader == "" {
 				return true
 			}
-			return originHeader == env.Env.AllowedOrigin
+			for _, allowedOrigin := range env.Env.AllowedOrigins {
+				if originHeader == allowedOrigin {
+					return true
+				}
+			}
+			return false
 		},
 	})))
 }

@@ -1,6 +1,8 @@
 package env
 
 import (
+	"strings"
+
 	"github.com/spf13/viper"
 )
 
@@ -19,7 +21,7 @@ const (
 	REDIS_ENPOINT                string = "REDIS_ENDPOINT_SECRET"
 	REDIS_PASSWORD               string = "REDIS_PASSWORD_SECRET"
 	POSTGRESQL_CONNECTION_STRING string = "POSTGRESQL_CONNECTION_STRING_SECRET"
-	ALLOWED_ORIGIN               string = "ALLOWED_ORIGIN"
+	ALLOWED_ORIGINS              string = "ALLOWED_ORIGINS"
 	SESSION_SECRET               string = "SESSION_SECRET"
 	AUTH_AZURE_CLIENT_ID         string = "AUTH_AZURE_CLIENT_ID"
 	AUTH_AZURE_CLIENT_SECRET     string = "AUTH_AZURE_CLIENT_SECRET"
@@ -33,7 +35,7 @@ type EnvConfig struct {
 	JwksUrl                    string
 	RedisEndpoint              string
 	RedisPassword              string
-	AllowedOrigin              string
+	AllowedOrigins             []string
 	PostgresqlConnectionString string
 	SessionSecret              string
 	AuthAzureClientId          string
@@ -55,7 +57,7 @@ func Init() {
 		Storage:                    Storage(viper.GetString(STORAGE)),
 		RedisEndpoint:              viper.GetString(REDIS_ENPOINT),
 		RedisPassword:              viper.GetString(REDIS_PASSWORD),
-		AllowedOrigin:              viper.GetString(ALLOWED_ORIGIN),
+		AllowedOrigins:             strings.Split(viper.GetString(ALLOWED_ORIGINS), ","),
 		PostgresqlConnectionString: viper.GetString(POSTGRESQL_CONNECTION_STRING),
 		SessionSecret:              viper.GetString(SESSION_SECRET),
 		AuthAzureClientId:          viper.GetString(AUTH_AZURE_CLIENT_ID),
