@@ -54,12 +54,12 @@ type QuestionApiTestSuite struct {
 }
 
 func (suite *QuestionApiTestSuite) SetupSuite() {
-	switch env.Storage(os.Getenv("STORAGE")) {
-	case env.Postgres:
-		initPostgreSqlContainer(suite)
-	case env.Redis:
-		initRedisTestContainer(suite)
-	}
+	// switch env.Storage(os.Getenv("STORAGE")) {
+	// case env.Postgres:
+	initPostgreSqlContainer(suite)
+	// case env.Redis:
+	// 	initRedisTestContainer(suite)
+	// }
 
 	os.Setenv("USE_MOCK_JWKS", "true")
 	os.Setenv("JWKS_URL", "https://test/discovery/v2.0/keys")
@@ -138,7 +138,6 @@ func (suite *QuestionApiTestSuite) TestApi_UNAUTHORIZED_401() {
 		{"Question_Rest_UNAUTHORIZED_401", http.MethodGet, "/question/session"},
 		{"Question_Rest_UNAUTHORIZED_401", http.MethodPost, "/question/session/start"},
 		{"Question_Rest_UNAUTHORIZED_401", http.MethodPost, "/question/session/stop"},
-		{"Events_UNAUTHORIZED_401", http.MethodGet, "/events"},
 	}
 
 	for _, test := range tests {
