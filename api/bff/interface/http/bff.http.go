@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"time"
 	"voting/bff/templates/components"
 	"voting/bff/templates/layouts"
 	"voting/bff/templates/pages"
@@ -56,7 +55,6 @@ func SaveNewQuestion(c *gin.Context) {
 
 	logrus.Info(fmt.Sprintf("%s:%v", question, anonymous))
 
-	time.Sleep(2 * time.Second)
 	sessions := sessions.Default(c)
 	token := sessions.Get("token").(string)
 	httputils.Post("http://:3333/api/v1/question/new", map[string]string{
@@ -89,8 +87,6 @@ func SaveUpdatedQuestion(c *gin.Context) {
 	sessions := sessions.Default(c)
 	token := sessions.Get("token").(string)
 
-	time.Sleep(2 * time.Second)
-
 	httputils.Put("http://:3333/api/v1/question/update", map[string]string{
 		"Authorization": "Bearer " + token,
 	}, dto)
@@ -100,7 +96,6 @@ func SaveUpdatedQuestion(c *gin.Context) {
 }
 
 func DeleteQuestion(c *gin.Context) {
-	time.Sleep(time.Second * 2)
 	questionId := c.Param("id")
 
 	sessions := sessions.Default(c)

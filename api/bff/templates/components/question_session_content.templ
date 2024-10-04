@@ -1,7 +1,7 @@
 package components
 
 templ NoActiveSession() {
-	<span>Keine aktive Q/A Session</span>
+	<span class="dark:text-white text-gray-900">Keine aktive Q/A Session</span>
 }
 
 var classNameSelected = "dark:text-white inline-block p-4 active dark:hover:text-gray-200"
@@ -72,8 +72,8 @@ templ QuestionsSessionContent(activeSession, onlyUnansweredQuestions bool) {
 	<div class="max-w-[1400px] ml-auto mr-auto pt-4">
 		<div id="question-session-content" class="content rounded-md overflow-hidden">
 			<div class="max-w-[1400px] ml-auto mr-auto relative">
-				@QuestionKindTabs(onlyUnansweredQuestions)
 				if activeSession {
+					@QuestionKindTabs(onlyUnansweredQuestions)
 					@NewQuestionButton()
 					if onlyUnansweredQuestions {
 						@QuestionUnansweredList()

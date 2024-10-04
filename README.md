@@ -1,17 +1,30 @@
 # Conplement Voting Tool
 This is the repository of the conplement voting tool used in employee meetings
 
-## Web Frontend (built with svelte) ⚡️
+## Web Frontend 1 (built with svelte) ⚡️
 - [Svelte](https://svelte.dev/)
 - [Vite](https://vitejs.dev/)
 
+## Web Frontend 2 (built with go, templ, htmx, alpinejs) ⚡️
+- [Go](https://go.dev/)
+- [Templ](https://templ.guide/)
+- [htmx](https://htmx.org/)
+- [Alpine.js](https://alpinejs.dev/)
+
 ## Api Backend (built with go) ⚡️
+### Web api framework
 - [Go](https://go.dev/)
 - [Gin-Gonic](https://github.com/gin-gonic/gin)
+### Testing
+- [Testify](https://github.com/stretchr/testify)
+- [Testcontainers](https://testcontainers.com/)
+### Live updates
+- [Centrifuge](https://github.com/centrifugal/centrifuge)
+### Data storage
+#### Redis (previously in use)
 - [Redis-Cloud](https://app.redislabs.com/#/)
 - [Go-ReJSON](https://github.com/nitishm/go-rejson)
-- [Testify](https://github.com/stretchr/testify)
-- [Centrifuge](https://github.com/centrifugal/centrifuge)
+#### PostgreSQL (currently in use)
 - [Neon PostgreSQL](https://neon.tech/)
 
 
