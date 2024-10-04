@@ -69,7 +69,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event_name != 'push' }}
     container: 
-      image: golang:1.22-alpine
+      image: golang:1.23-alpine
       options: --user root
     steps:
       - uses: actions/checkout@v4
@@ -86,7 +86,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event_name != 'push' }}
     container: 
-      image: golang:1.22-alpine
+      image: golang:1.23-alpine
       options: --user root
     steps:
       - uses: actions/checkout@v4
@@ -103,7 +103,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event_name != 'push' }}
     container: 
-      image: golang:1.22-alpine
+      image: golang:1.23-alpine
       options: --user root
     steps:
       - uses: actions/checkout@v4

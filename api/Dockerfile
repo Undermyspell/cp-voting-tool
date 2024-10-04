@@ -4,7 +4,8 @@ WORKDIR /app
 
 COPY . .
 
-RUN apk add npm
+RUN apk add npm && \
+    npm install
 RUN go install github.com/a-h/templ/cmd/templ@latest && \
     templ generate && \
     go generate
