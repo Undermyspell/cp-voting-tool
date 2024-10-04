@@ -54,12 +54,12 @@ type QuestionApiTestSuite struct {
 }
 
 func (suite *QuestionApiTestSuite) SetupSuite() {
-	// switch env.Storage(os.Getenv("STORAGE")) {
-	// case env.Postgres:
-	initPostgreSqlContainer(suite)
-	// case env.Redis:
-	// 	initRedisTestContainer(suite)
-	// }
+	switch env.Storage(os.Getenv("STORAGE")) {
+	case env.Postgres:
+		initPostgreSqlContainer(suite)
+	case env.Redis:
+		initRedisTestContainer(suite)
+	}
 
 	os.Setenv("USE_MOCK_JWKS", "true")
 	os.Setenv("JWKS_URL", "https://test/discovery/v2.0/keys")
