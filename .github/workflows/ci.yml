@@ -73,6 +73,12 @@ jobs:
       options: --user root
     steps:
       - uses: actions/checkout@v4
+      - name: Install templ
+        working-directory: api
+        run: go install github.com/a-h/templ/cmd/templ@latest
+      - name: Templ generate
+        working-directory: api
+        run: templ generate
       - name: Install dependencies
         working-directory: api
         run: go get .
@@ -90,6 +96,12 @@ jobs:
       options: --user root
     steps:
       - uses: actions/checkout@v4
+      - name: Install templ
+        working-directory: api
+        run: go install github.com/a-h/templ/cmd/templ@latest
+      - name: Templ generate
+        working-directory: api
+        run: templ generate
       - name: Install dependencies
         working-directory: api
         run: go get .
@@ -107,6 +119,12 @@ jobs:
       options: --user root
     steps:
       - uses: actions/checkout@v4
+      - name: Install templ
+        working-directory: api
+        run: go install github.com/a-h/templ/cmd/templ@latest
+      - name: Templ generate
+        working-directory: api
+        run: templ generate
       - name: Install dependencies
         working-directory: api
         run: go get .
