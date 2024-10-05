@@ -1,2 +1,7 @@
 env.yaml
 .dccache
+tmp/*
+bff/templates/**/*.go
+node_modules
+bff/static/js/*
+bff/static/css/tailwind.css

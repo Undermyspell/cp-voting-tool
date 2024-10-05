@@ -1,0 +1,47 @@
+package layouts
+
+templ Default(contents templ.Component, title string) {
+	<!DOCTYPE html>
+	<html lang="en" x-data :class="{ 'dark': $store.theme.isDarkMode }">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>{ title }</title>
+			<link rel="icon" type="image/x-icon" href="/static/img/logo.svg"/>
+			<link href="/static/css/tailwind.css" rel="stylesheet"/>
+			<link href="/static/fontawesome/css/fontawesome.min.css" rel="stylesheet"/>
+			<link href="/static/fontawesome/css/brands.min.css" rel="stylesheet"/>
+			<link href="/static/fontawesome/css/solid.min.css" rel="stylesheet"/>
+			<script src="https://unpkg.com/htmx.org@2.0.2" integrity="sha384-Y7hw+L/jvKeWIRRkqWYfPcvVxHzVzn5REgzbawhxAuQGwX1XWe70vji+VSeHOThJ" crossorigin="anonymous"></script>
+			<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+			<script defer src="/static/js/index.js"></script>
+			<style>
+				.htmx-indicator{
+					opacity:0;
+					z-index: -1000;
+				}
+				.htmx-request .htmx-indicator{
+					opacity: 1;
+					z-index: 1000;
+				}
+				.htmx-request.htmx-indicator{
+					opacity:1;
+					z-index: 1000;
+				}
+				body {
+					grid-template-rows: 3rem 1fr;
+					grid-template-areas: "header" "content"
+				}
+				.content {
+					grid-area: content
+				}
+				.header {
+					grid-area: header
+				}
+			</style>
+		</head>
+		<body class="dark:bg-gray-800 bg-gray-100 h-screen grid m-0 p-0">
+			@contents
+		</body>
+	</html>
+}

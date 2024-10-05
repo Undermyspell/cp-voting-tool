@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   client:
     build:
@@ -16,6 +14,8 @@ services:
       - 3333:3333
     env_file:
       - ./api/env.yaml
+    environment:
+      POSTGRESQL_CONNECTION_STRING_SECRET: postgresql://pgcomposeusr:pgcomposepw@postgres:5432/pgcomposeusr
     depends_on:
       - postgres  
   postgres:

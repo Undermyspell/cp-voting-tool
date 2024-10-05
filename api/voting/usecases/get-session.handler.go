@@ -2,6 +2,7 @@ package voting_usecases
 
 import (
 	"fmt"
+	"reflect"
 	shared_models "voting/shared/models"
 	voting_repositories "voting/voting/repositories"
 	errors "voting/voting/usecases/_errors"
@@ -16,6 +17,16 @@ type QuestionDto struct {
 	Creator   string
 	Anonymous bool
 	Owned     bool
+}
+
+func (question QuestionDto) GetHeaders() []string {
+	questionDtoType := reflect.TypeOf(QuestionDto{})
+	var headers []string
+	for i := 0; i < questionDtoType.NumField(); i++ {
+		field := questionDtoType.Field(i)
+		headers = append(headers, field.Name)
+	}
+	return headers
 }
 
 func GetSession(userContext *shared_models.UserContext) ([]QuestionDto, error) {

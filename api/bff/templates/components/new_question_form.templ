@@ -1,0 +1,42 @@
+package components
+
+templ NewQuestionForm() {
+	<form
+		id="myForm"
+		hx-post="/q/save"
+		hx-indicator="#indicator-new-question"
+		hx-swap="outerHTML swap:0.3s"
+		hx-target="#modal"
+		class="mx-auto m-0 gap-4 flex flex-col"
+	>
+		<div class="text-gray-900 dark:text-white">
+			<h2>Frage stellen</h2>
+			<span class="dark:text-gray-400 text-sm">Stelle eine neue Frage zur Diskussion</span>
+		</div>
+		<div class="flex gap-16 mb-5">
+			<textarea autofocus id="question" name="question" rows="3" maxlength="500" class="min-h-[80px] flex p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 dark:bg-gray-900 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" placeholder="Stelle eine Frage..."></textarea>
+			<div>
+				<ul class="list-disc text-gray-900 dark:text-white">
+					<li>Achte bei deinen Fragen immer auf einen fairen und höflichen Ton und bleibe sachlich.</li>
+					<li>Unsachliche und/oder beleidigende Fragen haben bei uns keinen Platz.</li>
+					<li>Wahre die Regeln der Höflichkeit, wie in einem Gespräch von Angesicht zu Angesicht.</li>
+					<li>Sieh davon ab, andere persönlich zu provozieren.</li>
+					<li>Gib deinen Namen an, um für Rückfragen ansprechbar zu sein.</li>
+				</ul>
+			</div>
+		</div>
+		<div class="flex items-center mb-5">
+			<input checked id="anonymous" name="anonymous" type="checkbox" value="true" class="dark:accent-gray-500 accent-gray-800 w-4 h-4 text-gray-600 bg-gray-100 border-gray-300 rounde dark:bg-gray-900 dark:border-gray-600"/>
+			<label for="anonymous" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Frage anonym stellen </label>
+		</div>
+		<button
+			type="submit"
+			class="shadow-sm hover:gray-700
+		font-medium rounded-lg px-4 py-2 text-center flex items-center gap-4
+		text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 text-sm dark:bg-gray-700 dark:text-white dark:border-gray-500 dark:hover:bg-gray-600 dark:hover:border-gray-600 dark:focus:ring-gray-700 ml-auto"
+		>Posten</button>
+		<div id="indicator-new-question" class="htmx-indicator absolute w-full h-full top-0 left-0 flex items-center justify-center backdrop-blur-[2px]">
+			@Spinner()
+		</div>
+	</form>
+}

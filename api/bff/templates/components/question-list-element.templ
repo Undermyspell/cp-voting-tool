@@ -1,0 +1,107 @@
+package components
+
+templ EditButton() {
+	<template x-if="question.Owned">
+		<button
+			:hx-get="`/q/update/${question.Id}`"
+			:hx-indicator="`#indicator-question-${question.Id}`"
+			hx-target="body"
+			hx-trigger="click"
+			hx-swap="beforeend"
+			type="button"
+			class="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700"
+		>Editieren</button>
+	</template>
+}
+
+templ AnswerButton() {
+	<button
+		:hx-put="`/q/answer/${question.Id}`"
+		:hx-indicator="`#indicator-question-${question.Id}`"
+		type="button"
+		tabindex="0"
+		class="ring-offset-background focus-visible:ring-ring inline-flex h-10 w-10 items-center justify-center whitespace-nowrap rounded-md border border-green-500/50 bg-green-500/20 text-sm font-medium text-green-600 transition-colors hover:bg-green-600 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+		data-button-root=""
+	>
+		<svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" width="20px" height="20px"><path d="M11.602 13.7599L13.014 15.1719L21.4795 6.7063L22.8938 8.12051L13.014 18.0003L6.65 11.6363L8.06421 10.2221L10.189 12.3469L11.6025 13.7594L11.602 13.7599ZM11.6037 10.9322L16.5563 5.97949L17.9666 7.38977L13.014 12.3424L11.6037 10.9322ZM8.77698 16.5873L7.36396 18.0003L1 11.6363L2.41421 10.2221L3.82723 11.6352L3.82604 11.6363L8.77698 16.5873Z"></path></svg>
+	</button>
+}
+
+templ DeleteButton() {
+	<template x-if="question.Owned">
+		<button
+			type="button"
+			:hx-delete="`/q/delete/${question.Id}`"
+			hx-target="body"
+			hx-swap="beforeend"
+			hx-trigger="confirmed"
+			:hx-indicator="`#indicator-question-${question.Id}`"
+			onClick="Swal.fire({
+						text:'Frage wirklich löschen?',
+						icon: 'warning',
+						iconColor: '#d33',
+						showCancelButton: true,
+						confirmButtonColor: '#d33',
+						cancelButtonColor: '#4b5563',
+						confirmButtonText: 'Löschen',
+						cancelButtonText: 'Abbrechen',
+						customClass: {
+							popup: 'dark:bg-gray-900 dark:text-white',
+							container: 'rounded-lg backdrop-blur-sm',
+							icon: 'text-xs',				
+						}
+					}).then((result)=>{
+						if(result.isConfirmed){
+						htmx.trigger(this, 'confirmed');  
+						} 
+					})"
+			tabindex="0"
+			class="inline-flex items-center justify-center rounded-md text-sm font-medium whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border h-10 w-10 bg-red-500/20 text-red-600 border-red-500/50 hover:text-white hover:bg-red-600"
+			data-button-root=""
+		>
+			<svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" width="20px" height="20px"><path d="M17 6H22V8H20V21C20 21.5523 19.5523 22 19 22H5C4.44772 22 4 21.5523 4 21V8H2V6H7V3C7 2.44772 7.44772 2 8 2H16C16.5523 2 17 2.44772 17 3V6ZM18 8H6V20H18V8ZM9 11H11V17H9V11ZM13 11H15V17H13V11ZM9 4V6H15V4H9Z"></path></svg>
+		</button>
+	</template>
+}
+
+templ QuestionUnansweredListElement() {
+	<div class="relative mx-6 flex items-start gap-6 rounded-lg text-gray-700 dark:text-white">
+		<div class="flex-0 flex flex-col items-center rounded-md bg-white px-4 py-2 shadow duration-100 hover:scale-105 dark:bg-gray-900">
+			<template x-if="question.Voted">
+				<button :hx-put="`/q/undovote/${question.Id}`">
+					<svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" width="32px" height="32px" color="red"><path d="M12.001 4.52853C14.35 2.42 17.98 2.49 20.2426 4.75736C22.5053 7.02472 22.583 10.637 20.4786 12.993L11.9999 21.485L3.52138 12.993C1.41705 10.637 1.49571 7.01901 3.75736 4.75736C6.02157 2.49315 9.64519 2.41687 12.001 4.52853Z"></path></svg>
+				</button>
+			</template>
+			<template x-if="!question.Voted">
+				<button :hx-put="`/q/upvote/${question.Id}`">
+					<svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" width="32px" height="32px"><path d="M12.001 4.52853C14.35 2.42 17.98 2.49 20.2426 4.75736C22.5053 7.02472 22.583 10.637 20.4786 12.993L11.9999 21.485L3.52138 12.993C1.41705 10.637 1.49571 7.01901 3.75736 4.75736C6.02157 2.49315 9.64519 2.41687 12.001 4.52853ZM18.827 6.1701C17.3279 4.66794 14.9076 4.60701 13.337 6.01687L12.0019 7.21524L10.6661 6.01781C9.09098 4.60597 6.67506 4.66808 5.17157 6.17157C3.68183 7.66131 3.60704 10.0473 4.97993 11.6232L11.9999 18.6543L19.0201 11.6232C20.3935 10.0467 20.319 7.66525 18.827 6.1701Z"></path></svg>
+				</button>
+			</template>
+			<span class="text-md" x-text="question.Votes"></span>
+		</div>
+		<div class="flex flex-1 gap-4 items-center justify-between self-stretch rounded-md bg-white p-4 shadow dark:bg-gray-900">
+			<div class="flex flex-col gap-2 items-start text-left">
+				<span x-text="question.Text"></span>
+				<span class="italic" x-text="question.Anonymous ? 'Anonym' : question.Creator"></span>
+			</div>
+			<div class="flex gap-2">
+				@EditButton()
+				@AnswerButton()
+				@DeleteButton()
+			</div>
+			<div :id="`indicator-question-${question.Id}`" class="htmx-indicator absolute w-full h-full top-0 left-0 flex items-center justify-center backdrop-blur-[2px]">
+				@Spinner()
+			</div>
+		</div>
+	</div>
+}
+
+templ QuestionAnsweredListElement() {
+	<div class="flex flex-col gap-2 rounded-lg text-gray-700 dark:text-white bg-white px-3 py-2 shadow dark:bg-gray-900 text-left">
+		<span x-text="question.Text"></span>
+		<div class="flex gap-2 justify-end">
+			<span x-text="'Votes: ' + question.Votes"></span>
+			<span x-text="question.Anonymous ? 'Anonym' : question.Creator"></span>
+		</div>
+	</div>
+}

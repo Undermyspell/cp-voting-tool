@@ -1,0 +1,15 @@
+package components
+
+import voting_usecases "voting/voting/usecases"
+
+templ NewQuestionModal() {
+	@Modal("Neue Frage") {
+		@NewQuestionForm()
+	}
+}
+
+templ UpdateQuestionModal(question voting_usecases.QuestionDto) {
+	@Modal("Neue Frage") {
+		@UpdateQuestionForm(question)
+	}
+}

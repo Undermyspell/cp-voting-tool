@@ -138,7 +138,6 @@ func (suite *QuestionApiTestSuite) TestApi_UNAUTHORIZED_401() {
 		{"Question_Rest_UNAUTHORIZED_401", http.MethodGet, "/question/session"},
 		{"Question_Rest_UNAUTHORIZED_401", http.MethodPost, "/question/session/start"},
 		{"Question_Rest_UNAUTHORIZED_401", http.MethodPost, "/question/session/stop"},
-		{"Events_UNAUTHORIZED_401", http.MethodGet, "/events"},
 	}
 
 	for _, test := range tests {

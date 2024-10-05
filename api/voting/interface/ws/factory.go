@@ -7,7 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func NewCentrifuge(broker shared_infra_broker.Broker) *centrifuge.Node {
+func InitCentrifuge(broker shared_infra_broker.Broker) {
 	node, _ = centrifuge.New(centrifuge.Config{
 		LogLevel:   centrifuge.LogLevelDebug,
 		LogHandler: handleLog,
@@ -22,6 +22,4 @@ func NewCentrifuge(broker shared_infra_broker.Broker) *centrifuge.Node {
 			logrus.Fatal(err)
 		}
 	}()
-
-	return node
 }

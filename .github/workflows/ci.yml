@@ -69,10 +69,16 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event_name != 'push' }}
     container: 
-      image: golang:1.22-alpine
+      image: golang:1.23-alpine
       options: --user root
     steps:
       - uses: actions/checkout@v4
+      - name: Install templ
+        working-directory: api
+        run: go install github.com/a-h/templ/cmd/templ@latest
+      - name: Templ generate
+        working-directory: api
+        run: templ generate
       - name: Install dependencies
         working-directory: api
         run: go get .
@@ -86,10 +92,16 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event_name != 'push' }}
     container: 
-      image: golang:1.22-alpine
+      image: golang:1.23-alpine
       options: --user root
     steps:
       - uses: actions/checkout@v4
+      - name: Install templ
+        working-directory: api
+        run: go install github.com/a-h/templ/cmd/templ@latest
+      - name: Templ generate
+        working-directory: api
+        run: templ generate
       - name: Install dependencies
         working-directory: api
         run: go get .
@@ -103,10 +115,16 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event_name != 'push' }}
     container: 
-      image: golang:1.22-alpine
+      image: golang:1.23-alpine
       options: --user root
     steps:
       - uses: actions/checkout@v4
+      - name: Install templ
+        working-directory: api
+        run: go install github.com/a-h/templ/cmd/templ@latest
+      - name: Templ generate
+        working-directory: api
+        run: templ generate
       - name: Install dependencies
         working-directory: api
         run: go get .
