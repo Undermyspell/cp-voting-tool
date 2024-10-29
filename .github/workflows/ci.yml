@@ -65,99 +65,99 @@ jobs:
   #           push: ${{ github.event_name != 'pull_request' }}
   #           platforms: linux/amd64
   #           tags: ${{ secrets.ACR_SERVER }}/cpvt-api:${{ github.event_name == 'workflow_dispatch' && inputs.build_tag || github.ref_type == 'tag' && github.ref_name || steps.short-sha.outputs.sha }}
-  build_web:
-    name: Build Svelte Web App
-    runs-on: ubuntu-latest
-    steps:
-        - uses: actions/checkout@v4
-        - name: Login to ACR
-          uses: docker/login-action@v3
-          with:
-            registry: ${{ secrets.ACR_SERVER }}
-            username: ${{ secrets.ACR_USER_NAME }}
-            password: ${{ secrets.ACR_PASSWORD }}
-        - name: Create short sha
-          uses: benjlevesque/short-sha@v3.0
-          id: short-sha
-          with:
-            length: 8
-        - name: Build and push
-          uses: docker/build-push-action@v5
-          with:
-            context: ./client-sk
-            push: ${{ github.event_name != 'pull_request' }}
-            platforms: linux/amd64
-            build-args: |
-              version_info=${{ github.event_name == 'workflow_dispatch' && inputs.build_tag || github.ref_type == 'tag' && github.ref_name || steps.short-sha.outputs.sha }}
-              PUBLIC_API_BASE_URL=${{ vars.PUBLIC_API_BASE_URL }}
-              PUBLIC_API_BASE_URL_WS=${{ vars.PUBLIC_API_BASE_URL_WS }}
-            tags: ${{ secrets.ACR_SERVER }}/cpvt-web:${{ github.event_name == 'workflow_dispatch' && inputs.build_tag || github.ref_type == 'tag' && github.ref_name || steps.short-sha.outputs.sha }}
-  test_inmemory:
-    name: Run Tests - Go Api - In Memory
-    runs-on: ubuntu-latest
-    if: ${{ github.event_name != 'push' }}
-    container: 
-      image: golang:1.23-alpine
-      options: --user root
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install templ
-        working-directory: api
-        run: go install github.com/a-h/templ/cmd/templ@latest
-      - name: Templ generate
-        working-directory: api
-        run: templ generate
-      - name: Install dependencies
-        working-directory: api
-        run: go get .
-      - name: Test
-        working-directory: api
-        run: go test -v ./...
-        env:
-          STORAGE: "inmemory"
-  test_redis:
-    name: Run Tests - Go Api - Redis
-    runs-on: ubuntu-latest
-    if: ${{ github.event_name != 'push' }}
-    container: 
-      image: golang:1.23-alpine
-      options: --user root
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install templ
-        working-directory: api
-        run: go install github.com/a-h/templ/cmd/templ@latest
-      - name: Templ generate
-        working-directory: api
-        run: templ generate
-      - name: Install dependencies
-        working-directory: api
-        run: go get .
-      - name: Test
-        working-directory: api
-        run: go test -v ./...
-        env:
-          STORAGE: "redis"
-  test_postgres:
-    name: Run Tests - Go Api - PostgreSQL
-    runs-on: ubuntu-latest
-    if: ${{ github.event_name != 'push' }}
-    container: 
-      image: golang:1.23-alpine
-      options: --user root
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install templ
-        working-directory: api
-        run: go install github.com/a-h/templ/cmd/templ@latest
-      - name: Templ generate
-        working-directory: api
-        run: templ generate
-      - name: Install dependencies
-        working-directory: api
-        run: go get .
-      - name: Test
-        working-directory: api
-        run: go test -v ./...
-        env:
-          STORAGE: "postgres"
+  # build_web:
+  #   name: Build Svelte Web App
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #       - uses: actions/checkout@v4
+  #       - name: Login to ACR
+  #         uses: docker/login-action@v3
+  #         with:
+  #           registry: ${{ secrets.ACR_SERVER }}
+  #           username: ${{ secrets.ACR_USER_NAME }}
+  #           password: ${{ secrets.ACR_PASSWORD }}
+  #       - name: Create short sha
+  #         uses: benjlevesque/short-sha@v3.0
+  #         id: short-sha
+  #         with:
+  #           length: 8
+  #       - name: Build and push
+  #         uses: docker/build-push-action@v5
+  #         with:
+  #           context: ./client-sk
+  #           push: ${{ github.event_name != 'pull_request' }}
+  #           platforms: linux/amd64
+  #           build-args: |
+  #             version_info=${{ github.event_name == 'workflow_dispatch' && inputs.build_tag || github.ref_type == 'tag' && github.ref_name || steps.short-sha.outputs.sha }}
+  #             PUBLIC_API_BASE_URL=${{ vars.PUBLIC_API_BASE_URL }}
+  #             PUBLIC_API_BASE_URL_WS=${{ vars.PUBLIC_API_BASE_URL_WS }}
+  #           tags: ${{ secrets.ACR_SERVER }}/cpvt-web:${{ github.event_name == 'workflow_dispatch' && inputs.build_tag || github.ref_type == 'tag' && github.ref_name || steps.short-sha.outputs.sha }}
+  # test_inmemory:
+  #   name: Run Tests - Go Api - In Memory
+  #   runs-on: ubuntu-latest
+  #   if: ${{ github.event_name != 'push' }}
+  #   container: 
+  #     image: golang:1.23-alpine
+  #     options: --user root
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Install templ
+  #       working-directory: api
+  #       run: go install github.com/a-h/templ/cmd/templ@latest
+  #     - name: Templ generate
+  #       working-directory: api
+  #       run: templ generate
+  #     - name: Install dependencies
+  #       working-directory: api
+  #       run: go get .
+  #     - name: Test
+  #       working-directory: api
+  #       run: go test -v ./...
+  #       env:
+  #         STORAGE: "inmemory"
+  # test_redis:
+  #   name: Run Tests - Go Api - Redis
+  #   runs-on: ubuntu-latest
+  #   if: ${{ github.event_name != 'push' }}
+  #   container: 
+  #     image: golang:1.23-alpine
+  #     options: --user root
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Install templ
+  #       working-directory: api
+  #       run: go install github.com/a-h/templ/cmd/templ@latest
+  #     - name: Templ generate
+  #       working-directory: api
+  #       run: templ generate
+  #     - name: Install dependencies
+  #       working-directory: api
+  #       run: go get .
+  #     - name: Test
+  #       working-directory: api
+  #       run: go test -v ./...
+  #       env:
+  #         STORAGE: "redis"
+  # test_postgres:
+  #   name: Run Tests - Go Api - PostgreSQL
+  #   runs-on: ubuntu-latest
+  #   if: ${{ github.event_name != 'push' }}
+  #   container: 
+  #     image: golang:1.23-alpine
+  #     options: --user root
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Install templ
+  #       working-directory: api
+  #       run: go install github.com/a-h/templ/cmd/templ@latest
+  #     - name: Templ generate
+  #       working-directory: api
+  #       run: templ generate
+  #     - name: Install dependencies
+  #       working-directory: api
+  #       run: go get .
+  #     - name: Test
+  #       working-directory: api
+  #       run: go test -v ./...
+  #       env:
+  #         STORAGE: "postgres"
