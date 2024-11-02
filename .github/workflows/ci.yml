@@ -15,7 +15,7 @@ on:
           default: null
 jobs:  
   build_api:
-    name: Build Go Api AWS
+    name: AWS - Build Go Api 
     runs-on: ubuntu-latest
     steps:
         - uses: actions/checkout@v4

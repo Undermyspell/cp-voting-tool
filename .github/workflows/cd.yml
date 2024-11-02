@@ -7,9 +7,9 @@ on:
           required: false
           type: string
           default: null
-jobs:   
+jobs:
   deploy_api:
-    name: Deploy Go Api
+    name: AWSS - Deploy Go Api
     runs-on: ubuntu-latest
     steps:
         - name: Get Git Tag
@@ -20,25 +20,60 @@ jobs:
           id: short-sha
           with:
             length: 8
-        - uses: azure/webapps-deploy@v2
+        - name: Configure AWS Credentials
+          uses: aws-actions/configure-aws-credentials@v4
+          id: aws-configure
           with:
-            app-name: 'cpvtapi'
-            publish-profile: ${{ secrets.AZURE_WEB_APP_API_PUBLISH_PROFILE }}
-            images: ${{ secrets.ACR_SERVER }}/cpvt-api:${{ github.event_name == 'workflow_dispatch' && inputs.build_tag || steps.git_tag.outputs.tag || steps.short-sha.outputs.sha }}
-  deploy_web:
-    name: Deploy Svelte Web app
-    runs-on: ubuntu-latest
-    steps:
-        - name: Get Git Tag
-          id: git_tag
-          run: echo "::set-output name=tag::$(git tag --points-at HEAD)"
-        - name: Create short sha
-          uses: benjlevesque/short-sha@v3.0
-          id: short-sha
+            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            aws-region: eu-central-1
+            role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+            role-duration-seconds: 1200
+        - name: Generate deployment package
+          run: zip -r deploy.zip deployment
+      
+        - name: Deploy to Elastic Beanstalk
+          uses: einaregilsson/beanstalk-deploy@v22
           with:
-            length: 8
-        - uses: azure/webapps-deploy@v2
-          with:
-            app-name: 'cpvtweb'
-            publish-profile: ${{ secrets.AZURE_WEB_APP_WEB_PUBLISH_PROFILE }}
-            images: ${{ secrets.ACR_SERVER }}/cpvt-web:${{ github.event_name == 'workflow_dispatch' && inputs.build_tag || steps.git_tag.outputs.tag || steps.short-sha.outputs.sha }}
+            aws_access_key: ${{ steps.aws-configure.outputs.aws-access-key-id }}
+            aws_secret_key: ${{ steps.aws-configure.outputs.aws-secret-access-key }}
+            aws_session_token: ${{ steps.aws-configure.outputs.aws-session-token }}
+            application_name: cpvote
+            environment_name: cpvote-env
+            version_label: ${{ steps.short-sha.outputs.sha }}
+            region: eu-central-1
+            deployment_package: deploy.zip  
+  # deploy_api:
+  #   name: Azure - Deploy Go Api
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #       - name: Get Git Tag
+  #         id: git_tag
+  #         run: echo "::set-output name=tag::$(git tag --points-at HEAD)"
+  #       - name: Create short sha
+  #         uses: benjlevesque/short-sha@v3.0
+  #         id: short-sha
+  #         with:
+  #           length: 8
+  #       - uses: azure/webapps-deploy@v2
+  #         with:
+  #           app-name: 'cpvtapi'
+  #           publish-profile: ${{ secrets.AZURE_WEB_APP_API_PUBLISH_PROFILE }}
+  #           images: ${{ secrets.ACR_SERVER }}/cpvt-api:${{ github.event_name == 'workflow_dispatch' && inputs.build_tag || steps.git_tag.outputs.tag || steps.short-sha.outputs.sha }}
+  # deploy_web:
+  #   name: Deploy Svelte Web app
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #       - name: Get Git Tag
+  #         id: git_tag
+  #         run: echo "::set-output name=tag::$(git tag --points-at HEAD)"
+  #       - name: Create short sha
+  #         uses: benjlevesque/short-sha@v3.0
+  #         id: short-sha
+  #         with:
+  #           length: 8
+  #       - uses: azure/webapps-deploy@v2
+  #         with:
+  #           app-name: 'cpvtweb'
+  #           publish-profile: ${{ secrets.AZURE_WEB_APP_WEB_PUBLISH_PROFILE }}
+  #           images: ${{ secrets.ACR_SERVER }}/cpvt-web:${{ github.event_name == 'workflow_dispatch' && inputs.build_tag || steps.git_tag.outputs.tag || steps.short-sha.outputs.sha }}
