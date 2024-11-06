@@ -30,6 +30,7 @@ jobs:
             aws-region: eu-central-1
             role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
             role-duration-seconds: 1200
+            output-credentials: true
 
         - name: Patch Image version to Dockerrun.aws.json 
           run: |
