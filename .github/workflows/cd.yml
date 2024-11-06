@@ -12,6 +12,7 @@ jobs:
     name: AWSS - Deploy Go Api
     runs-on: ubuntu-latest
     steps:
+        - uses: actions/checkout@v4
         - name: Get Git Tag
           id: git_tag
           run: echo "::set-output name=tag::$(git tag --points-at HEAD)"
@@ -29,6 +30,15 @@ jobs:
             aws-region: eu-central-1
             role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
             role-duration-seconds: 1200
+
+        - name: Patch Image version to Dockerrun.aws.json 
+          run: |
+            echo $IMAGE
+            cd deployment
+            jq '.Image.Name = $IMAGE' Dockerrun.aws.json > Dockerrun.aws.temp.json
+            mv Dockerrun.aws.temp.json Dockerrun.aws.json
+          env:
+            IMAGE: ${{ secrets.AWS_ECR_SERVER }}/cpvt-api:${{ github.event_name == 'workflow_dispatch' && inputs.build_tag || github.ref_type == 'tag' && github.ref_name || steps.short-sha.outputs.sha }}
         - name: Generate deployment package
           run: zip -r deploy.zip deployment
       
