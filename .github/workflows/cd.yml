@@ -41,7 +41,9 @@ jobs:
           env:
             IMAGE: ${{ secrets.AWS_ECR_SERVER }}/cpvt-api:${{ github.event_name == 'workflow_dispatch' && inputs.build_tag || github.ref_type == 'tag' && github.ref_name || steps.short-sha.outputs.sha }}
         - name: Generate deployment package
-          run: zip -r deploy.zip deployment
+          run: |
+            cd deployment
+            zip -r ../deploy.zip .
       
         - name: Deploy to Elastic Beanstalk
           uses: einaregilsson/beanstalk-deploy@v22
