@@ -6,9 +6,9 @@
 	},
 	"Ports": [
 		{
-			"ContainerPort": "80",
+			"ContainerPort": "3333",
 			"HostPort": "80"
 		}
 	],
-    "Logging": "/var/log/caddy"
+    "Logging": "/var/log/cpvoting"
 }

@@ -8,8 +8,8 @@ on:
           type: string
           default: null
 jobs:
-  deploy_api:
-    name: AWSS - Deploy Go Api
+  deploy_api_aws:
+    name: AWS - Deploy Go Api
     runs-on: ubuntu-latest
     steps:
         - uses: actions/checkout@v4
