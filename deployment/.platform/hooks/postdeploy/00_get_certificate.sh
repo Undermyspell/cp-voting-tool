@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-certbot -n -d cpvote.eu-central-1.elasticbeanstalk.com certonly --nginx --agree-tos --email michael.kaiser@conplement.de
+certbot -n -d ${AWS_BEANSTALK_DOMAIN} certonly --nginx --agree-tos --email ${CERTBOT_EMAIL}
