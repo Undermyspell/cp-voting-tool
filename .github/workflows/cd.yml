@@ -33,7 +33,7 @@ jobs:
             output-credentials: true
         - name: Substitute env vars in deployment files
           run: |
-            envsubst < ./deployment/.ebextensions/01_enable_https.config > 01_temp.config && \
+            envsubst '${AWS_BEANSTALK_DOMAIN}' < ./deployment/.ebextensions/01_enable_https.config > 01_temp.config && \
             mv 01_temp.config ./deployment/.ebextensions/01_enable_https.config
 
             envsubst < ./deployment/.platform/hooks/postdeploy/00_get_certificate.sh > 00_temp.sh && \

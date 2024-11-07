@@ -43,7 +43,7 @@ jobs:
             platforms: linux/amd64
             tags: ${{ secrets.AWS_ECR_SERVER }}/cpvt-api:${{ github.event_name == 'workflow_dispatch' && inputs.build_tag || github.ref_type == 'tag' && github.ref_name || steps.short-sha.outputs.sha }}
   build_api_azure:
-    name: Build Go Api
+    name: Azure - Build Go Api
     runs-on: ubuntu-latest
     steps:
         - uses: actions/checkout@v4
@@ -66,7 +66,7 @@ jobs:
             platforms: linux/amd64
             tags: ${{ secrets.ACR_SERVER }}/cpvt-api:${{ github.event_name == 'workflow_dispatch' && inputs.build_tag || github.ref_type == 'tag' && github.ref_name || steps.short-sha.outputs.sha }}
   build_web:
-    name: Build Svelte Web App
+    name: Azure - Build Svelte Web App
     runs-on: ubuntu-latest
     steps:
         - uses: actions/checkout@v4
