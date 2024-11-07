@@ -33,13 +33,13 @@ jobs:
             output-credentials: true
         - name: 
           run: |
-            envsubst < ./deployment/.ebextensions/01_enable_http.config > 01_temp.config && \
-            mv 01_temp.config ./deployment/.ebextensions/01_enable_http.config
+            envsubst < ./deployment/.ebextensions/01_enable_https.config > 01_temp.config && \
+            mv 01_temp.config ./deployment/.ebextensions/01_enable_https.config
 
             envsubst < ./deployment/hooks/postdeploy/00_get_certificate.sh > 00_temp.sh && \
             mv 00_temp.sh ./deployment/hooks/postdeploy/00_get_certificate.sh
 
-            cat ./deployment/.ebextensions/01_enable_http.config 
+            cat ./deployment/.ebextensions/01_enable_https.config 
             cat ./deployment/hooks/postdeploy/00_get_certificate.sh
           env:
             AWS_BEANSTALK_DOMAIN: ${{ vars.AWS_BEANSTALK_DOMAIN }}
