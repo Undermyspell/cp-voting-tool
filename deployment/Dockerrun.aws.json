@@ -1,0 +1,14 @@
+{
+	"AWSEBDockerrunVersion": "1",
+	"Image": {
+		"Name": "caddy",
+        "Update": "true"
+	},
+	"Ports": [
+		{
+			"ContainerPort": "3333",
+			"HostPort": "80"
+		}
+	],
+    "Logging": "/var/log/cpvoting"
+}

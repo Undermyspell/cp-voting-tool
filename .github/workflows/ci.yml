@@ -13,9 +13,37 @@ on:
           required: false
           type: string
           default: null
-jobs:   
-  build_api:
-    name: Build Go Api
+jobs:  
+  build_api_aws:
+    name: AWS - Build Go Api 
+    runs-on: ubuntu-latest
+    steps:
+        - uses: actions/checkout@v4
+        - name: Configure AWS Credentials
+          uses: aws-actions/configure-aws-credentials@v4
+          with:
+            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            aws-region: eu-central-1
+            role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+            role-duration-seconds: 1200
+        - name: Login to ECR
+          id: login-ecr
+          uses: aws-actions/amazon-ecr-login@v2
+        - name: Create short sha
+          uses: benjlevesque/short-sha@v3.0
+          id: short-sha
+          with:
+            length: 8
+        - name: Build and push
+          uses: docker/build-push-action@v5
+          with:
+            context: ./api
+            push: ${{ github.event_name != 'pull_request' }}
+            platforms: linux/amd64
+            tags: ${{ secrets.AWS_ECR_SERVER }}/cpvt-api:${{ github.event_name == 'workflow_dispatch' && inputs.build_tag || github.ref_type == 'tag' && github.ref_name || steps.short-sha.outputs.sha }}
+  build_api_azure:
+    name: Azure - Build Go Api
     runs-on: ubuntu-latest
     steps:
         - uses: actions/checkout@v4
@@ -38,7 +66,7 @@ jobs:
             platforms: linux/amd64
             tags: ${{ secrets.ACR_SERVER }}/cpvt-api:${{ github.event_name == 'workflow_dispatch' && inputs.build_tag || github.ref_type == 'tag' && github.ref_name || steps.short-sha.outputs.sha }}
   build_web:
-    name: Build Svelte Web App
+    name: Azure - Build Svelte Web App
     runs-on: ubuntu-latest
     steps:
         - uses: actions/checkout@v4
