@@ -82,20 +82,3 @@ jobs:
             app-name: 'cpvtapi'
             publish-profile: ${{ secrets.AZURE_WEB_APP_API_PUBLISH_PROFILE }}
             images: ${{ secrets.ACR_SERVER }}/cpvt-api:${{ github.event_name == 'workflow_dispatch' && inputs.build_tag || steps.git_tag.outputs.tag || steps.short-sha.outputs.sha }}
-  deploy_web:
-    name: Deploy Svelte Web app
-    runs-on: ubuntu-latest
-    steps:
-        - name: Get Git Tag
-          id: git_tag
-          run: echo "::set-output name=tag::$(git tag --points-at HEAD)"
-        - name: Create short sha
-          uses: benjlevesque/short-sha@v3.0
-          id: short-sha
-          with:
-            length: 8
-        - uses: azure/webapps-deploy@v2
-          with:
-            app-name: 'cpvtweb'
-            publish-profile: ${{ secrets.AZURE_WEB_APP_WEB_PUBLISH_PROFILE }}
-            images: ${{ secrets.ACR_SERVER }}/cpvt-web:${{ github.event_name == 'workflow_dispatch' && inputs.build_tag || steps.git_tag.outputs.tag || steps.short-sha.outputs.sha }}

@@ -4,7 +4,6 @@ import (
 	"embed"
 	"io/fs"
 	"net/http"
-	"time"
 	bff "voting/bff/interface/http"
 	"voting/internal/env"
 	"voting/shared/auth"
@@ -20,7 +19,6 @@ import (
 
 	_ "voting/docs"
 
-	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -77,14 +75,7 @@ func main() {
 
 	voting_repositories.InitInstances(votingStorage)
 
-	config := cors.Config{
-		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
-		AllowCredentials: false,
-		MaxAge:           12 * time.Hour,
-	}
-	config.AllowOrigins = []string{"*"}
-	r.Use(cors.New(config))
+	r.Use(middleware.Cors())
 	r.Use(middleware.Options)
 	r.Use(middleware.GinContextToContextMiddleware())
 
