@@ -1,11 +1,11 @@
 # Conplement Voting Tool
 This is the repository of the conplement voting tool used in employee meetings
 
-## Web Frontend 1 (built with svelte) ⚡️
-- [Svelte](https://svelte.dev/)
-- [Vite](https://vitejs.dev/)
+~~## Web Frontend (built with svelte) ⚡️~~
+- ~~[Svelte](https://svelte.dev/)~~
+- ~~[Vite](https://vitejs.dev/)~~
 
-## Web Frontend 2 (built with go, templ, htmx, alpinejs) ⚡️
+## Web Frontend (built with go, templ, htmx, alpinejs) ⚡️
 - [Go](https://go.dev/)
 - [Templ](https://templ.guide/)
 - [htmx](https://htmx.org/)
@@ -21,11 +21,15 @@ This is the repository of the conplement voting tool used in employee meetings
 ### Live updates
 - [Centrifuge](https://github.com/centrifugal/centrifuge)
 ### Data storage
-#### Redis (previously in use)
-- [Redis-Cloud](https://app.redislabs.com/#/)
-- [Go-ReJSON](https://github.com/nitishm/go-rejson)
-#### PostgreSQL (currently in use)
+#### ~~Redis~~
+- ~~[Redis-Cloud](https://app.redislabs.com/#/)~~
+- ~~[Go-ReJSON](https://github.com/nitishm/go-rejson)~~
+#### PostgreSQL
 - [Neon PostgreSQL](https://neon.tech/)
+
+#### Hosting
+- [Azure App Service](https://azure.microsoft.com/en-us/products/app-service)
+- [AWS Elastic Beanstalk](https://aws.amazon.com/elasticbeanstalk/)
 
 
 ## Get Started
