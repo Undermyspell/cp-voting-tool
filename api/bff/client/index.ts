@@ -17,7 +17,17 @@ import type { Question, QuestionDataStore, ThemeData, User } from './types';
             return (this as QuestionDataStore).questions.filter(q => q.Answered).sort((a, b) => b.Votes - a.Votes)
         },
         get sortedUnansweredQuestions(): Question[]  {
-            return (this as QuestionDataStore).questions.filter(q => !q.Answered).sort((a, b) => b.Votes - a.Votes)
+            if(this.autoSortQuestions) {
+                return (this as QuestionDataStore).questions
+                .filter(q => !q.Answered)
+                .sort((a, b) =>  {
+                    if(b.Votes !== a.Votes) {
+                        return b.Votes - a.Votes
+                    }
+                    return a.Id.localeCompare(b.Id)
+                })
+            } 
+            return (this as QuestionDataStore).questions.filter(q => !q.Answered)
         },
         user: null,
         usersOnlineCount: 0,
@@ -36,6 +46,7 @@ import type { Question, QuestionDataStore, ThemeData, User } from './types';
         updateUserOnlineCount(this: QuestionDataStore, usersOnlineCount: number) {
             this.usersOnlineCount = usersOnlineCount
         },
+        autoSortQuestions: true
     } as QuestionDataStore)
 
 

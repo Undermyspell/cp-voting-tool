@@ -16,6 +16,7 @@ export type QuestionDataStore = {
 	readonly  sortedUnansweredQuestions: Question[],
 	user: User | null,
 	usersOnlineCount: number,
+	autoSortQuestions: boolean,
 	addQuestion(this: QuestionDataStore, question: Question): () => void,
 	updateQuestion(this: QuestionDataStore, question: Question): () => void,
 	deleteQuestion(this: QuestionDataStore, question: Question): () => void,
