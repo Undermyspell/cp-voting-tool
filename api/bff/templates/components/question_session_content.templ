@@ -68,6 +68,13 @@ templ NewQuestionButton() {
 	</div>
 }
 
+templ AutoSortCheckbox() {
+	<div class="flex items-center mb-4 px-10">
+		<input x-model="$store.questionData.autoSortQuestions" id="autosortQuestions" name="autosortQuestions" type="checkbox" value="true" class="dark:accent-gray-500 accent-gray-800 w-4 h-4 text-gray-600 bg-gray-100 border-gray-300 rounde dark:bg-gray-900 dark:border-gray-600"/>
+		<label for="autosortQuestions" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Fragen automatisch sortieren?</label>
+	</div>
+}
+
 templ QuestionsSessionContent(activeSession, onlyUnansweredQuestions bool) {
 	<div class="max-w-[1400px] ml-auto mr-auto pt-4">
 		<div id="question-session-content" class="content rounded-md overflow-hidden">
@@ -75,6 +82,7 @@ templ QuestionsSessionContent(activeSession, onlyUnansweredQuestions bool) {
 				if activeSession {
 					@QuestionKindTabs(onlyUnansweredQuestions)
 					@NewQuestionButton()
+					@AutoSortCheckbox()
 					if onlyUnansweredQuestions {
 						@QuestionUnansweredList()
 					} else {
