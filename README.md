@@ -59,10 +59,10 @@ You now can access the application on http://localhost:3333
 You can access a Grafana dashboard with RED (Rate Error Duration) Metrics on http://localhost:3050
 
 ### Traces (Grafana)
-You can also access Traces via Grafana on http://localhost:3050
+You can also access Grafana dashboard for Traces via Grafana on http://localhost:3050
 
 ### Logs (Grafana)
-You can view application Logs via Grafana on http://localhost:3050
+You can view application Grafana dashboard for Logs via Grafana on http://localhost:3050
 
 ### Teardown application
 
