@@ -45,10 +45,28 @@ You can configure the type in the env.yaml file, yet You have to fill in the Pos
 
 If you want to start the api with a redis or postgreSQL cloud storage you have to decrypt the env.enc.yaml using [Mozilla sops](https://github.com/getsops/sops). Please contact the developer team for further information.
 
-### Run docker-compose file
+### Run application
 
-If a env.yaml file is located in the ./api directory you can run the application using the docker-compose file located at the root of the project.
+If a env.yaml file is located in the ./api directory you can run the applications via the commands in the makefile
+```shell
+cd ./api
+make up
+```
+
+You now can access the application on http://localhost:3333
+
+### Metrics (Grafana)
+You can access a Grafana dashboard with RED (Rate Error Duration) Metrics on http://localhost:3050
+
+### Traces (Grafana)
+You can also access Traces via Grafana on http://localhost:3050
+
+### Logs (Grafana)
+You can view application Logs via Grafana on http://localhost:3050
+
+### Teardown application
 
 ```shell
-docker-compose up -d
+cd ./api
+make down
 ```

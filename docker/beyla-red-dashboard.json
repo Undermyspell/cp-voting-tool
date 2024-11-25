@@ -1113,6 +1113,7 @@
     "refresh": "30s",
     "schemaVersion": 38,
     "tags": [
+      "cp-voting-tool",
       "ebpf",
       "red",
       "http",
