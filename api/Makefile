@@ -21,10 +21,10 @@ build: templ-install
 	@go build -o main main.go
 
 up: 
-	@docker compose -f ../docker/docker-compose.yml up -d 
+	@docker compose -f ../local/docker-compose.yml up -d 
 
 down:
-	@docker compose -f ../docker/docker-compose.yml down
+	@docker compose -f ../local/docker-compose.yml down
 
 test:
 	@echo "Testing..."

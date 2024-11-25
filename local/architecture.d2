@@ -1,0 +1,49 @@
+direction: down
+vars: {
+  d2-config: {
+    layout-engine: elk
+    theme-id: 200
+  }
+}
+Grafana Beyla: {
+  shape: image
+  icon: https://grafana.com/static/img/logos/beyla-logo.svg
+}
+API: {
+  shape: image
+  icon: https://upload.wikimedia.org/wikipedia/commons/0/05/Go_Logo_Blue.svg
+}
+Grafana Promtail: {
+  shape: image
+  icon: https://grafana.com/media/docs/loki/logo-grafana-loki.png
+}
+Prometheus: {
+  shape: image
+  icon: https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Prometheus_software_logo.svg/2066px-Prometheus_software_logo.svg.png
+}
+Grafana: {
+  shape: image
+  icon: https://cdn.iconscout.com/icon/free/png-256/free-grafana-3628811-3030088.png?f=webp
+}
+Grafana Loki: {
+  shape: image
+  icon: https://grafana.com/media/docs/loki/logo-grafana-loki.png
+}
+OTEL Collector: {
+  shape: image
+  icon: https://camo.githubusercontent.com/8d24629d591a06f2abdab869d0d362552bff745e7e817ec80d70e8c5b371f3d6/68747470733a2f2f6f70656e74656c656d657472792e696f2f696d672f6c6f676f732f6f70656e74656c656d657472792d6c6f676f2d6e61762e706e67
+}
+Grafana Tempo: {
+  shape: image
+  icon: https://grafana.com/static/assets/img/logos/grafana-tempo.svg
+}
+
+Grafana Beyla -> API: Obtain Traces and Metrics via eBPF
+Grafana Beyla -> OTEL Collector: Metrics and Traces
+Prometheus -> OTEL Collector: Scrape Metrics
+Grafana -> Prometheus: Query Metrics
+Grafana Promtail -> API: Read containr log files
+Grafana Promtail -> Grafana Loki: Send logs
+Grafana -> Grafana Loki: Query Logs
+OTEL Collector -> Grafana Tempo: Send Traces
+Grafana -> Grafana Tempo: Query Traces

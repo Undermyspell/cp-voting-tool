@@ -45,7 +45,7 @@ You can configure the type in the env.yaml file, yet You have to fill in the Pos
 
 If you want to start the api with a redis or postgreSQL cloud storage you have to decrypt the env.enc.yaml using [Mozilla sops](https://github.com/getsops/sops). Please contact the developer team for further information.
 
-### Run application
+### Run the local application stack
 
 If a env.yaml file is located in the ./api directory you can run the applications via the commands in the makefile
 ```shell
@@ -70,3 +70,6 @@ You can view application Grafana dashboard for Logs via Grafana on http://localh
 cd ./api
 make down
 ```
+
+### Local application stack architecture
+![Architecture](./local/architecture.svg)
