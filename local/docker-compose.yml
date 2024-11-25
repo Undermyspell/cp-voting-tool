@@ -1,0 +1,138 @@
+services:
+  api:
+    container_name: api
+    labels:
+      logging: "promtail"
+      logging_jobname: "api"
+    build:
+      context: ../api
+    ports:
+      - 3333:3333
+    env_file:
+      - ../api/env.yaml
+    environment:
+      POSTGRESQL_CONNECTION_STRING_SECRET: postgresql://pgcomposeusr:pgcomposepw@postgres:5432/pgcomposeusr
+    depends_on:
+      - postgres  
+
+  postgres:
+    container_name: postgres
+    labels:
+      logging: "promtail"
+      logging_jobname: "postgres"
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: pgcomposeusr
+      POSTGRES_PASSWORD: pgcomposepw
+    volumes:
+      - ../api/test/seed.sql:/docker-entrypoint-initdb.d/seed.sql
+    expose:
+      - 5432
+      
+  beyla:
+    image: grafana/beyla
+    container_name: beyla
+    labels:
+      logging: "promtail"
+      logging_jobname: "beyla"
+    pid: "service:api"
+    privileged: true
+    environment:
+      BEYLA_TRACE_PRINTER: text
+      BEYLA_OPEN_PORT: 3333
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+  
+  tempo:
+    image: grafana/tempo
+    container_name: tempo
+    labels:
+      logging: "promtail"
+      logging_jobname: "tempo"
+    restart: unless-stopped
+    command: [ "-config.file=/etc/tempo.yaml" ]
+    volumes:
+      - ./tempo.yaml:/etc/tempo.yaml
+    expose:
+      - 4318
+      - 3200
+  
+  otel-collector:
+    container_name: otel-collector
+    labels:
+      logging: "promtail"
+      logging_jobname: "otel-collector"
+    image: otel/opentelemetry-collector-contrib
+    restart: unless-stopped
+    volumes:
+    - ./otel-collector.yaml:/etc/otelcol-contrib/config.yaml
+    expose:
+      - 8888 # Prometheus metrics exposed by the Collector
+      - 8889
+      - 13133 # health_check extension
+      - 4318 # OTLP http receiver
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    labels:
+      logging: "promtail"
+      logging_jobname: "grafana"
+    restart: unless-stopped
+    ports:
+      - 3050:3000
+    volumes:
+      - ./datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+      - ./dashboard-provider.yaml:/etc/grafana/provisioning/dashboards/dashboard-provider.yaml
+      - ./beyla-red-dashboard.json:/dashboard-definitions/beyla-red-dashboard.json
+      - ./logs-dashboard.json:/dashboard-definitions/logs-dashboard.yaml.json
+      - ./traces-dashboard.json:/dashboard-definitions/traces-dashboard.yaml.json
+
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+      - GF_FEATURE_TOGGLES_ENABLE=traceqlEditor traceQLStreaming metricsSummary
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    labels:
+      logging: "promtail"
+      logging_jobname: "prometheus"
+    restart: unless-stopped
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    expose:
+      - 9090
+  
+  loki:
+    image: grafana/loki
+    container_name: loki
+    labels:
+      logging: "promtail"
+      logging_jobname: "loki"
+    restart: unless-stopped
+    ports:
+      - 3100:3100
+
+  promtail:
+    image: grafana/promtail
+    container_name: promtail
+    labels:
+      logging: "promtail"
+      logging_jobname: "promtail"
+    restart: unless-stopped
+    command: ["-config.file=/etc/promtail.yaml"]
+    volumes:
+      - ./promtail.yaml:/etc/promtail.yaml
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - loki

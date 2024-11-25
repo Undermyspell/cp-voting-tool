@@ -20,8 +20,14 @@ build: templ-install
 	@go generate
 	@go build -o main main.go
 
+up: 
+	@docker compose -f ../local/docker-compose.yml up -d 
+
+down:
+	@docker compose -f ../local/docker-compose.yml down
+
 test:
 	@echo "Testing..."
 	@STORAGE=postgres go test -v
 
-.PHONY: templ-install build test
+.PHONY: templ-install build test up down
