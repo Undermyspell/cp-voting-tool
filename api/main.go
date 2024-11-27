@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"embed"
 	"io/fs"
 	"net/http"
 	bff "voting/bff/interface/http"
 	"voting/internal/env"
+	"voting/obs"
 	"voting/shared/auth"
 	authhandler "voting/shared/auth/handler"
 	"voting/shared/auth/jwks"
@@ -24,6 +26,10 @@ import (
 	"github.com/sirupsen/logrus"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"github.com/uptrace/opentelemetry-go-extra/otellogrus"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 //go:embed bff/static/*
@@ -50,6 +56,28 @@ var r *gin.Engine
 // @host      localhost:3333
 // @BasePath  /api/v1
 func main() {
+	ctx := context.Background()
+	exp, _ := obs.NewExporter(ctx)
+	tp := obs.NewTraceProvider(exp)
+	defer func() { _ = tp.Shutdown(ctx) }()
+	otel.SetTracerProvider(tp)
+	tracer := tp.Tracer("cpvoting")
+
+	logrus.AddHook(otellogrus.NewHook(otellogrus.WithLevels(
+		logrus.PanicLevel,
+		logrus.FatalLevel,
+		logrus.ErrorLevel,
+		logrus.WarnLevel,
+		logrus.InfoLevel,
+		logrus.DebugLevel,
+	)))
+
+	parentCtx, outerSpan := tracer.Start(ctx, "start app")
+	test, span := tracer.Start(parentCtx, "init app")
+
+	logrus.WithContext(test).Info("inititalize app")
+	logrus.WithContext(test).Info("another loggy")
+
 	env.Init()
 	jwks.Init()
 	authhandler.InitOAuthConfig()
@@ -75,6 +103,11 @@ func main() {
 
 	voting_repositories.InitInstances(votingStorage)
 
+	span.End()
+
+	_, span = tracer.Start(parentCtx, "setup routes", trace.WithAttributes(attribute.String("hello", "world")))
+
+	logrus.Info("log - setup routes")
 	r.Use(middleware.Cors())
 	r.Use(middleware.Options)
 	r.Use(middleware.GinContextToContextMiddleware())
@@ -126,6 +159,10 @@ func main() {
 		ut.POST("/admin", user_http.GetAdmin)
 		ut.POST("/sessionadmin", user_http.GetAdmin)
 	}
+
+	span.End()
+
+	outerSpan.End()
 
 	start(r)
 }
