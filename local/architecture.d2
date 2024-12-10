@@ -13,10 +13,6 @@ API: {
   shape: image
   icon: https://upload.wikimedia.org/wikipedia/commons/0/05/Go_Logo_Blue.svg
 }
-Grafana Promtail: {
-  shape: image
-  icon: https://grafana.com/media/docs/loki/logo-grafana-loki.png
-}
 Prometheus: {
   shape: image
   icon: https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Prometheus_software_logo.svg/2066px-Prometheus_software_logo.svg.png
@@ -37,13 +33,18 @@ Grafana Tempo: {
   shape: image
   icon: https://grafana.com/static/assets/img/logos/grafana-tempo.svg
 }
+Grafana Alloy: {
+  shape: image
+  icon: https://grafana.com/media/docs/alloy/alloy_icon.png
+}
 
 Grafana Beyla -> API: Obtain Traces and Metrics via eBPF
-Grafana Beyla -> OTEL Collector: Metrics and Traces
+Grafana Beyla -> OTEL Collector: Metrics
+Grafana Beyla -> Grafana Alloy: Traces
 Prometheus -> OTEL Collector: Scrape Metrics
 Grafana -> Prometheus: Query Metrics
-Grafana Promtail -> API: Read containr log files
-Grafana Promtail -> Grafana Loki: Send logs
+Grafana Alloy -> API: Read container log files
+Grafana Alloy -> Grafana Loki: Send logs
 Grafana -> Grafana Loki: Query Logs
-OTEL Collector -> Grafana Tempo: Send Traces
+Grafana Alloy -> Grafana Tempo: Send Traces
 Grafana -> Grafana Tempo: Query Traces

@@ -1,0 +1,64 @@
+
+discovery.docker "logs_integrations_docker" {
+    host             = "unix:///var/run/docker.sock"
+    refresh_interval = "5s"
+}
+
+discovery.relabel "logs_integrations_docker" {
+    targets = []
+
+    rule {
+        source_labels = ["__meta_docker_container_name"]
+        regex         = "/(.*)"
+        target_label  = "container"
+    }
+
+    rule {
+        source_labels = ["__meta_docker_container_log_stream"]
+        target_label  = "stream"
+    }
+
+    rule {
+        source_labels = ["__meta_docker_container_label_logging_jobname"]
+        target_label  = "job"
+    }
+}
+
+loki.source.docker "logs_integrations_docker" {
+    host             = "unix:///var/run/docker.sock"
+    targets          = discovery.docker.logs_integrations_docker.targets
+    forward_to       = [loki.write.grafana_loki.receiver]
+    relabel_rules    = discovery.relabel.logs_integrations_docker.rules
+    refresh_interval = "5s"
+}
+
+loki.write "grafana_loki" {
+    endpoint {
+      url = "http://loki:3100/loki/api/v1/push"
+    }
+}
+
+otelcol.receiver.otlp "default" {
+    grpc { }
+
+    http { }
+
+    output {
+        traces  = [otelcol.exporter.otlphttp.traces.input]
+    }
+}
+
+otelcol.exporter.otlphttp "traces" {
+    client {
+        endpoint = "http://tempo:4318"
+
+        tls {
+            insecure = true
+        }
+    }
+}
+
+logging {
+  level  = "info"
+  format = "logfmt"
+}
