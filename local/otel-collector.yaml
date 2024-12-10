@@ -11,10 +11,6 @@ exporters:
     metric_expiration: 180m
     resource_to_telemetry_conversion:
       enabled: true
-  otlphttp:
-    endpoint: http://tempo:4318
-    tls:
-      insecure: true
   debug:
     verbosity: detailed
 
@@ -25,8 +21,4 @@ service:
   pipelines:
     metrics:
       receivers: [otlp]
-      exporters: [prometheus]
-    traces:
-      receivers: [otlp]
-      processors: [batch]
-      exporters: [otlphttp, debug]
+      exporters: [prometheus, debug]

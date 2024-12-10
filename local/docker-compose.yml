@@ -41,7 +41,8 @@ services:
     environment:
       BEYLA_TRACE_PRINTER: text
       BEYLA_OPEN_PORT: 3333
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://alloy:4318/v1/traces
+      OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: http://otel-collector:4318/v1/metrics
   
   tempo:
     image: grafana/tempo
@@ -57,21 +58,6 @@ services:
       - 4318
       - 3200
   
-  otel-collector:
-    container_name: otel-collector
-    labels:
-      logging: "promtail"
-      logging_jobname: "otel-collector"
-    image: otel/opentelemetry-collector-contrib
-    restart: unless-stopped
-    volumes:
-    - ./otel-collector.yaml:/etc/otelcol-contrib/config.yaml
-    expose:
-      - 8888 # Prometheus metrics exposed by the Collector
-      - 8889
-      - 13133 # health_check extension
-      - 4318 # OTLP http receiver
-
   grafana:
     image: grafana/grafana
     container_name: grafana
@@ -122,17 +108,52 @@ services:
     ports:
       - 3100:3100
 
-  promtail:
-    image: grafana/promtail
-    container_name: promtail
+  alloy:
+    image: grafana/alloy
+    container_name: alloy
     labels:
       logging: "promtail"
-      logging_jobname: "promtail"
-    restart: unless-stopped
-    command: ["-config.file=/etc/promtail.yaml"]
+      logging_jobname: "alloy"
+    ports:
+      - 12345:12345
     volumes:
-      - ./promtail.yaml:/etc/promtail.yaml
+      - ./config.alloy:/etc/alloy/config.alloy
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock
+    command:
+      - 'run'
+      - '--server.http.listen-addr=0.0.0.0:12345'
+      - '--storage.path=/var/lib/alloy/data'
+      - '/etc/alloy/config.alloy'
     depends_on:
       - loki
+  
+  otel-collector:
+    container_name: otel-collector
+    labels:
+      logging: "promtail"
+      logging_jobname: "otel-collector"
+    image: otel/opentelemetry-collector-contrib
+    restart: unless-stopped
+    volumes:
+    - ./otel-collector.yaml:/etc/otelcol-contrib/config.yaml
+    expose:
+      - 8888 # Prometheus metrics exposed by the Collector
+      - 8889
+      - 13133 # health_check extension
+      - 4318 # OTLP http receiver
+
+  # promtail:
+  #   image: grafana/promtail
+  #   container_name: promtail
+  #   labels:
+  #     logging: "promtail"
+  #     logging_jobname: "promtail"
+  #   restart: unless-stopped
+  #   command: ["-config.file=/etc/promtail.yaml"]
+  #   volumes:
+  #     - ./promtail.yaml:/etc/promtail.yaml
+  #     - /var/lib/docker/containers:/var/lib/docker/containers:ro
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #   depends_on:
+  #     - loki
