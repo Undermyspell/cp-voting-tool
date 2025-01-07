@@ -15,9 +15,9 @@
   "description": "",
   "devDependencies": {
     "@types/alpinejs": "^3.13.11",
-    "alpinejs": "^3.14.7",
+    "alpinejs": "^3.14.8",
     "centrifuge": "^5.2.2",
-    "esbuild": "^0.24.0",
+    "esbuild": "^0.24.2",
     "typescript": "^5.7.2"
   }
 }
