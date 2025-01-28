@@ -13,7 +13,7 @@ RUN go install github.com/a-h/templ/cmd/templ@latest && \
 RUN go build -o cp-voting-tool
 RUN go vet ./...
 
-FROM alpine:3.20 AS runtime
+FROM alpine:3.21 AS runtime
 
 WORKDIR /app
 
@@ -21,7 +21,7 @@ ENV GIN_MODE=release
 
 COPY --from=build /app .
 
-ENTRYPOINT [ "/app/cp-voting-tool" ]
+CMD [ "/app/cp-voting-tool" ]
 
 
 
