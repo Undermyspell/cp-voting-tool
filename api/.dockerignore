@@ -2,3 +2,5 @@ node_modules
 *env*
 *.toml
 Makefile
+bff/static/js/*
+bff/static/css/tailwind.css

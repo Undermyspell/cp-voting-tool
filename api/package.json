@@ -7,9 +7,7 @@
     "test": "test"
   },
   "scripts": {
-    "build": "esbuild --bundle --outdir=./bff/static/js $(find ./bff/client/ -name '*.ts' ! -name '*.d.ts')",
-    "build:gen": "esbuild --bundle --outfile=bff/static/js/index.js bff/client/index.ts",
-    "tailwindcss:gen": "tailwindcss build -i bff/static/css/style.css -o bff/static/css/tailwind.css -m"
+    "build": "esbuild --bundle --outdir=./bff/static/js $(find ./bff/client/ -name '*.ts' ! -name '*.d.ts')"
   },
   "keywords": [],
   "author": "",
@@ -20,7 +18,7 @@
     "alpinejs": "^3.14.8",
     "centrifuge": "^5.3.1",
     "esbuild": "^0.24.2",
-    "tailwindcss": "^4.0.0",
+    "tailwindcss": "^4.0.1",
     "typescript": "^5.7.3"
   }
 }

@@ -29,7 +29,8 @@ import (
 //go:embed bff/static/*
 var static embed.FS
 
-//go:generate npm run build:gen
+//go:generate npx @tailwindcss/cli -i bff/static/css/style.css -o bff/static/css/tailwind.css -m
+//go:generate npx esbuild --bundle --outfile=bff/static/js/index.js bff/client/index.ts
 
 var start = func(r *gin.Engine) {
 	r.Run(":3333")
