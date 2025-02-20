@@ -69,7 +69,7 @@ templ QuestionUnansweredListElement() {
 		<div class="flex-0 flex flex-col items-center rounded-md bg-white px-4 py-2 shadow duration-100 hover:scale-105 dark:bg-gray-900">
 			<template x-if="question.Voted">
 				<button :hx-put="`/q/undovote/${question.Id}`">
-<svg version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="32px" stroke="currentColor"
+<svg version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="32px" fill="currentColor"
 	 viewBox="0 0 471.2 471.2" style="enable-background:new 0 0 471.2 471.2;" xml:space="preserve">
 <g>
 	<g>
@@ -86,7 +86,7 @@ templ QuestionUnansweredListElement() {
 			</template>
 			<template x-if="!question.Voted">
 				<button :hx-put="`/q/upvote/${question.Id}`">
-<svg version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="32px" stroke="currentColor"
+<svg version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="32px" fill="currentColor"
 	 viewBox="0 0 471.2 471.2" style="enable-background:new 0 0 471.2 471.2;" xml:space="preserve">
 <g>
 	<g>
