@@ -91,7 +91,7 @@ func (session *Postgresql) GetQuestions() map[string]voting_models.Question {
 	for rows.Next() {
 		var question voting_models.Question
 		if err = rows.Scan(&question.Id, &question.Text, &question.Answered, &question.Anonymous, &question.CreatorName, &question.CreatorHash, &question.Votes); err != nil {
-			logrus.Fatalf(err.Error())
+			logrus.Fatal(err.Error())
 		}
 		questions[question.Id] = question
 	}
@@ -115,7 +115,7 @@ func (session *Postgresql) GetUserVotes() map[string]map[string]bool {
 		var userHash string
 		var questionId string
 		if err = rows.Scan(&questionId, &userHash); err != nil {
-			logrus.Fatalf(err.Error())
+			logrus.Fatal(err.Error())
 		}
 
 		if userVotes[userHash] == nil {
