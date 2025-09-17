@@ -1,4 +1,4 @@
-FROM golang:1.24-alpine AS build
+FROM golang:1.25-alpine AS build
 
 WORKDIR /app
 
@@ -13,7 +13,7 @@ RUN go install github.com/a-h/templ/cmd/templ@latest && \
 RUN go build -o cp-voting-tool
 RUN go vet ./...
 
-FROM alpine:3.21 AS runtime
+FROM alpine:3.22 AS runtime
 
 WORKDIR /app
 
