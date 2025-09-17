@@ -8,63 +8,6 @@ on:
           type: string
           default: null
 jobs:
-  # deploy_api_aws:
-  #   name: AWS - Deploy Go Api
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #       - uses: actions/checkout@v4
-  #       - name: Get Git Tag
-  #         id: git_tag
-  #         run: echo "::set-output name=tag::$(git tag --points-at HEAD)"
-  #       - name: Create short sha
-  #         uses: benjlevesque/short-sha@v3.0
-  #         id: short-sha
-  #         with:
-  #           length: 8
-  #       - name: Configure AWS Credentials
-  #         uses: aws-actions/configure-aws-credentials@v4
-  #         id: aws-configure
-  #         with:
-  #           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  #           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  #           aws-region: eu-central-1
-  #           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-  #           role-duration-seconds: 1200
-  #           output-credentials: true
-  #       - name: Substitute env vars in deployment files
-  #         run: |
-  #           envsubst '${AWS_BEANSTALK_DOMAIN}' < ./deployment/.ebextensions/01_enable_https.config > 01_temp.config && \
-  #           mv 01_temp.config ./deployment/.ebextensions/01_enable_https.config
-
-  #           envsubst < ./deployment/.platform/hooks/postdeploy/00_get_certificate.sh > 00_temp.sh && \
-  #           mv 00_temp.sh ./deployment/.platform/hooks/postdeploy/00_get_certificate.sh
-  #         env:
-  #           AWS_BEANSTALK_DOMAIN: ${{ vars.AWS_BEANSTALK_DOMAIN }}
-  #           CERTBOT_EMAIL: ${{ vars.CERTBOT_EMAIL }}
-  #       - name: Patch Image version to Dockerrun.aws.json 
-  #         run: |
-  #           echo $IMAGE
-  #           cd deployment
-  #           jq '.Image.Name = env.IMAGE' Dockerrun.aws.json > Dockerrun.aws.temp.json
-  #           mv Dockerrun.aws.temp.json Dockerrun.aws.json
-  #         env:
-  #           IMAGE: ${{ secrets.AWS_ECR_SERVER }}/cpvt-api:${{ github.event_name == 'workflow_dispatch' && inputs.build_tag || github.ref_type == 'tag' && github.ref_name || steps.short-sha.outputs.sha }}
-  #       - name: Generate deployment package
-  #         run: |
-  #           cd deployment
-  #           zip -r ../deploy.zip .
-      
-  #       - name: Deploy to Elastic Beanstalk
-  #         uses: einaregilsson/beanstalk-deploy@v22
-  #         with:
-  #           aws_access_key: ${{ steps.aws-configure.outputs.aws-access-key-id }}
-  #           aws_secret_key: ${{ steps.aws-configure.outputs.aws-secret-access-key }}
-  #           aws_session_token: ${{ steps.aws-configure.outputs.aws-session-token }}
-  #           application_name: cpvote
-  #           environment_name: cpvote-env
-  #           version_label: ${{ steps.short-sha.outputs.sha }}
-  #           region: eu-central-1
-  #           deployment_package: deploy.zip  
   deploy_api_azure:
     name: Azure - Deploy Go Api
     runs-on: ubuntu-latest
@@ -77,8 +20,14 @@ jobs:
           id: short-sha
           with:
             length: 8
-        - uses: azure/webapps-deploy@v2
+        - name: Log in to Azure
+          uses: azure/login@v1
           with:
-            app-name: 'cpvtapi'
-            publish-profile: ${{ secrets.AZURE_WEB_APP_API_PUBLISH_PROFILE }}
-            images: ${{ secrets.ACR_SERVER }}/cpvt-api:${{ github.event_name == 'workflow_dispatch' && inputs.build_tag || steps.git_tag.outputs.tag || steps.short-sha.outputs.sha }}
+            creds: ${{ secrets.AZURE_CREDENTIALS }}
+        - name: Deploy Container App via CLI
+          run: |
+            IMAGE_TAG="${{ github.event_name == 'workflow_dispatch' && inputs.build_tag || steps.git_tag.outputs.tag || steps.short-sha.outputs.sha }}"
+            az containerapp update \
+              --name ${{ vars.CONTAINER_APP_NAME }} \
+              --resource-group ${{ vars.RESOURCE_GROUP_NAME }} \
+              --image ${{ secrets.ACR_SERVER }}/cpvt-api:${IMAGE_TAG}

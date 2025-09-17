@@ -94,7 +94,7 @@ import type { Question, QuestionDataStore, ThemeData, User } from './types';
 
     Alpine.start() 
 
-    const initCentrifugo = async(user) => {
+    const initCentrifugo = async(user: User) => {
     console.log("init centrifugo")
 
     const protocol = window.location.protocol === "https:" ? "wss" : "ws"
