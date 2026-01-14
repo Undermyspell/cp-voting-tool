@@ -13,7 +13,7 @@ RUN go install github.com/a-h/templ/cmd/templ@latest && \
 RUN go build -o cp-voting-tool
 RUN go vet ./...
 
-FROM alpine:3.22 AS runtime
+FROM alpine:3.23 AS runtime
 
 WORKDIR /app
 
